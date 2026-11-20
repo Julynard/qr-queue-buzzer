@@ -1,6 +1,6 @@
 # Aqona accounts: design
 
-Status: approved by the owner (2026-11-20)
+Status: approved by the owner (2026-11-20). Additions for account management and super admin: draft for approval.
 
 ## Intent
 
@@ -23,6 +23,9 @@ Customers waiting in a queue never sign up and never give personal data. That pr
    later when paid plans exist.
 6. The current public, unprotected `/staff`, `/join` and `/t/<id>` pages are retired.
 7. Owners can delete a queue or their whole account, and that removes all of its data (including the live queue).
+8. Shop owners manage their own Aqona account and their staff from one settings page.
+9. The Aqona owner has a **super admin** panel to look after all accounts: find users and shops, block abuse,
+   delete accounts, and set a shop's plan by hand.
 
 ## Non-goals (this version)
 
@@ -149,6 +152,44 @@ aqona.app → [Start free] → /login
 - `/app` shows a workspace switcher only when the person belongs to more than one workspace.
 - First log-in: through an invite link → join that workspace, no "Name your business" step. Through "Start free" → create a workspace.
 
+### Account settings for shop owners (`/app/settings`)
+
+- **Profile**: name, email (read-only; it is the login), sign-in methods (Google linked or not), "Sign out of all devices".
+- **Workspace**: rename. Shows the plan (Free) and the limits in use (queues 1/1, people 2/3, tickets today).
+- **Staff**: list of members with role and date joined; pending invites with "Resend" and "Cancel";
+  "Invite staff" (respects the people limit); "Remove" a staff member, which ends their sessions in this workspace at once.
+- **Staff themselves**: can see the workspace and "Leave this workspace". They cannot invite, remove, or change settings.
+- **Danger zone** (owner only): delete a queue; delete the account (and with it the workspace, see "Deletion and privacy").
+- No ownership transfer in this version (one owner per workspace). If an owner needs to hand over, the super admin does it.
+
+### Super admin (`/admin`)
+
+Who: people whose email is listed in the `SUPER_ADMIN_EMAILS` setting (a Secret, comma-separated). At launch: the Aqona
+owner only. The list is checked on every admin request, so removing an email removes access at once.
+
+How they log in: **Google sign-in only** for admin access (Google's own 2-step verification protects it); an email-code
+session cannot open `/admin`. Better Auth's admin plugin may provide user listing, banning and session revocation;
+confirm during planning against better-auth.com, and use it only where it fits these rules.
+
+What they can do:
+- **Overview**: sign-ups today / this week, active workspaces, queues, tickets today across all shops, Cloudflare usage hint.
+- **Users**: search by email or name; see their workspaces and roles, sign-in methods, created date, last active;
+  **block / unblock** (blocked users cannot log in and their sessions end immediately); **delete** (same full deletion as
+  self-delete, including the queues' live data).
+- **Workspaces**: search by name or queue address; see owner, members, queues, plan, tickets today;
+  **change plan by hand** (Free / Plus / Business), so early paying shops can be served before online payments exist;
+  **transfer ownership** to another member; **delete**.
+- **Queues**: **pause** a queue (its QR shows "This queue is not available right now"; staff page shows why) and resume it.
+- **Audit log**: every admin action is recorded (who, what, which account, when) and shown in `/admin/log`.
+  Admin actions cannot be deleted from the log.
+
+What they cannot do (privacy by design):
+- See customers' names or ticket details inside a queue. Admin views show counts only.
+- Log in as another user ("impersonation"). Support happens by looking at the account's settings, not by acting as them.
+
+Data: `admin_audit` table (`id`, `admin_user_id`, `action`, `target_type`, `target_id`, `details` JSON, `created_at`);
+a `status` column on queue (`active` / `paused`); `plan` on workspace (already planned).
+
 ### Roles
 
 - **Owner**: everything: queues, staff, settings, delete.
@@ -188,7 +229,7 @@ aqona.app → [Start free] → /login
 - New D1 database; migrations run in the Cloudflare build **before** `wrangler deploy` (deploy command becomes
   migrations-then-deploy). Verify the automatic build token has D1 permission.
 - New secrets, each added as type **Secret** (never a plain Variable, never in `wrangler.jsonc`):
-  `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `TURNSTILE_SECRET_KEY`.
+  `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `TURNSTILE_SECRET_KEY`, `SUPER_ADMIN_EMAILS`.
   Email goes through a `send_email` binding (Cloudflare Email Service), not an API key.
 - Preview builds stay off (they would share live data).
 
@@ -197,9 +238,11 @@ aqona.app → [Start free] → /login
 1. **Accounts core**: D1 + Better Auth, log-in (Google; email code where the domain allows, console code in dev),
    workspace on "Start free", create a queue, per-queue addresses, staff page and staff API behind log-in, old pages
    retired, slug lookup, **privacy notice and delete queue / delete account** (needed before collecting any emails).
-2. **Staff invites**, roles, workspace switcher.
+2. **Staff invites**, roles, workspace switcher, **account settings page**, and a **first super admin** (users and
+   workspaces lists, block / unblock, delete, audit log). Public sign-up should not stay open long without a way to stop abuse.
 3. **Home page, terms page**, "Powered by Aqona".
 4. **Free limits enforced** (1 queue, owner + 2 staff, 300 tickets/day soft warning).
+5. **Super admin, rest**: overview numbers, change plan by hand, transfer ownership, pause / resume queue.
 
 The in-app-viewer banner and the push-failure message don't depend on accounts. They can ship first, as a small
 separate pull request against today's site.
@@ -227,4 +270,6 @@ Each slice is its own pull request and leaves the site working.
 3. Free plan limits as in the table under "Data": 1 queue, owner + 2 staff (hard), 300 tickets/day (soft).
 4. Only the owner can change daily-reset settings; staff can still start a new day by hand.
 5. The builder's calls on workspaces and people, privacy in slice 1, and local-only testing are agreed.
+7. Shop owners manage their account and staff from one settings page; the Aqona owner gets a super admin panel
+   (requested 2026-11-20). The details above are the builder's proposal, awaiting approval.
 6. Server code moves to **TypeScript first**, as its own pull request before slice 1. Customer-page scripts stay plain JavaScript.
