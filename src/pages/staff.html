@@ -1,0 +1,149 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Buzzer – Staff</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  body{font-family:system-ui,sans-serif;margin:0;background:#f4f4f5;color:#18181b}
+  header{background:#18181b;color:#fff;padding:16px 24px;display:flex;justify-content:space-between;align-items:center}
+  h1{margin:0;font-size:20px}
+  .wrap{display:grid;grid-template-columns:300px 1fr;gap:24px;padding:24px}
+  @media(max-width:800px){.wrap{grid-template-columns:1fr}}
+  .side{display:flex;flex-direction:column;gap:24px}
+  .card{background:#fff;border-radius:14px;padding:20px;box-shadow:0 1px 3px #0001}
+  button,a.btn{font:inherit;border:0;border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:600;text-decoration:none;display:inline-block}
+  #qr{display:flex;justify-content:center;margin:10px 0}
+  .small{font-size:12px;color:#71717a;text-align:center;word-break:break-all}
+  .warn{background:#fef3c7;color:#92400e;font-size:13px;padding:10px;border-radius:10px;margin-top:12px;text-align:left}
+  table{width:100%;border-collapse:collapse}
+  td,th{padding:12px 8px;border-bottom:1px solid #e4e4e7;text-align:left}
+  th{font-size:12px;color:#71717a;text-transform:uppercase}
+  .num{font-size:22px;font-weight:800}
+  .name{font-weight:600}.id{font-size:11px;color:#a1a1aa;font-family:monospace}
+  .buzz{background:#dc2626;color:#fff}.done{background:#e4e4e7}.rm{background:none;color:#a1a1aa}
+  .pill{font-size:12px;padding:3px 8px;border-radius:99px;font-weight:600}
+  .waiting{background:#fef3c7;color:#92400e}.buzzing{background:#fee2e2;color:#991b1b}
+  .coming{background:#dbeafe;color:#1e40af}.done-p{background:#dcfce7;color:#166534}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+  .empty{color:#a1a1aa;text-align:center;padding:30px}
+  tr.isdone{opacity:.45}
+  .reset label{display:flex;align-items:center;gap:8px;margin:10px 0;font-size:14px}
+  .reset input[type=time],.reset input[type=text]{font:inherit;padding:6px 8px;border:1px solid #d4d4d8;border-radius:8px}
+  .reset input[type=text]{width:100%;box-sizing:border-box}
+  .reset .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .save{background:#2563eb;color:#fff}.newday{background:#18181b;color:#fff}
+  .note{font-size:12px;color:#71717a;margin-top:8px;min-height:16px}
+  #conn{font-size:12px;opacity:.7;margin-left:12px}
+</style></head><body>
+<header><h1>🔔 Queue Buzzer — Staff</h1><span style="font-size:14px"><span id="count" style="opacity:.8"></span><span id="conn">Connecting…</span></span></header>
+<div class="wrap">
+  <div class="side">
+    <div class="card" style="text-align:center">
+      <b>Customer QR</b>
+      <div id="qr"></div>
+      <div class="small">__JOIN__</div>
+      <p><a class="btn" style="background:#2563eb;color:#fff" href="/qr" target="_blank">🖨 Open printable QR</a></p>
+      <div class="warn" id="httpWarn" style="display:none">⚠️ Not on HTTPS: lock-screen alerts and screen-awake are off.</div>
+    </div>
+    <div class="card reset">
+      <b>Daily reset</b>
+      <div class="note" style="margin-top:4px">A new day clears every ticket and numbering starts again at #1.</div>
+      <label><input type="checkbox" id="autoReset"> Reset automatically every day at <input type="time" id="resetTime" required></label>
+      <label style="display:block">Time zone<br><input type="text" id="timeZone" placeholder="Asia/Manila" autocomplete="off"></label>
+      <div class="note" id="nextReset"></div>
+      <div class="row">
+        <button class="save" onclick="saveSettings()">Save</button>
+        <button class="newday" onclick="startNewDay()">Start new day now</button>
+      </div>
+      <div class="note" id="resetMsg"></div>
+    </div>
+  </div>
+  <div class="card">
+    <table><thead><tr><th>#</th><th>Customer</th><th>Phone</th><th>Status</th><th></th></tr></thead>
+    <tbody id="list"><tr><td colspan="5" class="empty">Waiting for customers to scan…</td></tr></tbody></table>
+  </div>
+</div>
+<script>
+if (location.protocol !== 'https:') document.getElementById('httpWarn').style.display='block';
+new QRCode(document.getElementById('qr'),{text:'__JOIN__',width:220,height:220});
+const $ = id => document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let state = null, settingsShown = false;
+
+// ---------- live connection (WebSocket), with slow polling while it is down ----------
+let ws = null, tries = 0, pollTimer = null;
+function connect(){
+  try { ws = new WebSocket((location.protocol==='https:'?'wss:':'ws:')+'//'+location.host+'/ws/staff'); }
+  catch(e){ ws = null; startPolling(); return; }
+  ws.onopen = () => { tries = 0; stopPolling(); $('conn').textContent = '● Live'; };
+  ws.onmessage = e => { try { const d = JSON.parse(e.data); if (d.type === 'state') render(d); } catch(_){} };
+  ws.onclose = () => {
+    ws = null; $('conn').textContent = 'Reconnecting…'; startPolling();
+    setTimeout(connect, Math.min(1000 * 2 ** tries++, 15000));
+  };
+}
+async function poll(){ try { const r = await fetch('/api/state', {cache:'no-store'}); render(await r.json()); } catch(e){} }
+function startPolling(){ if (!pollTimer) { poll(); pollTimer = setInterval(poll, 10000); } }
+function stopPolling(){ clearInterval(pollTimer); pollTimer = null; }
+setInterval(() => { if (ws && ws.readyState === 1) ws.send('ping'); }, 30000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !ws) connect(); });
+connect();
+
+async function act(a, id){
+  try { await fetch('/api/'+a+'/'+id, {method:'POST'}); } catch(e){}
+  if (!ws || ws.readyState !== 1) poll();
+}
+
+function render(d){
+  state = d;
+  const rows = d.tickets || [];
+  $('count').textContent = rows.filter(t => t.status !== 'done').length + ' in queue';
+  const el = $('list');
+  if (!rows.length) el.innerHTML = '<tr><td colspan="5" class="empty">Waiting for customers to scan…</td></tr>';
+  else el.innerHTML = rows.map(t => {
+    const open = t.status !== 'done', q = "'" + t.id + "'";
+    return '<tr class="'+(open?'':'isdone')+'"><td class="num">#'+t.num+'</td>'+
+      '<td><div class="name">'+(t.name?esc(t.name):'<i style="color:#a1a1aa">No name</i>')+'</div><div class="id">ID '+t.id+'</div></td>'+
+      '<td><span class="dot" style="background:'+(t.online?'#22c55e':'#d4d4d8')+'"></span>'+(t.online?'Page open':'Page closed')+
+        '<div class="id">'+(t.push?'🔔 lock-screen alerts on':'no lock-screen alerts')+'</div></td>'+
+      '<td><span class="pill '+(t.status==='done'?'done-p':t.status)+'">'+t.status+'</span></td>'+
+      '<td style="text-align:right;white-space:nowrap">'+
+        (open?'<button class="buzz" onclick="act(\'buzz\','+q+')">🔔 Buzz</button> <button class="done" onclick="act(\'done\','+q+')">Done</button>':'')+
+        ' <button class="rm" title="Remove" onclick="act(\'remove\','+q+')">✕</button></td></tr>';
+  }).join('');
+  if (!settingsShown && d.settings) { showSettings(d.settings); settingsShown = true; }
+  showNextReset(d);
+}
+
+// ---------- daily reset ----------
+function showSettings(s){ $('autoReset').checked = s.autoReset; $('resetTime').value = s.resetTime; $('timeZone').value = s.timeZone; }
+function showNextReset(d){
+  const s = d.settings; if (!s) return;
+  if (!s.autoReset || !d.nextResetAt) { $('nextReset').textContent = 'Automatic reset is off.'; return; }
+  let when;
+  try { when = new Date(d.nextResetAt).toLocaleString('en-PH', {timeZone: s.timeZone, weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit'}); }
+  catch(e){ when = new Date(d.nextResetAt).toLocaleString(); }
+  $('nextReset').textContent = 'Next automatic reset: ' + when + ' (' + s.timeZone + ')';
+}
+async function saveSettings(){
+  const body = { autoReset: $('autoReset').checked, resetTime: $('resetTime').value, timeZone: $('timeZone').value.trim() || 'Asia/Manila' };
+  $('resetMsg').textContent = 'Saving…';
+  try {
+    const r = await fetch('/api/settings', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+    const d = await r.json();
+    if (!r.ok) { $('resetMsg').textContent = '⚠️ ' + (d.error || 'Could not save'); return; }
+    $('resetMsg').textContent = '✓ Saved';
+    showSettings(d.settings); if (state) { state.settings = d.settings; state.nextResetAt = d.nextResetAt; showNextReset(state); }
+  } catch(e) { $('resetMsg').textContent = '⚠️ Could not save. Check the connection.'; }
+}
+async function startNewDay(){
+  const rows = (state && state.tickets) || [];
+  const open = rows.filter(t => t.status !== 'done').length;
+  const msg = 'Start a new day now?\n\nThis clears all ' + rows.length + ' tickets' +
+    (open ? ' (' + open + ' still waiting — their phones will be told to join again)' : '') +
+    ' and numbering starts again at #1.';
+  if (!confirm(msg)) return;
+  try { await fetch('/api/reset', {method:'POST'}); $('resetMsg').textContent = '✓ New day started'; }
+  catch(e) { $('resetMsg').textContent = '⚠️ Could not reset. Check the connection.'; }
+  if (!ws || ws.readyState !== 1) poll();
+}
+</script></body></html>

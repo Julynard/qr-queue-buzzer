@@ -1,0 +1,4 @@
+# Copy to .dev.vars for `npm run dev`. Generate keys with: npm run vapid
+VAPID_PRIVATE_KEY=
+# Optional: address phones can reach, used in the QR when testing on Wi-Fi
+# PUBLIC_URL=http://192.168.1.10:8787

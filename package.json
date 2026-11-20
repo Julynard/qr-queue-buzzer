@@ -1,16 +1,19 @@
 {
-  "name": "buzzer",
+  "name": "qr-queue-buzzer",
   "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
+  "private": true,
+  "description": "QR code queue buzzer: customers scan, staff buzz their phone. Runs on Cloudflare Workers.",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "dev": "wrangler dev",
+    "dev:lan": "wrangler dev --ip 0.0.0.0",
+    "deploy": "wrangler deploy",
+    "test": "node --test",
+    "vapid": "node scripts/gen-vapid.js"
   },
-  "keywords": [],
-  "author": "",
   "license": "ISC",
-  "dependencies": {
-    "web-push": "^3.6.7"
+  "devDependencies": {
+    "http_ece": "^1.2.1",
+    "wrangler": "^4.165.0"
   }
 }
