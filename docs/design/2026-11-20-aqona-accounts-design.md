@@ -48,7 +48,8 @@ Customers waiting in a queue never sign up and never give personal data. That pr
 - Cloudflare Workers: the owner agreed to move to **Workers Paid** (about US$5/month) when needed. That removes the free
   plan's shared 100,000 requests/day ceiling and its Worker size limit, and allows Cloudflare Email Service.
 - The GitHub repository is public: no secrets or business strategy in the repo. Prices are public on the pricing page
-  (owner, 2026-11-21: Free ₱0, Pro ₱499/month, Max ₱1,499/month; yearly = 2 months free).
+  (owner, 2026-11-21: Free ₱0, Pro ₱299/month for up to 5 counters, Max ₱999/month for up to 10 counters and branches;
+  yearly = 2 months free). Set after comparing Pumila.ph (Free/₱199/₱399/₱999/₱2,499) and a ₱5,699 10-disc pager set.
 - Email sending needs an owned domain (`aqona.app`; the owner will buy it before real shops print QR codes).
   Login codes and invites are sent with **Cloudflare Email Service** (needs Workers Paid and the domain onboarded).
 - Production Google sign-in should run on the owned domain. The `workers.dev` address is the live site (preview builds are off),
