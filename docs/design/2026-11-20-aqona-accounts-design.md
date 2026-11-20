@@ -270,6 +270,6 @@ Each slice is its own pull request and leaves the site working.
 3. Free plan limits as in the table under "Data": 1 queue, owner + 2 staff (hard), 300 tickets/day (soft).
 4. Only the owner can change daily-reset settings; staff can still start a new day by hand.
 5. The builder's calls on workspaces and people, privacy in slice 1, and local-only testing are agreed.
+6. Server code moves to **TypeScript first**, as its own pull request before slice 1. Customer-page scripts stay plain JavaScript.
 7. Shop owners manage their account and staff from one settings page; the Aqona owner gets a super admin panel
    (requested 2026-11-20). The details above are the builder's proposal, awaiting approval.
-6. Server code moves to **TypeScript first**, as its own pull request before slice 1. Customer-page scripts stay plain JavaScript.
