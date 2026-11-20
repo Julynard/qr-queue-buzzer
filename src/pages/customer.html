@@ -186,7 +186,7 @@
       <div class="head"><span class="shop"></span><span class="ticketNo"></span></div>
       <h1 class="anton" id="endTitle"></h1>
       <div id="endMsg" role="status"></div>
-      <button class="primary" onclick="location.href='/join'">Take a new number</button>
+      <button class="primary" onclick="location.href=BASE">Take a new number</button>
     </div>
     <div class="tear"><i></i></div>
     <div class="stub" style="height:96px;padding:8px 19px 12px">
@@ -209,7 +209,11 @@ let view = __VIEW__;
 const QUEUE = __QUEUE__;
 const NOTICE = __NOTICE__;
 const VAPID = '__VAPID__';
-let ctx, beepTimer, wakeLock = null, soundOn = false, pushOn = false;
+// This queue's address, e.g. "/q/anas-milk-tea". Every call and link below is under it.
+const BASE = __BASE__;
+// The remembered ticket is per queue, so scanning another shop's QR never opens this shop's ticket.
+const KEY = 'buzzerTicket:' + BASE.split('/').pop();
+let ctx, beepTimer, wakeLock = null, soundOn = false, pushOn = false, pushFailed = false;
 const $ = id => document.getElementById(id);
 const secure = window.isSecureContext;
 const ua = navigator.userAgent;
@@ -223,9 +227,9 @@ const setAll = (sel, text) => document.querySelectorAll(sel).forEach(el => { el.
 
 if (secure && 'serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
 
-// Back on /join with a ticket from earlier: go to it. (Only from /join; on /t/<id> with no ticket that
+// Back on the join page with a ticket from earlier: go to it. (Only from the join page; on /t/<id> with no ticket that
 // would reload the same page forever.)
-if (!ticket && location.pathname === '/join') { try { const s = localStorage.getItem('buzzerTicket'); if (s) location.replace('/t/'+s); } catch(e){} }
+if (!ticket && location.pathname.replace(/\/$/, '') === BASE) { try { const s = localStorage.getItem(KEY); if (/^[a-f0-9]{12}$/.test(s || '')) location.replace(BASE+'/t/'+s); } catch(e){} }
 
 // ---------- shop name: "Ana's Milk Tea · Counter 1" -> shop + counter ----------
 const [SHOP, ...rest] = (QUEUE.queueName || '').split(' · ');
@@ -277,9 +281,10 @@ async function enablePush(fromTap, permPromise){
     const reg = await navigator.serviceWorker.ready;
     let sub = await reg.pushManager.getSubscription();
     if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:b64ToBytes(VAPID) });
-    await fetch('/api/subscribe/'+ticket.id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(sub)});
-    pushOn = true;
-  } catch(e){ console.log('push error', e); }
+    const r = await fetch(BASE+'/api/subscribe/'+ticket.id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(sub)});
+    if (!r.ok) throw new Error('subscribe ' + r.status);
+    pushOn = true; pushFailed = false;
+  } catch(e){ console.log('push error', e); pushFailed = true; }
   renderAlerts();
 }
 
@@ -291,6 +296,7 @@ function renderAlerts(){
   if (!secure) off.push('Lock-screen alerts and keeping the screen on need a secure (https) link.');
   else {
     if (perm === 'denied') off.push('Lock-screen alerts are blocked in your browser settings. Keep this page open.');
+    else if (pushFailed) off.push("Lock-screen alerts couldn't be turned on on this phone. Keep this page open.");
     if (!wakeLock && 'wakeLock' in navigator && soundOn) off.push('Your screen may turn off. Keep this page open.');
   }
   $('warn').textContent = off.join(' ');
@@ -310,7 +316,7 @@ async function join(){
   if (!permP && pushSupported && Notification.permission==='default') permP = Notification.requestPermission();
   $('joinBtn').disabled = true; $('joinBtn').textContent = 'Taking a number…'; $('joinErr').textContent = '';
   try {
-    const r = await fetch('/api/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:$('name').value, key:joinKey})});
+    const r = await fetch(BASE+'/api/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:$('name').value, key:joinKey})});
     if (r.status === 429) throw new Error('The queue is full right now. Please ask the staff.');
     if (!r.ok) throw new Error('Could not join. Please try again.');
     ticket = await r.json();
@@ -319,9 +325,9 @@ async function join(){
     $('joinBtn').disabled = false; $('joinBtn').textContent = 'Take a number'; joining = false;
     return;
   }
-  try { localStorage.setItem('buzzerTicket', ticket.id); } catch(e){}
-  history.replaceState(null,'','/t/'+ticket.id);
-  $('mf').href = '/manifest/'+ticket.id+'.json';
+  try { localStorage.setItem(KEY, ticket.id); } catch(e){}
+  history.replaceState(null,'',BASE+'/t/'+ticket.id);
+  $('mf').href = BASE+'/manifest/'+ticket.id+'.json';
   // best guess until the live connection sends the real place
   view = { status: 'waiting', place: (QUEUE.waiting || 0) + 1, waitMin: QUEUE.waitMin, claimLeftMs: null };
   showTicket();
@@ -372,6 +378,7 @@ function applyView(v){
   if (v.status === 'done') return finish('Thank you!', 'Order collected. Enjoy!');
   if (v.status === 'reset') return finish('New day.', 'The queue was reset for a new day. Please join again.');
   if (v.status === 'gone') return finish('Removed.', 'Your ticket was removed from the queue.');
+  if (v.status === 'closed') return finish('Closed.', 'This queue was closed. Please ask the staff.');
 }
 
 function showWaiting(v){
@@ -409,13 +416,13 @@ function tick(){
 function ack(){
   unlockSound(); stopRing(); needsTap = false;
   state = 'coming'; show('claimBtn', false); show('thanks', true);
-  fetch('/api/ack/'+ticket.id,{method:'POST'}).catch(()=>{});
+  fetch(BASE+'/api/ack/'+ticket.id,{method:'POST'}).catch(()=>{});
 }
 
 function finish(title, text){
   ended = true; stopPolling(); stopRing(); clearInterval(clockTimer);
   if (ws) { try { ws.close(); } catch(e){} ws = null; }
-  try{localStorage.removeItem('buzzerTicket')}catch(e){}
+  try{localStorage.removeItem(KEY)}catch(e){}
   if (wakeLock) wakeLock.release();
   $('endTitle').textContent = title;
   $('endMsg').textContent = text;
@@ -428,7 +435,7 @@ let ws = null, tries = 0, pollTimer = null;
 function setLive(on){ $('live').classList.toggle('off', !on); $('liveText').textContent = on ? 'Live. Your place moves the moment the line does.' : 'Reconnecting…'; }
 function connect(){
   if (ended) return;
-  try { ws = new WebSocket((location.protocol==='https:'?'wss:':'ws:')+'//'+location.host+'/ws/t/'+ticket.id); }
+  try { ws = new WebSocket((location.protocol==='https:'?'wss:':'ws:')+'//'+location.host+BASE+'/ws/t/'+ticket.id); }
   catch(e){ ws = null; startPolling(); return; }
   ws.onopen = () => { tries = 0; stopPolling(); setLive(true); };
   ws.onmessage = e => { try { const d = JSON.parse(e.data); if (d.type === 'status') applyView(d); } catch(_){} };
@@ -439,7 +446,12 @@ function connect(){
   };
 }
 async function poll(){
-  try { const r = await fetch('/api/status/'+ticket.id, {cache:'no-store'}); applyView(await r.json()); }
+  try {
+    const r = await fetch(BASE+'/api/status/'+ticket.id, {cache:'no-store'});
+    // The queue itself is gone (deleted by the shop): stop retrying.
+    if (r.status === 404 || r.status === 410) return applyView({ status: 'closed' });
+    applyView(await r.json());
+  }
   catch(e){ setLive(false); }
 }
 function startPolling(){ if (!pollTimer && !ended) { poll(); pollTimer = setInterval(poll, 10000); } }
@@ -456,9 +468,9 @@ if (ticket) {
   showTicket();
   if (pushSupported && Notification.permission==='granted') enablePush(false);
 } else {
-  if (location.pathname.startsWith('/t/')) {
-    try{localStorage.removeItem('buzzerTicket')}catch(e){}
-    history.replaceState(null,'','/join');
+  if (location.pathname.startsWith(BASE+'/t/')) {
+    try{localStorage.removeItem(KEY)}catch(e){}
+    history.replaceState(null,'',BASE);
   }
   if (NOTICE) { $('noticeText').textContent = NOTICE; show('notice', true); }
   const w = QUEUE.waiting || 0;

@@ -1,4 +1,16 @@
-# Copy to .dev.vars for `npm run dev`. Generate keys with: npm run vapid
+# Copy to .dev.vars for `npm run dev`. Generate push keys with: npm run vapid
 VAPID_PRIVATE_KEY=
 # Optional: address phones can reach, used in the QR when testing on Wi-Fi
 # PUBLIC_URL=http://192.168.1.10:8787
+
+# Accounts. Make a secret with: openssl rand -base64 32
+BETTER_AUTH_SECRET=
+# Local only: print login codes in the terminal instead of emailing them
+EMAIL_MODE=console
+# Cloudflare's always-pass Turnstile test secret (pairs with the test site key in wrangler.jsonc)
+TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
+# Optional: Google sign-in (OAuth client, redirect http://127.0.0.1:8787/api/auth/callback/google)
+# GOOGLE_CLIENT_ID=
+# GOOGLE_CLIENT_SECRET=
+# Optional: Better Auth Infrastructure (dashboard + abuse protection); sends sign-in events to Better Auth
+# BETTER_AUTH_API_KEY=

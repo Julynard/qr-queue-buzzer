@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Your queues · Aqona</title>
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{--accent:#0B6FB8;--paper:#CFE4F5;--ink:#0A2A4A;--soft:#33506E;--mute:#6B7280;--ground:#F6F7F9;--line:#E3E6EA;--hi:#FFE58A;--danger:#B42318}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:Inter,system-ui,sans-serif}
+  a{color:var(--accent)}a:hover{color:#095A96}
+  .hide{display:none!important}
+  button{font:inherit;cursor:pointer}
+  button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  header{background:#fff;border-bottom:1px solid var(--line)}
+  .wrap{max-width:960px;margin:0 auto;padding:0 20px}
+  .hbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;min-height:68px}
+  .brand{font-family:'Space Grotesk',Inter,sans-serif;font-weight:700;font-size:26px;letter-spacing:-.03em;text-decoration:none;color:var(--ink)}.brand b{color:var(--accent)}
+  .who{display:flex;align-items:center;gap:12px;font-size:14px;font-weight:600}
+  .avatar{width:32px;height:32px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+  main.wrap{padding:28px 20px 64px;display:flex;flex-direction:column;gap:22px}
+  h1{margin:0;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:48px;line-height:1}
+  h2{margin:0;font-size:18px;font-weight:800}
+  .sub{font-size:14px;color:var(--soft);margin-top:6px}
+  .card{background:#fff;border:2px solid var(--ink);border-radius:8px}
+  .btn{font-weight:800;min-height:48px;padding:0 18px;border:2px solid var(--ink);border-radius:6px;background:#fff;color:var(--ink);display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .btn:hover{color:var(--ink)}
+  .btn.acc{background:var(--accent);color:#fff}.btn.ink{background:var(--ink);color:#fff}
+  .btn.danger{border-color:var(--danger);color:var(--danger)}
+  .linkbtn{border:0;background:none;padding:0;min-height:44px;font-weight:700;color:var(--ink);text-decoration:underline}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .tag{font-size:12px;font-weight:800;padding:3px 10px;border-radius:999px;background:var(--ink);color:#fff}
+  .qcard{padding:24px;display:flex;flex-wrap:wrap;gap:28px;align-items:center}
+  .qr{width:200px;height:200px;border:2px solid var(--line);border-radius:8px;padding:8px;flex:none}
+  .qr img,.qr canvas{width:100%!important;height:auto!important}
+  .addr{font-size:17px;font-weight:800;word-break:break-all}
+  label{font-size:14px;font-weight:700}
+  .field{font:inherit;font-size:16px;color:var(--ink);height:50px;padding:0 12px;border:2px solid var(--ink);border-radius:6px;background:#fff;width:100%;max-width:420px}
+  .msg{font-size:14px;font-weight:700;min-height:20px}.msg.bad{color:var(--danger)}
+  .danger-zone{border:2px dashed var(--danger);border-radius:8px;padding:22px 24px;display:flex;flex-direction:column;gap:14px}
+  .onboard{background:var(--paper);border:3px solid var(--ink);border-radius:6px;padding:28px;display:flex;flex-direction:column;gap:12px;max-width:560px}
+  .usage{border:2px dashed #9AA6B2;border-radius:8px;padding:14px 16px;font-size:14px;display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center}
+</style></head><body>
+<header><div class="wrap hbar">
+  <a class="brand" href="/app"><b>aqo</b>na</a>
+  <div class="who"><span class="avatar" id="avatar" aria-hidden="true"></span><span id="whoName"></span><button class="linkbtn" onclick="signOut()">Sign out</button></div>
+</div></header>
+
+<main class="wrap">
+  <div id="loading" class="sub">Loading…</div>
+
+  <!-- First visit: name the business -->
+  <form id="onboard" class="onboard hide" onsubmit="onboard(event)">
+    <h1>Name your business or queue</h1>
+    <div class="sub" style="margin:0">This is what customers see on their ticket. You can change it later in Settings.</div>
+    <label for="biz">Business or queue name</label>
+    <input id="biz" class="field" maxlength="60" required placeholder="Ana's Milk Tea" autocomplete="organization">
+    <label for="you">Your name</label>
+    <input id="you" class="field" maxlength="60" placeholder="Ana Reyes" autocomplete="name">
+    <div class="row" style="margin-top:6px"><button class="btn acc" id="onboardBtn">Create my queue</button><span class="msg bad" id="onboardMsg" role="alert"></span></div>
+  </form>
+
+  <div id="home" class="hide" style="display:flex;flex-direction:column;gap:22px"></div>
+</main>
+
+<script>
+const ORIGIN = location.origin;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let me = null;
+
+async function api(path, opts = {}){
+  const r = await fetch('/api/app' + path, { ...opts, headers: { 'Content-Type': 'application/json' } });
+  if (r.status === 401) { location.href = '/login?next=/app'; throw new Error('log in'); }
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) { const e = new Error(d.message || d.error || 'Something went wrong. Please try again.'); e.status = r.status; throw e; }
+  return d;
+}
+
+async function load(){
+  me = await api('/me');
+  $('loading').classList.add('hide');
+  $('whoName').textContent = me.user.name || me.user.email;
+  $('avatar').textContent = (me.user.name || me.user.email).split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  if (!me.workspaces.length) return showOnboarding();
+  render();
+}
+
+function showOnboarding(){
+  $('onboard').classList.remove('hide'); $('home').classList.add('hide');
+  let start = null;
+  try { start = JSON.parse(sessionStorage.getItem('aqonaStart') || 'null'); } catch(e){}
+  if (start) { $('biz').value = start.businessName || ''; $('you').value = start.yourName || me.user.name || ''; }
+  else $('you').value = me.user.name || '';
+  // Came from "Start free": the names were already typed there, so create straight away.
+  if (start && start.businessName) onboard();
+}
+async function onboard(e){
+  if (e) e.preventDefault();
+  $('onboardBtn').disabled = true; $('onboardMsg').textContent = '';
+  try {
+    await api('/onboard', { method: 'POST', body: JSON.stringify({ businessName: $('biz').value, yourName: $('you').value }) });
+    try { sessionStorage.removeItem('aqonaStart'); } catch(e){}
+    $('onboard').classList.add('hide');
+    await load();
+  } catch(err) { $('onboardMsg').textContent = err.message; $('onboardBtn').disabled = false; }
+}
+
+function render(){
+  const home = $('home');
+  home.classList.remove('hide');
+  home.innerHTML = me.workspaces.map(w => {
+    const owner = w.role === 'owner';
+    return '<section aria-label="' + esc(w.name) + '" style="display:flex;flex-direction:column;gap:18px">' +
+      '<div><h1>' + esc(w.name) + '</h1><div class="sub">' + (owner ? 'Owner' : 'Staff') + ' · Free plan</div></div>' +
+      w.queues.map(q => {
+        const link = ORIGIN + '/q/' + q.slug;
+        return '<div class="card qcard">' +
+          '<div class="qr" data-qr="' + esc(link) + '" role="img" aria-label="QR code for ' + esc(q.name) + '"></div>' +
+          '<div style="flex:1 1 260px;display:flex;flex-direction:column;gap:12px">' +
+            '<h2>' + esc(q.name) + '</h2>' +
+            '<div><div style="font-size:13px;font-weight:700;color:var(--soft)">Customers scan this to join</div><div class="addr">' + esc(link.replace(/^https?:\/\//, '')) + '</div></div>' +
+            '<div class="row">' +
+              '<a class="btn acc" href="/q/' + esc(q.slug) + '/staff">Open staff page</a>' +
+              '<a class="btn" href="/q/' + esc(q.slug) + '/qr" target="_blank" rel="noopener">Print poster</a>' +
+              '<button class="btn" data-copy="' + esc(link) + '">Copy link</button>' +
+            '</div>' +
+          '</div></div>';
+      }).join('') +
+      (owner ? '<div class="usage"><b>Free plan</b><span>Queues ' + w.queues.length + ' of ' + w.limits.queues + '</span>' +
+        '<button class="linkbtn" data-add="' + esc(w.id) + '">Add a queue</button><span class="msg" id="addMsg-' + esc(w.id) + '" role="status"></span></div>' : '') +
+      (owner ? '<div class="danger-zone"><h2 style="color:var(--danger)">Danger zone</h2>' +
+        w.queues.map(q => '<div class="row"><button class="btn danger" data-del="' + esc(q.id) + '" data-name="' + esc(q.name) + '">Delete “' + esc(q.name) + '”</button>' +
+          '<span class="sub" style="margin:0">Removes its QR address, every ticket and all its settings. Printed QR codes stop working.</span></div>').join('') +
+        '</div>' : '') +
+      '</section>';
+  }).join('') +
+  '<div class="danger-zone"><h2 style="color:var(--danger)">Delete my account</h2>' +
+  '<div class="sub" style="margin:0">Deletes your account, your workspace, every queue in it and all their data. This cannot be undone.</div>' +
+  '<form class="row" onsubmit="deleteAccount(event)"><label for="confirmDel" style="width:100%">Type DELETE to confirm</label>' +
+  '<input id="confirmDel" class="field" style="max-width:220px" autocomplete="off"><button class="btn danger">Delete my account</button>' +
+  '<span class="msg bad" id="delMsg" role="alert"></span></form></div>';
+
+  home.querySelectorAll('[data-qr]').forEach(el => new QRCode(el, { text: el.dataset.qr, width: 400, height: 400, colorDark: '#0A2A4A', colorLight: '#FFFFFF' }));
+  home.querySelectorAll('[data-copy]').forEach(b => b.onclick = async () => {
+    try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = 'Copied'; } catch(e) { prompt('Copy this link:', b.dataset.copy); }
+    setTimeout(() => { b.textContent = 'Copy link'; }, 2000);
+  });
+  home.querySelectorAll('[data-add]').forEach(b => b.onclick = () => addQueue(b.dataset.add));
+  home.querySelectorAll('[data-del]').forEach(b => b.onclick = () => deleteQueue(b.dataset.del, b.dataset.name));
+}
+
+async function addQueue(workspaceId){
+  const msg = $('addMsg-' + workspaceId);
+  const name = prompt('Name of the new queue (for example "Counter 2"):');
+  if (!name) return;
+  try { await api('/queues', { method: 'POST', body: JSON.stringify({ workspaceId, name }) }); await load(); }
+  catch(err) { msg.textContent = err.status === 402 ? 'The Free plan has 1 queue. More queues come with Plus (coming soon).' : err.message; }
+}
+async function deleteQueue(id, name){
+  if (!confirm('Delete "' + name + '"?\n\nIts QR address, every ticket and all its settings are removed. Printed QR codes stop working. This cannot be undone.')) return;
+  try { await api('/queues/' + id, { method: 'DELETE' }); await load(); } catch(err) { alert(err.message); }
+}
+async function deleteAccount(e){
+  e.preventDefault();
+  if ($('confirmDel').value.trim() !== 'DELETE') { $('delMsg').textContent = 'Type DELETE to confirm.'; return; }
+  try { await api('/account', { method: 'DELETE', body: JSON.stringify({ confirm: 'DELETE' }) }); location.href = '/'; }
+  catch(err) { $('delMsg').textContent = err.message; }
+}
+async function signOut(){
+  try { await fetch('/api/auth/sign-out', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }); } catch(e){}
+  location.href = '/';
+}
+load().catch(err => { if (err.message !== 'log in') $('loading').textContent = 'Could not load your queues. Please refresh.'; });
+</script>
+</body></html>

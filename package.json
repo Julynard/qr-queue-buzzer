@@ -7,12 +7,15 @@
   "scripts": {
     "dev": "wrangler dev",
     "dev:lan": "wrangler dev --ip 0.0.0.0",
-    "deploy": "wrangler deploy",
+    "deploy": "npm run db:migrate && wrangler deploy",
     "test": "node --test \"test/**/*.test.ts\"",
     "vapid": "node scripts/gen-vapid.ts",
-    "check": "wrangler types --env-file /dev/null --check && tsc --noEmit && tsc --noEmit -p tsconfig.node.json",
-    "types": "wrangler types --env-file /dev/null",
-    "smoke": "node scripts/smoke.ts"
+    "check": "wrangler types --env-file /dev/null --strict-vars=false --check && tsc --noEmit && tsc --noEmit -p tsconfig.node.json",
+    "types": "wrangler types --env-file /dev/null --strict-vars=false",
+    "smoke": "node scripts/smoke.ts",
+    "db:migrate:local": "wrangler d1 migrations apply aqona --local",
+    "db:migrate": "wrangler d1 migrations apply aqona --remote",
+    "db:schema": "node scripts/auth-schema.ts > migrations/0001_auth.sql"
   },
   "license": "ISC",
   "devDependencies": {
@@ -20,5 +23,9 @@
     "http_ece": "^1.2.1",
     "typescript": "^7.0.2",
     "wrangler": "^4.165.0"
+  },
+  "dependencies": {
+    "@better-auth/infra": "^0.4.31",
+    "better-auth": "^1.7.26"
   }
 }
