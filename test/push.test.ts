@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import nodeCrypto from "node:crypto";
 import ece from "http_ece";
-import { encryptPayload, vapidAuthorization, buildPushRequest, b64urlEncode, b64urlDecode } from "../src/push.js";
+import { encryptPayload, vapidAuthorization, buildPushRequest, b64urlEncode, b64urlDecode } from "../src/push.ts";
 
 // A fake "phone": its own P-256 key pair and auth secret, like a browser push subscription.
 function fakeBrowser() {
@@ -16,9 +16,10 @@ function fakeBrowser() {
 }
 
 async function vapidPair() {
-  const pair = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
-  const publicKey = b64urlEncode(await crypto.subtle.exportKey("raw", pair.publicKey));
-  const { d } = await crypto.subtle.exportKey("jwk", pair.privateKey);
+  const pair = (await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"])) as CryptoKeyPair;
+  const publicKey = b64urlEncode((await crypto.subtle.exportKey("raw", pair.publicKey)) as ArrayBuffer);
+  const { d } = (await crypto.subtle.exportKey("jwk", pair.privateKey)) as JsonWebKey;
+  assert.ok(d);
   return { publicKey, privateKey: d, subject: "mailto:test@example.com" };
 }
 

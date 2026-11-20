@@ -8,12 +8,16 @@
     "dev": "wrangler dev",
     "dev:lan": "wrangler dev --ip 0.0.0.0",
     "deploy": "wrangler deploy",
-    "test": "node --test",
-    "vapid": "node scripts/gen-vapid.js"
+    "test": "node --test \"test/**/*.test.ts\"",
+    "vapid": "node scripts/gen-vapid.ts",
+    "check": "wrangler types --check && tsc --noEmit",
+    "types": "wrangler types"
   },
   "license": "ISC",
   "devDependencies": {
+    "@types/node": "^24.19.2",
     "http_ece": "^1.2.1",
+    "typescript": "^7.0.2",
     "wrangler": "^4.165.0"
   }
 }
