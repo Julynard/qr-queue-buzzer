@@ -289,23 +289,40 @@ async function copyLink(btn){
 }
 
 // ---------- live connection (WebSocket), with slow polling while it is down ----------
-let ws = null, tries = 0, pollTimer = null;
+let ws = null, tries = 0, pollTimer = null, stopped = false;
+// Signed out, removed from the team, or the queue was deleted: stop reconnecting and say why.
+function stopWith(text){
+  stopped = true; stopPolling();
+  if (ws) { try { ws.close(); } catch(e){} ws = null; }
+  setConn(false, 'Stopped');
+  $('list').innerHTML = '<tr><td colspan="5" class="empty" role="alert">' + esc(text) + ' <a href="/app">Back to your queues</a></td></tr>';
+}
 function setConn(on, text){ $('conn').classList.toggle('off', !on); $('connText').textContent = text; }
 function connect(){
+  if (stopped) return;
   try { ws = new WebSocket((location.protocol==='https:'?'wss:':'ws:')+'//'+location.host+BASE+'/ws/staff'); }
   catch(e){ ws = null; startPolling(); return; }
   ws.onopen = () => { tries = 0; stopPolling(); setConn(true, 'Live'); };
   ws.onmessage = e => { try { const d = JSON.parse(e.data); if (d.type === 'state') render(d); } catch(_){} };
   ws.onclose = () => {
-    ws = null; setConn(false, 'Reconnecting…'); startPolling();
+    ws = null; if (stopped) return;
+    setConn(false, 'Reconnecting…'); startPolling();
     setTimeout(connect, Math.min(1000 * 2 ** tries++, 15000));
   };
 }
-async function poll(){ try { const r = await fetch(BASE+'/api/state', {cache:'no-store'}); render(await r.json()); } catch(e){} }
-function startPolling(){ if (!pollTimer) { poll(); pollTimer = setInterval(poll, 10000); } }
+async function poll(){
+  try {
+    const r = await fetch(BASE+'/api/state', {cache:'no-store'});
+    if (r.status === 401) { location.href = '/login?next=' + encodeURIComponent(location.pathname); return; }
+    if (r.status === 403) return stopWith("You're no longer on this queue's team.");
+    if (r.status === 404 || r.status === 410) return stopWith('This queue was deleted.');
+    render(await r.json());
+  } catch(e){}
+}
+function startPolling(){ if (!pollTimer && !stopped) { poll(); pollTimer = setInterval(poll, 10000); } }
 function stopPolling(){ clearInterval(pollTimer); pollTimer = null; }
 setInterval(() => { if (ws && ws.readyState === 1) ws.send('ping'); }, 30000);
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !ws) connect(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !ws && !stopped) connect(); });
 connect();
 
 async function act(a, id){

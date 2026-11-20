@@ -378,6 +378,7 @@ function applyView(v){
   if (v.status === 'done') return finish('Thank you!', 'Order collected. Enjoy!');
   if (v.status === 'reset') return finish('New day.', 'The queue was reset for a new day. Please join again.');
   if (v.status === 'gone') return finish('Removed.', 'Your ticket was removed from the queue.');
+  if (v.status === 'closed') return finish('Closed.', 'This queue was closed. Please ask the staff.');
 }
 
 function showWaiting(v){
@@ -445,7 +446,12 @@ function connect(){
   };
 }
 async function poll(){
-  try { const r = await fetch(BASE+'/api/status/'+ticket.id, {cache:'no-store'}); applyView(await r.json()); }
+  try {
+    const r = await fetch(BASE+'/api/status/'+ticket.id, {cache:'no-store'});
+    // The queue itself is gone (deleted by the shop): stop retrying.
+    if (r.status === 404 || r.status === 410) return applyView({ status: 'closed' });
+    applyView(await r.json());
+  }
   catch(e){ setLive(false); }
 }
 function startPolling(){ if (!pollTimer && !ended) { poll(); pollTimer = setInterval(poll, 10000); } }

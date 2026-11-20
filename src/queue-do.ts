@@ -3,7 +3,7 @@
 // and runs the automatic daily reset with a Durable Object alarm.
 
 import { DurableObject } from "cloudflare:workers";
-import { QueueCore, isAction, MAX_TICKETS_PER_DAY, pushPayload } from "./queue-core.ts";
+import { QueueCore, isAction, MAX_TICKETS_PER_DAY, pushPayload, queueGate } from "./queue-core.ts";
 import type { Meta, Ticket } from "./queue-core.ts";
 import { sendPush } from "./push.ts";
 import type { VapidKeys } from "./push.ts";
@@ -31,6 +31,7 @@ export class QueueDO extends DurableObject<Env> {
   core: QueueCore;
   lastSeen = new Map<string, number>(); // ticket id -> last poll time (memory only)
   deleted = false; // set by /internal/wipe: the queue was deleted and its storage cleared
+  initialized: boolean; // false until /internal/init has saved this queue's state
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -40,10 +41,12 @@ export class QueueDO extends DurableObject<Env> {
     const tickets = this.sql.exec<{ data: string }>("SELECT data FROM tickets").toArray().map((r) => JSON.parse(r.data) as Ticket);
     const metaRow = this.sql.exec<{ v: string }>("SELECT v FROM meta WHERE k = 'state'").toArray()[0];
     this.core = new QueueCore({ tickets, meta: metaRow ? (JSON.parse(metaRow.v) as Meta) : {} });
+    this.initialized = !!metaRow;
 
     // Phones send "ping" every 30s to keep the connection alive; answered without waking this object.
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair("ping", "pong"));
     ctx.blockConcurrencyWhile(async () => {
+      if (!this.initialized) { await ctx.storage.deleteAlarm(); return; }
       const now = Date.now();
       this.#applyReset(this.core.autoResetIfDue(now));
       this.#applyExpiry(this.core.expireClaims(now));
@@ -53,6 +56,7 @@ export class QueueDO extends DurableObject<Env> {
 
   // ---------- storage ----------
   #save(): void {
+    if (this.deleted) return; // e.g. a push that finishes after the queue was deleted
     const c = this.core.takeChanges();
     if (c.clearAll) this.sql.exec("DELETE FROM tickets");
     for (const id of c.del) this.sql.exec("DELETE FROM tickets WHERE id = ?", id);
@@ -142,11 +146,11 @@ export class QueueDO extends DurableObject<Env> {
 
   // ---------- requests ----------
   async fetch(request: Request): Promise<Response> {
-    if (this.deleted) return new Response("This queue was deleted", { status: 410 });
-    const internal = new URL(request.url).pathname;
-    // Called only by the Worker (it never forwards /internal/* from the outside).
-    if (internal === "/internal/init" && request.method === "POST") return this.#init(request);
-    if (internal === "/internal/wipe" && request.method === "POST") return this.#wipe();
+    // /internal/* is called only by the Worker (it never forwards /internal/* from the outside).
+    const gate = queueGate({ initialized: this.initialized, deleted: this.deleted }, new URL(request.url).pathname);
+    if (gate === "gone") return new Response("This queue doesn't exist", { status: 410 });
+    if (gate === "init") return request.method === "POST" ? this.#init(request) : new Response("Not found", { status: 404 });
+    if (gate === "wipe") return request.method === "POST" ? this.#wipe() : new Response("Not found", { status: 404 });
 
     const now = Date.now();
     const cleared = this.core.autoResetIfDue(now);
@@ -250,6 +254,7 @@ export class QueueDO extends DurableObject<Env> {
   }
 
   async alarm(): Promise<void> {
+    if (!this.initialized || this.deleted) { await this.ctx.storage.deleteAlarm(); return; }
     const now = Date.now();
     const cleared = this.core.autoResetIfDue(now);
     if (cleared) this.#applyReset(cleared);
@@ -267,7 +272,9 @@ export class QueueDO extends DurableObject<Env> {
       const r = this.core.setSettings({ queueName: body.queueName }, Date.now());
       if (!r.ok) return json(r, 400);
     }
+    this.core.touchMeta(); // always save state, so this object counts as set up from now on
     this.#save();
+    this.initialized = true;
     await this.#syncAlarm();
     return json({ ok: true });
   }
@@ -275,10 +282,11 @@ export class QueueDO extends DurableObject<Env> {
   /** The queue was deleted: tell connected phones, close every connection, and erase all stored data. */
   async #wipe(): Promise<Response> {
     for (const ws of this.ctx.getWebSockets()) {
-      if (this.ctx.getTags(ws).some((t) => t.startsWith("t:"))) this.#send(ws, { type: "status", status: "gone", place: null, waitMin: null, claimLeftMs: null });
+      if (this.ctx.getTags(ws).some((t) => t.startsWith("t:"))) this.#send(ws, { type: "status", status: "closed", place: null, waitMin: null, claimLeftMs: null });
       try { ws.close(1000, "deleted"); } catch {}
     }
     this.deleted = true;
+    this.core = new QueueCore(); // forget tickets in memory too (names, push addresses)
     await this.ctx.storage.deleteAlarm();
     await this.ctx.storage.deleteAll();
     return json({ ok: true });

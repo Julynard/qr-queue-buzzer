@@ -126,6 +126,19 @@ export function pushPayload(t: Ticket, base: string, queueName: string): { title
   };
 }
 
+/**
+ * What a queue's Durable Object may do with a request. An object with no saved state was never set up
+ * (or was wiped and then restarted): it serves nothing, so it can't schedule a daily-reset alarm for a
+ * queue that no longer exists. A deleted queue is never set up again.
+ */
+export function queueGate(state: { initialized: boolean; deleted: boolean }, path: string): "serve" | "init" | "wipe" | "gone" {
+  if (state.deleted) return "gone";
+  if (path === "/internal/init") return "init";
+  if (!state.initialized) return "gone";
+  if (path === "/internal/wipe") return "wipe";
+  return "serve";
+}
+
 export class QueueCore {
   tickets: Map<string, Ticket>;
   meta: Meta;

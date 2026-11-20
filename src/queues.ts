@@ -17,8 +17,9 @@ export async function findQueueBySlug(db: D1Database, slug: string, now = Date.n
 
 export function forgetSlug(slug: string): void { cache.delete(slug); }
 
+/** In use, or used before by a deleted queue (addresses are never reused). */
 export async function slugTaken(db: D1Database, slug: string): Promise<boolean> {
-  return !!(await db.prepare("select 1 as x from queue where slug = ?").bind(slug).first());
+  return !!(await db.prepare("select 1 as x from queue where slug = ?1 union all select 1 from deleted_slug where slug = ?1 limit 1").bind(slug).first());
 }
 
 export async function isMember(db: D1Database, userId: string, workspaceId: string): Promise<boolean> {
@@ -46,7 +47,10 @@ export async function renameQueue(db: D1Database, id: string, name: string): Pro
   await db.prepare("update queue set name = ? where id = ?").bind(name, id).run();
 }
 
-export async function deleteQueueRow(db: D1Database, row: QueueRow): Promise<void> {
-  await db.prepare("delete from queue where id = ?").bind(row.id).run();
+export async function deleteQueueRow(db: D1Database, row: QueueRow, now = Date.now()): Promise<void> {
+  await db.batch([
+    db.prepare("insert or ignore into deleted_slug (slug, deleted_at) values (?, ?)").bind(row.slug, now),
+    db.prepare("delete from queue where id = ?").bind(row.id),
+  ]);
   forgetSlug(row.slug);
 }

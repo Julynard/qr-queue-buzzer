@@ -19,7 +19,7 @@ import { classifyQueuePath } from "./access.ts";
 import { findQueueBySlug, isMember, renameQueue } from "./queues.ts";
 import type { QueueRow } from "./queues.ts";
 import type { CustomerView, PublicTicket } from "./queue-core.ts";
-import { safeJson, fill, escHtml } from "./html.ts";
+import { safeJson, fill, escHtml, safeNext } from "./html.ts";
 
 interface QueueInfo { queueName: string; waiting: number; waitMin: number | null; nextNum: number }
 
@@ -49,9 +49,9 @@ export default {
       const auth = createAuth(env, request);
       const session = await getSession(auth, request);
       if (p === "/login") {
-        const next = url.searchParams.get("next") ?? "";
-        if (session) return redirect(/^\/(?!\/)/.test(next) ? next : "/app");
-        return html(fill(LOGIN_HTML, { METHODS: safeJson(signInMethods(env)), TURNSTILE_SITE: env.TURNSTILE_SITE_KEY }));
+        const next = safeNext(url.searchParams.get("next"), url.origin);
+        if (session) return redirect(next);
+        return html(fill(LOGIN_HTML, { METHODS: safeJson(signInMethods(env)), TURNSTILE_SITE: env.TURNSTILE_SITE_KEY, NEXT: safeJson(next) }));
       }
       if (p === "/app") return session ? html(APP_HTML) : redirect("/login?next=/app");
       return handleAppApi(request, env, auth, session);
@@ -94,12 +94,17 @@ function manifest(startUrl: string, scope: string): string {
 async function queueRoute(request: Request, env: Env, row: QueueRow, forward: string, origin: string): Promise<Response> {
   const stub = env.QUEUE.get(env.QUEUE.idFromName(row.id));
   const base = `/q/${row.slug}`;
-  const internal = (path: string) => stub.fetch(new Request("https://queue" + path));
+  // Reads the queue's own data; null when the queue is gone (deleted moments ago, still in the slug cache).
+  const internal = async <T>(path: string): Promise<T | null> => {
+    const r = await stub.fetch(new Request("https://queue" + path));
+    return r.ok ? ((await r.json()) as T) : null;
+  };
   let m: RegExpMatchArray | null;
 
   if (forward === "/staff") return html(fill(STAFF_HTML, { JOIN: origin + base, BASE: base }));
   if (forward === "/qr") {
-    const info = (await (await internal("/api/info")).json()) as QueueInfo;
+    const info = await internal<QueueInfo>("/api/info");
+    if (!info) return notFound();
     return html(fill(POSTER_HTML, { JOIN: origin + base, QUEUE_NAME: escHtml(info.queueName) }));
   }
   if ((m = forward.match(/^\/manifest\/([a-f0-9]{12})\.json$/))) {
@@ -108,17 +113,19 @@ async function queueRoute(request: Request, env: Env, row: QueueRow, forward: st
   if (forward === "/join" || (m = forward.match(/^\/t\/([a-f0-9]{12})$/))) {
     let ticket: PublicTicket | null = null;
     let view: CustomerView | null = null;
-    let info: QueueInfo;
+    let info: QueueInfo | null;
     let notice = "";
     if (forward !== "/join" && m) {
-      const d = (await (await internal(`/api/ticket/${m[1]}`)).json()) as { ticket: PublicTicket | null; status: string; view: CustomerView; info: QueueInfo };
+      const d = await internal<{ ticket: PublicTicket | null; status: string; view: CustomerView; info: QueueInfo }>(`/api/ticket/${m[1]}`);
+      if (!d) return notFound();
       ticket = d.ticket;
       view = d.ticket ? d.view : null;
       info = d.info;
       if (d.status === "reset") notice = "The queue was reset for a new day. Please join again.";
       else if (d.status === "gone") notice = "That ticket is no longer in the queue. You can join again.";
     } else {
-      info = (await (await internal("/api/info")).json()) as QueueInfo;
+      info = await internal<QueueInfo>("/api/info");
+      if (!info) return notFound();
     }
     return html(fill(CUSTOMER_HTML, {
       TICKET: safeJson(ticket), VIEW: safeJson(view), QUEUE: safeJson(info), NOTICE: safeJson(notice), BASE: safeJson(base),
@@ -130,6 +137,7 @@ async function queueRoute(request: Request, env: Env, row: QueueRow, forward: st
   const target = new URL(request.url);
   target.pathname = forward;
   const res = await stub.fetch(new Request(target.toString(), request));
+  if (res.status === 410) return isPage(forward) ? notFound() : json({ error: "This queue doesn't exist" }, 404);
   // Keep the dashboard's queue name in step with the name customers see.
   if (forward === "/api/settings" && res.ok) {
     const d = (await res.clone().json()) as { settings?: { queueName?: string } };

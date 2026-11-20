@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { QueueCore, MAX_TICKETS_PER_DAY, pushPayload } from "../src/queue-core.ts";
+import { QueueCore, MAX_TICKETS_PER_DAY, pushPayload, queueGate } from "../src/queue-core.ts";
 import type { Settings, Ticket } from "../src/queue-core.ts";
 
 let counter = 0;
@@ -383,4 +383,15 @@ test("push payload links to the ticket under its queue's address", () => {
   const nameless = join(q).ticket;
   assert.equal(pushPayload(nameless, "", "").body, "Come to the counter.");
   assert.equal(pushPayload(nameless, "", "").url, `/t/${nameless.id}`);
+});
+
+test("a queue object that was never set up, or was deleted, only accepts set-up", () => {
+  assert.equal(queueGate({ initialized: true, deleted: false }, "/api/join"), "serve");
+  assert.equal(queueGate({ initialized: false, deleted: false }, "/api/join"), "gone", "an empty object (e.g. after a wipe and restart) serves nothing");
+  assert.equal(queueGate({ initialized: false, deleted: false }, "/ws/staff"), "gone");
+  assert.equal(queueGate({ initialized: false, deleted: false }, "/internal/init"), "init");
+  assert.equal(queueGate({ initialized: true, deleted: false }, "/internal/init"), "init");
+  assert.equal(queueGate({ initialized: true, deleted: false }, "/internal/wipe"), "wipe");
+  assert.equal(queueGate({ initialized: true, deleted: true }, "/api/state"), "gone");
+  assert.equal(queueGate({ initialized: true, deleted: true }, "/internal/init"), "gone", "a deleted queue is never set up again");
 });

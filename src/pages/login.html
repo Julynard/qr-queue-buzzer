@@ -90,9 +90,8 @@ const METHODS = __METHODS__;
 const SITE_KEY = '__TURNSTILE_SITE__';
 const $ = id => document.getElementById(id);
 const show = (id, on) => $(id).classList.toggle('hide', !on);
-// Only same-site paths are allowed as "next" (no //other-site.com).
-const q = new URLSearchParams(location.search).get('next') || '/app';
-const NEXT = /^\/(?!\/)/.test(q) ? q : '/app';
+// Where to go after log-in: checked on the server (same-site paths only).
+const NEXT = __NEXT__;
 const post = (path, body, headers = {}) => fetch('/api/auth' + path, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) });
 
 show('googleBtn', METHODS.google);

@@ -222,10 +222,16 @@ await phone.opened;
 await phone.next(isStatus());
 check("another shop's owner can't delete the queue", (await site("/api/app/queues/" + queueId, cookieB, { method: "DELETE" })).status === 403);
 check("owner deletes the queue", (await site("/api/app/queues/" + queueId, cookieA, { method: "DELETE" })).ok);
-check("connected phones are told the ticket is gone", (await phone.next<StatusMsg>(isStatus("gone"))).status === "gone");
+check("connected phones are told the queue was closed", (await phone.next<StatusMsg>(isStatus("closed"))).status === "closed");
 // (The page closes its own connection on "gone"; a server-side close takes ~10 s to finish under wrangler dev.)
 phone.close();
 check("deleted queue's address -> 404", (await site(Q)).status === 404);
+check("deleted queue's API -> 404 (phones stop retrying)", (await site(Q + "/api/status/" + last.id)).status === 404);
+// Printed QR codes point at the address forever, so a deleted queue's address is never given to someone else.
+const cookieC = await devLogin(`smoke-c-${run}@example.com`, B);
+const onboardC = await (await site("/api/app/onboard", cookieC, { method: "POST", body: JSON.stringify({ businessName: `Smoke Shop ${run}` }) })).json() as { slug: string };
+check("a deleted queue's address is never reused", !!onboardC.slug && `/q/${onboardC.slug}` !== Q, JSON.stringify(onboardC));
+await site("/api/app/account", cookieC, { method: "DELETE", body: JSON.stringify({ confirm: "DELETE" }) });
 check("account delete needs DELETE typed", (await site("/api/app/account", cookieA, { method: "DELETE", body: JSON.stringify({ confirm: "yes" }) })).status === 400);
 for (const [who, c] of [["A", cookieA], ["B", cookieB]] as const) {
   check(`account ${who} deleted`, (await site("/api/app/account", c, { method: "DELETE", body: JSON.stringify({ confirm: "DELETE" }) })).ok);

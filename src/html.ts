@@ -9,3 +9,16 @@ export const safeJson = (v: unknown): string => JSON.stringify(v).replace(/</g, 
 export const fill = (page: string, vals: Record<string, string>): string =>
   page.replace(/__([A-Z_]+?)__/g, (all, k: string) => (Object.hasOwn(vals, k) ? vals[k]! : all));
 export const escHtml = (s: string): string => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+
+/**
+ * Where to go after log-in: a path on this site only. Anything that could leave the site
+ * ("//x", backslashes, tabs or other control characters, encoded or not, another origin) gives "/app".
+ */
+export function safeNext(next: string | null | undefined, origin: string): string {
+  if (!next || !next.startsWith("/")) return "/app";
+  let decoded: string;
+  try { decoded = decodeURIComponent(next); } catch { return "/app"; }
+  if (/[\\\u0000-\u001f\u007f]/.test(next + decoded) || decoded.startsWith("//")) return "/app";
+  const u = new URL(next, origin);
+  return u.origin === origin ? u.pathname + u.search + u.hash : "/app";
+}
