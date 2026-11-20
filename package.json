@@ -10,7 +10,7 @@
     "deploy": "wrangler deploy",
     "test": "node --test \"test/**/*.test.ts\"",
     "vapid": "node scripts/gen-vapid.ts",
-    "check": "wrangler types --env-file /dev/null --check && tsc --noEmit",
+    "check": "wrangler types --env-file /dev/null --check && tsc --noEmit && tsc --noEmit -p tsconfig.node.json",
     "types": "wrangler types --env-file /dev/null",
     "smoke": "node scripts/smoke.ts"
   },

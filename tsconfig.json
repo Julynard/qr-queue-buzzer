@@ -1,4 +1,5 @@
 {
+  // Worker code: Cloudflare runtime types only, so Node-only globals (process, Buffer) fail the check.
   "compilerOptions": {
     "target": "ES2023",
     "lib": ["ES2023"],
@@ -10,7 +11,7 @@
     "verbatimModuleSyntax": true,
     "erasableSyntaxOnly": true,
     "skipLibCheck": true,
-    "types": ["node"]
+    "types": []
   },
-  "include": ["src", "test", "scripts", "worker-configuration.d.ts"]
+  "include": ["src", "worker-configuration.d.ts"]
 }
