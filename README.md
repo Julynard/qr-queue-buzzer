@@ -55,10 +55,14 @@ the time and time zone, turn the automatic reset off, or tap **Start new day now
 After changing `wrangler.jsonc`, run `npm run types` to refresh `worker-configuration.d.ts`.
 
 ## Testing on phones
-1. Scan the QR with your phone, enter a name (optional) and tap **Join queue**.
+1. Scan the QR with your phone, enter a name (optional) and tap **Take a number**.
 2. Tap **Allow** when it asks about notifications.
-3. Lock your phone, then tap **🔔 Buzz** on the staff page.
+3. Lock your phone, then tap **Notify** on the staff page.
 
 - Android (Chrome): the notification shows on the lock screen.
-- iPhone: tap Share → Add to Home Screen, open **Buzzer** from the home screen,
-  tap "Turn on buzzer" and allow notifications. Then lock-screen alerts work.
+- iPhone: tap Share → Add to Home Screen, open **Aqona** from the home screen,
+  tap "Turn on alerts" and allow notifications. Then lock-screen alerts work.
+
+## Claim time and No show
+After **Notify**, the customer has a few minutes (default 5, set under Settings → Claim time) to come to the
+counter. When the time runs out the ticket shows **No show**. Staff can still notify it again or mark it done.
