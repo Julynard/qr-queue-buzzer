@@ -3,6 +3,8 @@
   "name": "qr-queue-buzzer",
   "main": "src/index.ts",
   "compatibility_date": "2025-11-01",
+  // Better Auth needs Node.js APIs (crypto, AsyncLocalStorage).
+  "compatibility_flags": ["nodejs_compat"],
   // Keep the public https://qr-queue-buzzer.<account>.workers.dev address on after every deploy.
   // Preview addresses stay off: preview versions would share the live queue.
   "workers_dev": true,
@@ -15,6 +17,9 @@
   "durable_objects": {
     "bindings": [{ "name": "QUEUE", "class_name": "QueueDO" }]
   },
+  // Accounts, sessions, login codes, workspaces and the list of queues.
+  // database_id: replace with the id from `npx wrangler d1 create aqona` before the first remote deploy.
+  "d1_databases": [{ "binding": "DB", "database_name": "aqona", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }],
   // The free plan only allows SQLite-backed Durable Objects.
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["QueueDO"] }],
   "vars": {
@@ -22,6 +27,11 @@
     //   local: VAPID_PRIVATE_KEY in .dev.vars    deployed: npx wrangler secret put VAPID_PRIVATE_KEY
     "VAPID_PUBLIC_KEY": "BASvt5_OUiBwIjzKMhhAANAw79gwBrz3d5qLGcjou0DGSDNKyfdzAXRoyYQOWqdRZ8CgdI6sOnHnIF_Pwj3B6ZU",
     // Contact the push services can use. Change to a real mailto: or https: address before going live.
-    "VAPID_SUBJECT": "mailto:test@example.com"
+    "VAPID_SUBJECT": "mailto:test@example.com",
+    // How login codes are delivered: "off" (live site until aqona.app email is set up: Google sign-in only)
+    // or "console" (local dev only, set in .dev.vars: the code is printed in the wrangler dev terminal).
+    "EMAIL_MODE": "off",
+    // Cloudflare Turnstile site key (public). This one is Cloudflare's always-pass test key.
+    "TURNSTILE_SITE_KEY": "1x00000000000000000000AA"
   }
 }

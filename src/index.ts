@@ -7,6 +7,7 @@ import SW_JS from "./pages/sw.txt";
 import ICON_SVG from "./pages/icon.svg";
 
 export { QueueDO } from "./queue-do.ts";
+import { createAuth } from "./auth.ts";
 import type { CustomerView, PublicTicket } from "./queue-core.ts";
 
 interface QueueInfo { queueName: string; waiting: number; waitMin: number | null; nextNum: number }
@@ -35,6 +36,8 @@ export default {
     const base = (env.PUBLIC_URL || url.origin).replace(/\/$/, "");
     const queue = env.QUEUE.get(env.QUEUE.idFromName(SHOP));
     let m: RegExpMatchArray | null = null;
+
+    if (p.startsWith("/api/auth/")) return createAuth(env, request).handler(request);
 
     if (p === "/" || p === "/staff") return html(fill(STAFF_HTML, { JOIN: base + "/join" }));
     if (p === "/qr") {
