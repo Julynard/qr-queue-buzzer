@@ -3,6 +3,10 @@
   "name": "qr-queue-buzzer",
   "main": "src/index.js",
   "compatibility_date": "2025-11-01",
+  // Keep the public https://qr-queue-buzzer.<account>.workers.dev address on after every deploy.
+  // Preview addresses stay off: preview versions would share the live queue.
+  "workers_dev": true,
+  "preview_urls": false,
   "observability": { "enabled": true },
   // 127.0.0.1, not localhost: on WSL, Windows browsers can't reach "localhost" (IPv6) inside WSL.
   "dev": { "ip": "127.0.0.1", "port": 8787 },
