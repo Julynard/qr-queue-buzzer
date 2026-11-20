@@ -24,8 +24,18 @@
   .foot{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:8px}
   .print{position:fixed;top:16px;right:16px;font:600 15px Inter,system-ui,sans-serif;min-height:44px;padding:0 18px;border:2px solid #0A2A4A;border-radius:6px;background:var(--accent);color:#fff;cursor:pointer}
   @page{size:A4;margin:0}
-  @media print{html,body{background:#fff}.sheet{margin:0;box-shadow:none;width:210mm;height:297mm}.print{display:none}}
-  @media (max-width:793px){.sheet{zoom:.45;margin:12px auto}}
+  /* Print: one full A4 page, keeping the blue frame and step circles even with "Background graphics" off. */
+  @media print{
+    html,body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    /* Fill the printable area (A4 with no margins by default; still one page if the printer adds margins). */
+    .sheet{margin:0;box-shadow:none;width:auto;height:100vh;padding:5vh 6vw;gap:2.4vh;overflow:hidden;break-inside:avoid}
+    .print{display:none}
+    h1{font-size:min(64px,8vw)}
+    .qrframe{width:min(400px,38vh);height:min(400px,38vh)}
+    #qr img,#qr canvas{width:calc(min(400px,38vh) - 60px)!important;height:calc(min(400px,38vh) - 60px)!important}
+  }
+  /* Small screens only: show the whole sheet smaller. Never when printing (the page is narrower than 794px). */
+  @media screen and (max-width:793px){.sheet{zoom:.45;margin:12px auto}}
 </style></head><body>
 <button class="print" onclick="print()">Print</button>
 <div class="sheet">
