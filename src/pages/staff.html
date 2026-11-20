@@ -1,83 +1,306 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Buzzer – Staff</title>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Queue · Aqona</title>
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
-  body{font-family:system-ui,sans-serif;margin:0;background:#f4f4f5;color:#18181b}
-  header{background:#18181b;color:#fff;padding:16px 24px;display:flex;justify-content:space-between;align-items:center}
-  h1{margin:0;font-size:20px}
-  .wrap{display:grid;grid-template-columns:300px 1fr;gap:24px;padding:24px}
-  @media(max-width:800px){.wrap{grid-template-columns:1fr}}
-  .side{display:flex;flex-direction:column;gap:24px}
-  .card{background:#fff;border-radius:14px;padding:20px;box-shadow:0 1px 3px #0001}
-  button,a.btn{font:inherit;border:0;border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:600;text-decoration:none;display:inline-block}
-  #qr{display:flex;justify-content:center;margin:10px 0}
-  .small{font-size:12px;color:#71717a;text-align:center;word-break:break-all}
-  .warn{background:#fef3c7;color:#92400e;font-size:13px;padding:10px;border-radius:10px;margin-top:12px;text-align:left}
-  table{width:100%;border-collapse:collapse}
-  td,th{padding:12px 8px;border-bottom:1px solid #e4e4e7;text-align:left}
-  th{font-size:12px;color:#71717a;text-transform:uppercase}
-  .num{font-size:22px;font-weight:800}
-  .name{font-weight:600}.id{font-size:11px;color:#a1a1aa;font-family:monospace}
-  .buzz{background:#dc2626;color:#fff}.done{background:#e4e4e7}.rm{background:none;color:#a1a1aa}
-  .pill{font-size:12px;padding:3px 8px;border-radius:99px;font-weight:600}
-  .waiting{background:#fef3c7;color:#92400e}.buzzing{background:#fee2e2;color:#991b1b}
-  .coming{background:#dbeafe;color:#1e40af}.done-p{background:#dcfce7;color:#166534}
-  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
-  .empty{color:#a1a1aa;text-align:center;padding:30px}
-  tr.isdone{opacity:.45}
-  .reset label{display:flex;align-items:center;gap:8px;margin:10px 0;font-size:14px}
-  .reset input[type=time],.reset input[type=text]{font:inherit;padding:6px 8px;border:1px solid #d4d4d8;border-radius:8px}
-  .reset input[type=text]{width:100%;box-sizing:border-box}
-  .reset .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-  .save{background:#2563eb;color:#fff}.newday{background:#18181b;color:#fff}
-  .note{font-size:12px;color:#71717a;margin-top:8px;min-height:16px}
-  #conn{font-size:12px;opacity:.7;margin-left:12px}
+  :root{--accent:#0B6FB8;--paper:#CFE4F5;--ink:#0A2A4A;--soft:#33506E;--mute:#6B7280;--ground:#F6F7F9;--line:#E3E6EA;--hi:#FFE58A}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:Inter,system-ui,sans-serif}
+  a{color:var(--accent)}a:hover{color:#095A96}
+  .hide{display:none!important}
+  .anton{font-family:Anton,Impact,sans-serif;font-weight:400}
+  .brand{font-family:'Space Grotesk',Inter,sans-serif;font-weight:700;letter-spacing:-.03em}.brand b{color:var(--accent);font-weight:700}
+  button{font:inherit;cursor:pointer}
+  button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .app{min-height:100vh;display:flex;flex-wrap:wrap;align-items:stretch}
+
+  /* sidebar */
+  nav{flex:1 1 240px;max-width:280px;background:#fff;border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:18px}
+  .navtop{padding:0 8px;display:flex;flex-direction:column;gap:14px}
+  .queuebox{min-height:52px;padding:8px 12px;border:2px solid var(--ink);border-radius:6px;background:var(--paper);display:flex;flex-direction:column;justify-content:center}
+  .queuebox b{font-size:15px}.queuebox span{font-size:12px}
+  .groups{display:flex;flex-direction:column;gap:18px}
+  .group{display:flex;flex-direction:column;gap:2px}
+  .gtitle{padding:0 10px 6px;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+  .item{font-size:15px;font-weight:600;min-height:44px;padding:0 10px;border:0;border-radius:8px;background:transparent;color:var(--ink);display:flex;align-items:center;gap:10px;text-align:left}
+  .item .bar{width:4px;height:20px;border-radius:2px;background:transparent}
+  .item .lbl{flex:1}
+  .item[aria-current=page]{background:var(--paper);font-weight:800}
+  .item[aria-current=page] .bar{background:var(--ink)}
+  .count{font-size:12px;font-weight:800;padding:2px 8px;border-radius:999px;background:var(--hi);color:var(--ink)}
+  .navfoot{margin-top:auto;display:flex;flex-direction:column;gap:10px;padding:0 4px}
+  .plan{border:2px dashed #9AA6B2;border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px}
+  .plan .t{font-size:13px;font-weight:800}.plan .u{font-size:12px;color:var(--soft)}
+
+  /* main */
+  main{flex:999 1 560px;min-width:0;padding:28px 32px;display:flex;flex-direction:column;gap:20px}
+  h1{margin:0;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:48px;line-height:1}
+  h2{margin:0;font-size:18px;font-weight:800}
+  .card{background:#fff;border:2px solid var(--ink);border-radius:8px}
+  .titlerow{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px}
+  .sub{margin-top:6px;font-size:14px;color:var(--soft)}.sub b{color:var(--ink)}
+  .conn{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#166534}
+  .conn .dot{width:8px;height:8px;border-radius:50%;background:#16A34A}
+  .conn.off{color:var(--mute)}.conn.off .dot{background:#CBD0D6}
+  .btn{font-weight:800;min-height:48px;padding:0 18px;border:2px solid var(--ink);border-radius:6px;background:#fff;color:var(--ink);display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .btn:hover{color:var(--ink)}
+  .btn.acc{background:var(--accent);color:#fff}
+  .btn.ink{background:var(--ink);color:#fff}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .muted{font-size:13px;color:var(--mute)}
+  .msg{font-size:14px;font-weight:700;min-height:20px}
+
+  /* queue table */
+  .tablewrap{overflow-x:auto}
+  table{width:100%;min-width:680px;border-collapse:collapse;font-size:15px}
+  th{padding:12px 8px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);text-align:left}
+  th:first-child,td:first-child{padding-left:20px}
+  th:last-child,td:last-child{padding-right:20px;text-align:right}
+  td{padding:12px 8px;border-top:1px dashed #CBD0D6;vertical-align:middle}
+  td.num{font-family:Anton,Impact,sans-serif;font-size:30px}
+  tr.closed{opacity:.5}tr.closed td.num{color:var(--mute)}
+  .small{font-size:12px;color:var(--mute)}
+  .phone{display:flex;align-items:center;gap:6px}
+  .phone .dot{width:8px;height:8px;border-radius:50%}
+  .pill{font-size:13px;font-weight:700;padding:4px 12px;border-radius:999px;white-space:nowrap}
+  .act{font-size:14px;font-weight:700;min-height:44px;padding:0 16px;border:2px solid var(--ink);border-radius:6px;background:#fff;color:var(--ink);display:inline-flex;align-items:center;gap:8px;vertical-align:middle}
+  .act.notify{background:var(--accent);color:#fff}
+  .act+.act{margin-left:8px}
+  .rm{min-height:44px;min-width:44px;margin-left:6px;border:0;border-radius:6px;background:transparent;color:var(--mute);vertical-align:middle;display:inline-flex;align-items:center;justify-content:center}
+  .rm:hover{color:var(--ink);background:var(--ground)}
+  td.empty{text-align:center!important;color:var(--mute);padding:40px 20px}
+
+  /* QR */
+  .qrcard{padding:28px;display:flex;flex-wrap:wrap;gap:32px;align-items:center}
+  #qr{width:240px;height:240px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:2px solid var(--line);padding:8px}
+  #qr img,#qr canvas{width:100%!important;height:auto!important}
+  .warn{background:var(--hi);border:2px solid var(--ink);border-radius:6px;padding:10px 12px;font-size:13px;font-weight:600}
+
+  /* settings */
+  .sec{padding:22px 24px;display:flex;flex-direction:column;gap:10px}
+  .sec+.sec{border-top:2px dashed var(--ink)}
+  .field{font:inherit;font-size:16px;color:var(--ink);height:48px;padding:0 12px;border:2px solid var(--ink);border-radius:6px;background:#fff}
+  .flabel{font-size:14px;font-weight:700}
+  .check{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:15px;min-height:44px}
+  .check input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
+  .check .field{height:44px;font-size:15px}
+
+  /* locked / coming soon */
+  .locked{background:var(--paper);padding:32px;max-width:820px;display:flex;flex-direction:column;gap:14px}
+  .locked .head{font-family:Anton,Impact,sans-serif;font-size:34px;line-height:1.05}
+  .locked .body{font-size:16px;line-height:1.55;max-width:560px}
+  .tag{font-size:13px;font-weight:800;padding:4px 12px;border-radius:999px;background:var(--ink);color:#fff}
+
+  @media (max-width:760px){
+    nav{max-width:none;min-width:0;width:100%;flex-basis:100%;border-right:0;border-bottom:1px solid var(--line);padding:14px;gap:10px}
+    .navtop{flex-direction:row;align-items:center;gap:12px;padding:0 4px}
+    .queuebox{flex:1;min-width:0;min-height:44px;padding:4px 10px}
+    .queuebox b,.queuebox span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .groups{flex-direction:row;gap:4px;overflow-x:auto;padding-bottom:4px}
+    .group{flex-direction:row;gap:4px}
+    .gtitle,.navfoot{display:none}
+    .item{white-space:nowrap}
+    main{padding:20px 16px}
+    h1{font-size:40px}
+  }
 </style></head><body>
-<header><h1>🔔 Queue Buzzer — Staff</h1><span style="font-size:14px"><span id="count" style="opacity:.8"></span><span id="conn">Connecting…</span></span></header>
-<div class="wrap">
-  <div class="side">
-    <div class="card" style="text-align:center">
-      <b>Customer QR</b>
-      <div id="qr"></div>
-      <div class="small">__JOIN__</div>
-      <p><a class="btn" style="background:#2563eb;color:#fff" href="/qr" target="_blank">🖨 Open printable QR</a></p>
-      <div class="warn" id="httpWarn" style="display:none">⚠️ Not on HTTPS: lock-screen alerts and screen-awake are off.</div>
+<div class="app">
+  <nav aria-label="Main">
+    <div class="navtop">
+      <span class="brand" style="font-size:26px"><b>aqo</b>na</span>
+      <div class="queuebox"><b id="qShop">Your queue</b><span id="qCounter"></span></div>
     </div>
-    <div class="card reset">
-      <b>Daily reset</b>
-      <div class="note" style="margin-top:4px">A new day clears every ticket and numbering starts again at #1.</div>
-      <label><input type="checkbox" id="autoReset"> Reset automatically every day at <input type="time" id="resetTime" required></label>
-      <label style="display:block">Time zone<br><input type="text" id="timeZone" placeholder="Asia/Manila" autocomplete="off"></label>
-      <div class="note" id="nextReset"></div>
-      <div class="row">
-        <button class="save" onclick="saveSettings()">Save</button>
-        <button class="newday" onclick="startNewDay()">Start new day now</button>
+    <div class="groups" id="groups"></div>
+    <div class="navfoot">
+      <div class="plan">
+        <div class="t">Free plan</div>
+        <div class="u" id="usage"></div>
+        <button class="btn ink" style="min-height:40px;font-size:13px;border-radius:4px;justify-content:center" onclick="go('plan')">See Plus</button>
       </div>
-      <div class="note" id="resetMsg"></div>
     </div>
-  </div>
-  <div class="card">
-    <table><thead><tr><th>#</th><th>Customer</th><th>Phone</th><th>Status</th><th></th></tr></thead>
-    <tbody id="list"><tr><td colspan="5" class="empty">Waiting for customers to scan…</td></tr></tbody></table>
-  </div>
+  </nav>
+
+  <main>
+    <!-- Queue -->
+    <section data-tab="queue">
+      <div class="titlerow">
+        <div><h1>Queue</h1><div class="sub" id="queueSub"></div></div>
+        <span class="conn off" id="conn"><span class="dot"></span><span id="connText">Connecting…</span></span>
+      </div>
+      <div class="card" style="overflow:hidden;margin-top:20px">
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>No.</th><th>Customer</th><th>Phone</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="list"><tr><td colspan="5" class="empty">Waiting for customers to scan…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- QR code -->
+    <section data-tab="qr" class="hide">
+      <h1>QR code</h1>
+      <div class="card qrcard" style="margin-top:20px">
+        <div id="qr" role="img" aria-label="QR code that opens the join page"></div>
+        <div style="flex:1 1 280px;display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:14px;font-weight:700">Customers scan this to join</div>
+          <div style="font-size:18px;font-weight:800;word-break:break-all">__JOIN__</div>
+          <div style="font-size:14px;color:var(--soft);line-height:1.5">This address never changes, so printed posters keep working.</div>
+          <div class="row" style="margin-top:6px">
+            <a class="btn acc" href="/qr" target="_blank" rel="noopener">Print poster</a>
+            <button class="btn" onclick="downloadQr()">Download PNG</button>
+            <button class="btn" onclick="copyLink(this)">Copy link</button>
+          </div>
+          <div class="warn hide" id="httpWarn">Not on a secure (https) link: lock-screen alerts and keeping phone screens on are off.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Display screen (not built yet) -->
+    <section data-tab="display" class="hide">
+      <div class="row"><h1>Display screen</h1><span class="tag">Coming soon</span></div>
+      <div class="card locked" style="margin-top:20px">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0A2A4A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+        <div class="head">A "Now calling" screen for your counter.</div>
+        <div class="body">Optional. Open a link on a TV or tablet at the counter and it shows the numbers being called and the ones still preparing. Ticket numbers only, never names.</div>
+        <div class="row" style="margin-top:6px"><button class="btn" onclick="go('queue')">Back to queue</button></div>
+      </div>
+    </section>
+
+    <!-- Team (not built yet) -->
+    <section data-tab="team" class="hide">
+      <div class="row"><h1>Team</h1><span class="tag">Coming soon</span></div>
+      <div class="card locked" style="margin-top:20px">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0A2A4A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <div class="head">Invite your staff by email.</div>
+        <div class="body">Staff will sign in to run the queue; only the owner changes settings. This comes with owner accounts. Until then, anyone with this page's link can run the queue.</div>
+        <div class="row" style="margin-top:6px"><button class="btn" onclick="go('queue')">Back to queue</button></div>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section data-tab="settings" class="hide">
+      <h1>Settings</h1>
+      <form class="card" style="max-width:820px;margin-top:20px" onsubmit="saveSettings(event)">
+        <div class="sec">
+          <h2>Queue</h2>
+          <label for="qname" class="flabel">Name customers see</label>
+          <input id="qname" class="field" maxlength="60" placeholder="Ana's Milk Tea · Counter 1" style="max-width:420px">
+          <div class="muted">Shown on the customer ticket and the poster. Put " · " before a counter name to show it on the right. The join address stays the same, so printed QR codes keep working.</div>
+        </div>
+        <div class="sec" style="gap:12px">
+          <h2>Daily reset</h2>
+          <label class="check"><input type="checkbox" id="autoReset">Start a new day automatically at <input type="time" id="resetTime" class="field" required></label>
+          <label for="timeZone" class="flabel">Time zone</label>
+          <input id="timeZone" class="field" placeholder="Asia/Manila" autocomplete="off" style="max-width:300px">
+          <div class="muted" id="nextReset"></div>
+          <div><button type="button" class="btn" style="min-height:46px;padding:0 16px" onclick="startNewDay()">Start new day now</button></div>
+        </div>
+        <div class="sec">
+          <h2>Claim time</h2>
+          <label style="font-size:15px;line-height:44px">Customers have <input type="number" id="claimMinutes" class="field" min="1" max="30" step="1" required style="width:72px;height:44px;font-size:15px;margin:0 6px"> minutes to come after you notify them. Then the ticket shows <b>No show</b>.</label>
+        </div>
+        <div class="sec" style="flex-direction:row;justify-content:flex-end;align-items:center;gap:14px;padding:16px 24px">
+          <span class="msg" id="settingsMsg" role="status"></span>
+          <button type="submit" class="btn acc" style="padding:0 22px">Save changes</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Plus (locked) -->
+    <section data-tab="locked" class="hide">
+      <div class="row"><h1 id="lockedTitle"></h1><span class="tag">Plus</span></div>
+      <div class="card locked" style="margin-top:20px">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0A2A4A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        <div class="head" id="lockedHead"></div>
+        <div class="body" id="lockedBody"></div>
+        <div class="row" style="margin-top:6px">
+          <button class="btn ink" onclick="document.getElementById('upgradeMsg').textContent='Paid plans are coming soon.'">Upgrade to Plus</button>
+          <button class="btn" onclick="go('queue')">Back to queue</button>
+          <span class="msg" id="upgradeMsg" role="status"></span>
+        </div>
+      </div>
+    </section>
+  </main>
 </div>
+
 <script>
-if (location.protocol !== 'https:') document.getElementById('httpWarn').style.display='block';
-new QRCode(document.getElementById('qr'),{text:'__JOIN__',width:220,height:220});
+const JOIN = '__JOIN__';
 const $ = id => document.getElementById(id);
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let state = null, settingsShown = false;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(3, '0');
+const LOCK = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="Locked, Plus plan"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+const BELL = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
+const X = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+const PILLS = {
+  waiting: { bg:'#FEF3C7', fg:'#92400E', label:'Waiting' },
+  buzzing: { bg:'#FEE4E2', fg:'#B42318', label:'Notified' },
+  coming:  { bg:'#DBEAFE', fg:'#1D4ED8', label:'On the way' },
+  done:    { bg:'#DCFCE7', fg:'#166534', label:'Done' },
+  noshow:  { bg:'#FFEDD5', fg:'#9A3412', label:'No show' },
+};
+const LOCKED = {
+  branding: ['Branding', 'Make every ticket yours.', 'Use your own colours and logo on the customer ticket, the QR poster and the display screen. Status colours stay fixed so customers are never confused.'],
+  reports:  ['Reports', 'See your busiest hours.', 'Average wait time, customers per day, no-show rate and busiest hours, so you know when to add staff.'],
+  log:      ['Activity log', 'Know who did what.', 'Every notify, done, removal and new day, with the staff member and the time. Useful when a customer says they were skipped.'],
+  plan:     ['Plus plan', 'Grow past the Free limits.', 'Unlimited tickets, more staff and queues, your own branding, reports and the activity log.'],
+};
+const GROUPS = [
+  ['Run the queue', [['queue','Queue'], ['qr','QR code'], ['display','Display screen']]],
+  ['Manage', [['team','Team'], ['settings','Settings']]],
+  ['Plus', [['branding','Branding',1], ['reports','Reports',1], ['log','Activity log',1]]],
+];
+let state = null, settingsShown = false, tab = 'queue';
+
+// ---------- sidebar + tabs (tab kept in the address, so a refresh stays put) ----------
+function renderNav(){
+  const open = state ? state.tickets.filter(t => t.status !== 'done' && t.status !== 'noshow').length : 0;
+  $('groups').innerHTML = GROUPS.map(([title, items]) =>
+    '<div class="group"><div class="gtitle">' + title + '</div>' + items.map(([key, label, locked]) =>
+      '<button class="item" onclick="go(\'' + key + '\')"' + (tab === key ? ' aria-current="page"' : '') + '>' +
+      '<span class="bar"></span><span class="lbl">' + label + '</span>' +
+      (locked ? LOCK : '') + (key === 'queue' ? '<span class="count">' + open + '</span>' : '') + '</button>').join('') + '</div>').join('');
+}
+function go(key){
+  tab = LOCKED[key] || ['queue','qr','display','team','settings'].includes(key) ? key : 'queue';
+  if (location.hash.slice(1) !== tab) history.replaceState(null, '', '#' + tab);
+  const lk = LOCKED[tab];
+  document.querySelectorAll('main > section').forEach(s => s.classList.toggle('hide', s.dataset.tab !== (lk ? 'locked' : tab)));
+  if (lk) { $('lockedTitle').textContent = lk[0]; $('lockedHead').textContent = lk[1]; $('lockedBody').textContent = lk[2]; $('upgradeMsg').textContent = ''; }
+  renderNav();
+}
+window.addEventListener('hashchange', () => go(location.hash.slice(1)));
+go(location.hash.slice(1));
+
+// ---------- QR ----------
+if (location.protocol !== 'https:') $('httpWarn').classList.remove('hide');
+new QRCode($('qr'), { text: JOIN, width: 512, height: 512, colorDark: '#0A2A4A', colorLight: '#FFFFFF' });
+function downloadQr(){
+  const c = $('qr').querySelector('canvas');
+  if (!c) return;
+  const a = document.createElement('a');
+  a.href = c.toDataURL('image/png'); a.download = 'queue-qr.png'; a.click();
+}
+async function copyLink(btn){
+  try { await navigator.clipboard.writeText(JOIN); btn.textContent = 'Copied'; }
+  catch(e) { prompt('Copy this link:', JOIN); }
+  setTimeout(() => { btn.textContent = 'Copy link'; }, 2000);
+}
 
 // ---------- live connection (WebSocket), with slow polling while it is down ----------
 let ws = null, tries = 0, pollTimer = null;
+function setConn(on, text){ $('conn').classList.toggle('off', !on); $('connText').textContent = text; }
 function connect(){
   try { ws = new WebSocket((location.protocol==='https:'?'wss:':'ws:')+'//'+location.host+'/ws/staff'); }
   catch(e){ ws = null; startPolling(); return; }
-  ws.onopen = () => { tries = 0; stopPolling(); $('conn').textContent = '● Live'; };
+  ws.onopen = () => { tries = 0; stopPolling(); setConn(true, 'Live'); };
   ws.onmessage = e => { try { const d = JSON.parse(e.data); if (d.type === 'state') render(d); } catch(_){} };
   ws.onclose = () => {
-    ws = null; $('conn').textContent = 'Reconnecting…'; startPolling();
+    ws = null; setConn(false, 'Reconnecting…'); startPolling();
     setTimeout(connect, Math.min(1000 * 2 ** tries++, 15000));
   };
 }
@@ -93,57 +316,79 @@ async function act(a, id){
   if (!ws || ws.readyState !== 1) poll();
 }
 
+const time12 = hhmm => { const [h, m] = hhmm.split(':').map(Number); return ((h % 12) || 12) + ':' + String(m).padStart(2, '0') + (h < 12 ? ' AM' : ' PM'); };
+const clock = ms => new Date(ms).toLocaleTimeString([], { hour:'numeric', minute:'2-digit' });
+
 function render(d){
   state = d;
   const rows = d.tickets || [];
-  $('count').textContent = rows.filter(t => t.status !== 'done').length + ' in queue';
+  const s = d.settings || {};
+  const open = rows.filter(t => t.status !== 'done' && t.status !== 'noshow').length;
+  $('queueSub').innerHTML = '<b>' + open + '</b> waiting or called · ' + (s.autoReset ? 'daily reset at ' + time12(s.resetTime) : 'automatic reset off');
+  $('usage').textContent = (d.ticketsToday ?? rows.length) + ' of ' + (d.maxTickets || 999) + ' tickets today';
+  const [shop, ...counter] = (s.queueName || '').split(' · ');
+  $('qShop').textContent = shop || 'Your queue';
+  $('qCounter').textContent = counter.join(' · ');
+  $('qCounter').classList.toggle('hide', !counter.length);
+  renderNav();
+
   const el = $('list');
   if (!rows.length) el.innerHTML = '<tr><td colspan="5" class="empty">Waiting for customers to scan…</td></tr>';
   else el.innerHTML = rows.map(t => {
-    const open = t.status !== 'done', q = "'" + t.id + "'";
-    return '<tr class="'+(open?'':'isdone')+'"><td class="num">#'+t.num+'</td>'+
-      '<td><div class="name">'+(t.name?esc(t.name):'<i style="color:#a1a1aa">No name</i>')+'</div><div class="id">ID '+t.id+'</div></td>'+
-      '<td><span class="dot" style="background:'+(t.online?'#22c55e':'#d4d4d8')+'"></span>'+(t.online?'Page open':'Page closed')+
-        '<div class="id">'+(t.push?'🔔 lock-screen alerts on':'no lock-screen alerts')+'</div></td>'+
-      '<td><span class="pill '+(t.status==='done'?'done-p':t.status)+'">'+t.status+'</span></td>'+
-      '<td style="text-align:right;white-space:nowrap">'+
-        (open?'<button class="buzz" onclick="act(\'buzz\','+q+')">🔔 Buzz</button> <button class="done" onclick="act(\'done\','+q+')">Done</button>':'')+
-        ' <button class="rm" title="Remove" onclick="act(\'remove\','+q+')">✕</button></td></tr>';
+    const p = PILLS[t.status] || PILLS.waiting, isOpen = t.status !== 'done', q = "'" + t.id + "'";
+    return '<tr class="' + (isOpen ? '' : 'closed') + '">' +
+      '<td class="num">' + pad(t.num) + '</td>' +
+      '<td><div style="font-weight:700">' + (t.name ? esc(t.name) : 'No name') + '</div><div class="small">Joined ' + clock(t.createdAt) + '</div></td>' +
+      '<td><div class="phone"><span class="dot" style="background:' + (t.online ? '#16A34A' : '#CBD0D6') + '"></span>' + (t.online ? 'Page open' : 'Page closed') + '</div>' +
+        '<div class="small">' + (t.push ? 'Lock-screen alerts on' : 'No lock-screen alerts') + '</div></td>' +
+      '<td><span class="pill" style="background:' + p.bg + ';color:' + p.fg + '">' + p.label + '</span></td>' +
+      '<td style="white-space:nowrap">' +
+        (isOpen ? '<button class="act notify" onclick="act(\'buzz\',' + q + ')">' + BELL + 'Notify</button><button class="act" onclick="act(\'done\',' + q + ')">Done</button>' : '') +
+        '<button class="rm" aria-label="Remove ticket ' + pad(t.num) + '" title="Remove" onclick="act(\'remove\',' + q + ')">' + X + '</button></td></tr>';
   }).join('');
   if (!settingsShown && d.settings) { showSettings(d.settings); settingsShown = true; }
   showNextReset(d);
 }
 
-// ---------- daily reset ----------
-function showSettings(s){ $('autoReset').checked = s.autoReset; $('resetTime').value = s.resetTime; $('timeZone').value = s.timeZone; }
+// ---------- settings ----------
+function showSettings(s){
+  $('qname').value = s.queueName || '';
+  $('autoReset').checked = s.autoReset; $('resetTime').value = s.resetTime; $('timeZone').value = s.timeZone;
+  $('claimMinutes').value = s.claimMinutes;
+}
 function showNextReset(d){
   const s = d.settings; if (!s) return;
   if (!s.autoReset || !d.nextResetAt) { $('nextReset').textContent = 'Automatic reset is off.'; return; }
   let when;
-  try { when = new Date(d.nextResetAt).toLocaleString('en-PH', {timeZone: s.timeZone, weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit'}); }
+  try { when = new Date(d.nextResetAt).toLocaleString('en-PH', {timeZone: s.timeZone, weekday:'short', day:'numeric', month:'short', hour:'numeric', minute:'2-digit'}); }
   catch(e){ when = new Date(d.nextResetAt).toLocaleString(); }
-  $('nextReset').textContent = 'Next automatic reset: ' + when + ' (' + s.timeZone + ')';
+  $('nextReset').textContent = 'Next reset: ' + when + ' (' + s.timeZone + '). Every ticket is cleared and numbers start again at 001.';
 }
-async function saveSettings(){
-  const body = { autoReset: $('autoReset').checked, resetTime: $('resetTime').value, timeZone: $('timeZone').value.trim() || 'Asia/Manila' };
-  $('resetMsg').textContent = 'Saving…';
+async function saveSettings(e){
+  e.preventDefault();
+  const body = {
+    queueName: $('qname').value, autoReset: $('autoReset').checked, resetTime: $('resetTime').value,
+    timeZone: $('timeZone').value.trim() || 'Asia/Manila', claimMinutes: Number($('claimMinutes').value),
+  };
+  $('settingsMsg').textContent = 'Saving…';
   try {
     const r = await fetch('/api/settings', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
     const d = await r.json();
-    if (!r.ok) { $('resetMsg').textContent = '⚠️ ' + (d.error || 'Could not save'); return; }
-    $('resetMsg').textContent = '✓ Saved';
-    showSettings(d.settings); if (state) { state.settings = d.settings; state.nextResetAt = d.nextResetAt; showNextReset(state); }
-  } catch(e) { $('resetMsg').textContent = '⚠️ Could not save. Check the connection.'; }
+    if (!r.ok) { $('settingsMsg').textContent = d.error || 'Could not save'; return; }
+    $('settingsMsg').textContent = 'Saved';
+    showSettings(d.settings);
+    if (state) { state.settings = d.settings; state.nextResetAt = d.nextResetAt; render(state); }
+  } catch(e) { $('settingsMsg').textContent = 'Could not save. Check the connection.'; }
 }
 async function startNewDay(){
   const rows = (state && state.tickets) || [];
-  const open = rows.filter(t => t.status !== 'done').length;
+  const open = rows.filter(t => t.status !== 'done' && t.status !== 'noshow').length;
   const msg = 'Start a new day now?\n\nThis clears all ' + rows.length + ' tickets' +
-    (open ? ' (' + open + ' still waiting — their phones will be told to join again)' : '') +
-    ' and numbering starts again at #1.';
+    (open ? ' (' + open + ' still waiting or called; their phones will be told to join again)' : '') +
+    ' and numbering starts again at 001.';
   if (!confirm(msg)) return;
-  try { await fetch('/api/reset', {method:'POST'}); $('resetMsg').textContent = '✓ New day started'; }
-  catch(e) { $('resetMsg').textContent = '⚠️ Could not reset. Check the connection.'; }
+  try { await fetch('/api/reset', {method:'POST'}); $('settingsMsg').textContent = 'New day started'; }
+  catch(e) { $('settingsMsg').textContent = 'Could not reset. Check the connection.'; }
   if (!ws || ws.readyState !== 1) poll();
 }
 </script></body></html>
