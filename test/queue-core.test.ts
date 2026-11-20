@@ -1,11 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { QueueCore, MAX_TICKETS_PER_DAY } from "../src/queue-core.ts";
-import type { Ticket } from "../src/queue-core.ts";
+import type { Settings, Ticket } from "../src/queue-core.ts";
 
 let counter = 0;
 const newId = () => (++counter).toString(16).padStart(12, "0");
 const NOW = Date.UTC(2026, 10, 20, 2, 0); // 2026-11-20 10:00 in Manila
+const MIN = 60_000;
 function join(q: QueueCore, body: { name?: unknown; key?: unknown } = {}): { ticket: Ticket; created: boolean } {
   const r = q.join(body, { now: NOW, newId });
   if ("error" in r) throw new Error("queue unexpectedly full");
@@ -82,15 +83,160 @@ test("ack only works while buzzing, and nothing re-opens a done ticket", () => {
   assert.equal(q.act("done", id).ok, false);
 });
 
-test("re-buzzing a buzzing ticket is allowed but changes nothing to save", () => {
+test("re-notifying a notified ticket restarts its claim timer and is saved", () => {
   const q = new QueueCore();
   const { id } = join(q).ticket;
-  q.act("buzz", id);
+  q.act("buzz", id, NOW);
   q.takeChanges();
-  const r = q.act("buzz", id);
+  const r = q.act("buzz", id, NOW + 60_000);
   assert.equal(r.ok, true);
-  assert.equal(r.changed, false);
-  assert.equal(q.takeChanges().put.length, 0);
+  assert.equal(r.changed, true);
+  assert.equal(q.tickets.get(id)?.claimBy, NOW + 60_000 + 5 * 60_000);
+  assert.equal(q.tickets.get(id)?.calledAt, NOW, "first call time is kept for the wait estimate");
+  assert.equal(q.takeChanges().put.length, 1);
+});
+
+test("notify starts a claim timer from the claim time setting (default 5 minutes)", () => {
+  const q = new QueueCore();
+  const { id } = join(q).ticket;
+  q.act("buzz", id, NOW);
+  assert.equal(q.tickets.get(id)?.claimBy, NOW + 5 * MIN);
+  q.setSettings({ claimMinutes: 2 }, NOW);
+  const b = join(q).ticket;
+  q.act("buzz", b.id, NOW);
+  assert.equal(q.tickets.get(b.id)?.claimBy, NOW + 2 * MIN);
+  assert.equal(q.tickets.get(id)?.claimBy, NOW + 5 * MIN, "changing the setting leaves running timers alone");
+});
+
+test("when the claim timer runs out a notified ticket becomes No show", () => {
+  const q = new QueueCore();
+  const a = join(q).ticket;
+  const b = join(q).ticket;
+  q.act("buzz", a.id, NOW);
+  assert.deepEqual(q.expireClaims(NOW + 5 * MIN - 1), []);
+  assert.equal(q.status(a.id), "buzzing");
+  q.takeChanges();
+  assert.deepEqual(q.expireClaims(NOW + 5 * MIN), [a.id]);
+  assert.equal(q.status(a.id), "noshow");
+  assert.equal(q.status(b.id), "waiting", "waiting tickets have no timer");
+  assert.equal(q.takeChanges().put.length, 1);
+  assert.deepEqual(q.expireClaims(NOW + 10 * MIN), [], "expires once");
+});
+
+test("'On the way' still becomes No show if the customer doesn't arrive in time", () => {
+  const q = new QueueCore();
+  const { id } = join(q).ticket;
+  q.act("buzz", id, NOW);
+  q.act("ack", id, NOW + MIN);
+  assert.deepEqual(q.expireClaims(NOW + 5 * MIN), [id]);
+  assert.equal(q.status(id), "noshow");
+});
+
+test("a No show can be notified again or marked done, but not acknowledged", () => {
+  const q = new QueueCore();
+  const { id } = join(q).ticket;
+  q.act("buzz", id, NOW);
+  q.expireClaims(NOW + 5 * MIN);
+  assert.equal(q.act("ack", id, NOW + 6 * MIN).ok, false);
+  assert.equal(q.act("buzz", id, NOW + 6 * MIN).ok, true);
+  assert.equal(q.status(id), "buzzing");
+  assert.equal(q.tickets.get(id)?.claimBy, NOW + 11 * MIN);
+  q.expireClaims(NOW + 11 * MIN);
+  assert.equal(q.act("done", id, NOW + 12 * MIN).ok, true);
+  assert.equal(q.status(id), "done");
+  assert.equal(q.tickets.get(id)?.claimBy, null);
+});
+
+test("next alarm is the earlier of the daily reset and the first claim deadline", () => {
+  const q = new QueueCore();
+  q.scheduleNextReset(NOW);
+  assert.equal(q.nextAlarmAt(), q.meta.nextResetAt);
+  const a = join(q).ticket;
+  const b = join(q).ticket;
+  q.act("buzz", b.id, NOW + MIN);
+  q.act("buzz", a.id, NOW + 2 * MIN);
+  assert.equal(q.nextAlarmAt(), NOW + 6 * MIN);
+  q.act("done", b.id, NOW + 3 * MIN);
+  assert.equal(q.nextAlarmAt(), NOW + 7 * MIN);
+  q.setSettings({ autoReset: false }, NOW);
+  q.act("done", a.id, NOW + 3 * MIN);
+  assert.equal(q.nextAlarmAt(), null);
+});
+
+test("place in line counts waiting tickets ahead; called tickets have no place", () => {
+  const q = new QueueCore();
+  const [a, b, c] = [join(q).ticket, join(q).ticket, join(q).ticket];
+  assert.equal(q.waitingCount(), 3);
+  assert.deepEqual([a, b, c].map((t) => q.place(t.id)), [1, 2, 3]);
+  q.act("buzz", b.id, NOW);
+  assert.equal(q.place(b.id), null);
+  assert.equal(q.place(c.id), 2, "staff serving out of order still moves everyone behind up");
+  assert.equal(q.waitingCount(), 2);
+  q.act("remove", a.id);
+  assert.equal(q.place(c.id), 1);
+});
+
+test("wait estimate needs 3 called tickets, then uses the typical time per ticket", () => {
+  const q = new QueueCore();
+  const t = Array.from({ length: 6 }, () => join(q).ticket); // all joined at NOW
+  assert.equal(q.waitMinutes(1), null);
+  q.act("buzz", t[0]!.id, NOW + 4 * MIN);
+  q.act("done", t[1]!.id, NOW + 6 * MIN); // served without a notify still counts
+  assert.equal(q.waitMinutes(1), null, "two samples are not enough");
+  q.act("buzz", t[2]!.id, NOW + 9 * MIN);
+  // time at the front of the line: 4, 2, 3 minutes -> typical (median) 3 minutes
+  assert.equal(q.waitMinutes(1), 3);
+  assert.equal(q.waitMinutes(3), 9);
+});
+
+test("wait estimate ignores idle time before a customer arrived", () => {
+  const q = new QueueCore();
+  for (let i = 0; i < 3; i++) {
+    // one customer an hour, each served 2 minutes after joining
+    const r = q.join({}, { now: NOW + i * 60 * MIN, newId });
+    if ("error" in r) throw new Error("full");
+    q.act("buzz", r.ticket.id, NOW + i * 60 * MIN + 2 * MIN);
+  }
+  assert.equal(q.waitMinutes(1), 2);
+});
+
+test("customer view: status, place, wait and claim time left", () => {
+  const q = new QueueCore();
+  const a = join(q).ticket;
+  const b = join(q).ticket;
+  assert.deepEqual(q.customerView(b.id, NOW), { status: "waiting", place: 2, waitMin: null, claimLeftMs: null });
+  q.act("buzz", a.id, NOW);
+  assert.deepEqual(q.customerView(a.id, NOW + MIN), { status: "buzzing", place: null, waitMin: null, claimLeftMs: 4 * MIN });
+  assert.deepEqual(q.customerView("ffffffffffff", NOW), { status: "gone", place: null, waitMin: null, claimLeftMs: null });
+});
+
+test("queue name and claim time settings are validated", () => {
+  const q = new QueueCore();
+  // (read through a function so TypeScript doesn't narrow the values between setSettings calls)
+  const settings = (): Settings => q.meta.settings;
+  assert.equal(settings().queueName, "");
+  assert.equal(settings().claimMinutes, 5);
+  assert.deepEqual(q.setSettings({ queueName: "  Ana's Milk Tea · Counter 1  ", claimMinutes: 10 }, NOW), { ok: true });
+  assert.equal(settings().queueName, "Ana's Milk Tea · Counter 1");
+  assert.equal(settings().claimMinutes, 10);
+  q.setSettings({ queueName: "x".repeat(100) }, NOW);
+  assert.equal(settings().queueName.length, 60);
+  assert.equal(q.setSettings({ queueName: 5 }, NOW).ok, false);
+  for (const bad of [0, 31, 2.5, "5"]) assert.equal(q.setSettings({ claimMinutes: bad }, NOW).ok, false);
+  assert.equal(settings().claimMinutes, 10);
+});
+
+test("a queue saved before these features loads with defaults", () => {
+  const legacy = { id: "0000000000aa", num: 1, name: "", status: "buzzing", key: null, createdAt: NOW, subs: [] };
+  const q = new QueueCore({
+    tickets: [legacy as unknown as Ticket],
+    meta: { nextNum: 2, settings: { autoReset: true, resetTime: "00:00", timeZone: "Asia/Manila" } as Settings },
+  });
+  assert.equal(q.meta.settings.claimMinutes, 5);
+  assert.equal(q.meta.settings.queueName, "");
+  assert.equal(q.tickets.get("0000000000aa")?.claimBy, null);
+  assert.deepEqual(q.expireClaims(NOW + 60 * MIN), [], "an old notified ticket without a timer never expires on its own");
+  assert.equal(q.nextAlarmAt(), null);
 });
 
 test("actions on unknown or removed tickets do nothing", () => {

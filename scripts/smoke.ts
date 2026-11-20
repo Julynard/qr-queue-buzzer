@@ -6,7 +6,7 @@
 interface TicketJson { id: string; num: number; name: string; status: string }
 interface StateJson { type: "state"; tickets: { id: string; num: number; online: boolean }[] }
 interface StatusJson { status: string }
-interface StatusMsg { type: "status"; status: string }
+interface StatusMsg { type: "status"; status: string; place: number | null; waitMin: number | null; claimLeftMs: number | null }
 type Msg = StateJson | StatusMsg;
 export {};
 
@@ -91,12 +91,20 @@ const first = await staff.next<StateJson>(isState);
 check("staff socket gets the list on connect", first.tickets.length === 21);
 const cust = new Socket("/ws/t/" + t1.id);
 await cust.opened;
-check("customer socket gets status on connect", (await cust.next<StatusMsg>(isStatus())).status === "waiting");
+const firstStatus = await cust.next<StatusMsg>(isStatus());
+check("customer socket gets status and place on connect", firstStatus.status === "waiting" && firstStatus.place === 1, JSON.stringify(firstStatus));
+const cust4 = new Socket("/ws/t/" + byNum(4).id);
+await cust4.opened;
+check("4th ticket is 4th in line", (await cust4.next<StatusMsg>(isStatus())).place === 4);
 await staff.next((m) => isState(m) && !!m.tickets.find((t) => t.id === t1.id)?.online);
 check("staff sees the customer's page as open", true);
 
 await post("/api/buzz/" + t1.id);
-check("buzz reaches the customer live", (await cust.next<StatusMsg>(isStatus("buzzing"))).status === "buzzing");
+const buzzed = await cust.next<StatusMsg>(isStatus("buzzing"));
+check("notify reaches the customer live with a 5-minute claim timer",
+  buzzed.claimLeftMs != null && buzzed.claimLeftMs > 4.9 * 60_000 && buzzed.claimLeftMs <= 5 * 60_000, JSON.stringify(buzzed));
+check("everyone behind moves up live", (await cust4.next<StatusMsg>((m) => isStatus("waiting")(m) && (m as StatusMsg).place === 3)).place === 3);
+cust4.close();
 await post("/api/done/" + t1.id);
 check("done reaches the customer live", (await cust.next<StatusMsg>(isStatus("done"))).status === "done");
 const lateAck = await postJson<{ ok: boolean; status: string }>("/api/ack/" + t1.id);
@@ -119,6 +127,20 @@ const dollar = await postJson<TicketJson>("/api/join", { name: "a$'b$&c" });
 const dollarPage = await pageText("/t/" + dollar.id);
 check("a name with $' or $& doesn't break the ticket page", parses(scripts(dollarPage)) && dollarPage.includes("a$'b$&c"));
 for (const p of ["/staff", "/qr", "/join", "/t/" + dollar.id]) check(`page scripts parse: ${p}`, parses(scripts(await pageText(p))));
+const sneaky = await postJson<TicketJson>("/api/join", { name: "__VIEW____VAPID__" });
+const sneakyPage = await pageText("/t/" + sneaky.id);
+check("a name that looks like a placeholder stays a name", parses(scripts(sneakyPage)) && sneakyPage.includes('"name":"__VIEW____VAPID__"') && !sneakyPage.includes("'__VAPID__'"));
+
+const evilQueue = "</script><b>x $' $& __NOTICE__ __JOIN__ · Counter";
+check("queue name saves", (await postJson<{ ok: boolean }>("/api/settings", { queueName: evilQueue })).ok === true);
+for (const p of ["/join", "/t/" + dollar.id]) {
+  const page = await pageText(p);
+  check(`queue name can't break out of the page script: ${p}`, !page.includes("</script><b>x") && parses(scripts(page)) && page.includes("$' $& __NOTICE__"));
+}
+const poster = await pageText("/qr");
+check("poster shows the queue name as text", poster.includes("&lt;/script&gt;&lt;b&gt;x $&#39; $&amp; __NOTICE__ __JOIN__") && parses(scripts(poster)));
+check("bad claim time refused", (await post("/api/settings", { claimMinutes: 0 })).status === 400);
+check("queue name cleared", (await postJson<{ ok: boolean }>("/api/settings", { queueName: "" })).ok === true);
 check("service worker parses", parses(await pageText("/sw.js")));
 
 const c3 = new Socket("/ws/t/" + t3.id);
