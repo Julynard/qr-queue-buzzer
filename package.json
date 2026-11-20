@@ -10,8 +10,9 @@
     "deploy": "wrangler deploy",
     "test": "node --test \"test/**/*.test.ts\"",
     "vapid": "node scripts/gen-vapid.ts",
-    "check": "wrangler types --check && tsc --noEmit",
-    "types": "wrangler types"
+    "check": "wrangler types --env-file /dev/null --check && tsc --noEmit",
+    "types": "wrangler types --env-file /dev/null",
+    "smoke": "node scripts/smoke.ts"
   },
   "license": "ISC",
   "devDependencies": {
