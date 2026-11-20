@@ -1,3 +1,5 @@
 node_modules/
 vapid.json
 *.log
+.dev.vars
+.wrangler/

@@ -1,0 +1,15 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Scan to join the queue</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  body{font-family:system-ui,sans-serif;text-align:center;padding:40px;color:#18181b}
+  h1{font-size:48px;margin:0 0 8px}p{font-size:22px;color:#52525b;margin:0 0 30px}
+  #qr{display:inline-block;padding:20px;border:4px solid #18181b;border-radius:20px}
+  .steps{font-size:20px;margin-top:30px;line-height:1.8}
+</style></head><body>
+<h1>📱 Scan to join the queue</h1>
+<p>We'll buzz your phone when your order is ready. No app, no sign-up.</p>
+<div id="qr"></div>
+<div class="steps">1. Scan &nbsp;•&nbsp; 2. Enter your name (optional) &nbsp;•&nbsp; 3. Allow notifications</div>
+<script>new QRCode(document.getElementById('qr'),{text:'__JOIN__',width:360,height:360});</script>
+</body></html>

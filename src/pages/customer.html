@@ -1,0 +1,233 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Queue</title>
+<link rel="manifest" id="mf" href="__MANIFEST__">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Buzzer">
+<meta name="theme-color" content="#18181b">
+<style>
+  html,body{margin:0;min-height:100%;font-family:system-ui,sans-serif}
+  body{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:#18181b;color:#fff;padding:30px 20px 50px;box-sizing:border-box;min-height:100vh}
+  .label{font-size:15px;opacity:.7;letter-spacing:2px;text-transform:uppercase}
+  .num{font-size:110px;font-weight:900;line-height:1;margin:8px 0 6px}
+  .who{font-size:22px;margin-bottom:14px;opacity:.9}
+  #msg{font-size:19px;min-height:30px;max-width:360px}
+  input{font:inherit;font-size:20px;padding:16px;border-radius:12px;border:0;width:100%;max-width:320px;box-sizing:border-box;text-align:center;margin:18px 0 0}
+  button{font:inherit;font-size:20px;font-weight:700;border:0;border-radius:14px;padding:18px 28px;margin-top:16px;background:#2563eb;color:#fff;width:100%;max-width:320px}
+  button.sec{background:#3f3f46;font-size:17px;padding:14px}
+  .status{margin-top:18px;font-size:15px;line-height:1.9;background:#27272a;border-radius:12px;padding:10px 16px;text-align:left;max-width:320px;width:100%;box-sizing:border-box}
+  .tip{margin-top:12px;font-size:14px;background:#1e3a8a;border-radius:12px;padding:12px;max-width:320px;text-align:left}
+  #conn{position:fixed;bottom:12px;left:0;right:0;font-size:12px;opacity:.6}
+  .hide{display:none!important}
+  .notice{margin:18px 0 0;font-size:16px;background:#3f3f46;border-radius:12px;padding:12px 14px;max-width:320px}
+  .err{margin-top:12px;font-size:15px;color:#fca5a5;min-height:20px;max-width:320px}
+  body.alarm{animation:flash .5s infinite}
+  body.alarm button{background:#fff;color:#dc2626}
+  @keyframes flash{0%,100%{background:#dc2626}50%{background:#facc15}}
+  body.ready{background:#16a34a}
+  body.alarm .status,body.alarm .tip,body.ready .status,body.ready .tip{display:none}
+</style></head><body>
+
+<div id="joinView">
+  <div class="notice hide" id="notice"></div>
+  <div style="font-size:60px">🔔</div>
+  <h1 style="margin:6px 0">Join the queue</h1>
+  <div style="opacity:.75">We'll buzz this phone when your order is ready.<br>No app, no sign-up, no phone number.</div>
+  <input id="name" maxlength="30" placeholder="Your name (optional)" autocomplete="given-name">
+  <button id="joinBtn" onclick="join()">Join queue</button>
+  <div class="err" id="joinErr"></div>
+</div>
+
+<div id="ticketView" class="hide">
+  <div class="label">Your number</div>
+  <div class="num" id="num"></div>
+  <div class="who" id="who"></div>
+  <div id="msg"></div>
+  <button id="btn" class="hide"></button>
+  <button id="pushBtn" class="sec hide" onclick="enablePush(true)">🔔 Alert me even if my phone is locked</button>
+  <div class="status" id="status"></div>
+  <div class="tip hide" id="iosTip">📱 <b>iPhone:</b> for alerts while your phone is locked, tap <b>Share ⬆︎</b> → <b>Add to Home Screen</b>, then open <b>Buzzer</b> from your home screen.</div>
+  <div id="conn">Connecting…</div>
+</div>
+
+<script>
+let ticket = __TICKET__;
+const NOTICE = __NOTICE__;
+const VAPID = '__VAPID__';
+let ctx, beepTimer, wakeLock = null, soundOn = false, pushOn = false;
+const $ = id => document.getElementById(id);
+const secure = window.isSecureContext;
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+const pushSupported = secure && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+
+if (secure && 'serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
+
+// Back on /join with a ticket from earlier: go to it. (Only from /join; on /t/<id> with no ticket that
+// would reload the same page forever.)
+if (!ticket && location.pathname === '/join') { try { const s = localStorage.getItem('buzzerTicket'); if (s) location.replace('/t/'+s); } catch(e){} }
+
+// ---------- sound (needs one tap) ----------
+function unlockSound(){
+  try { ctx = ctx || new (window.AudioContext||window.webkitAudioContext)(); ctx.resume(); tone(0.04); soundOn = true; } catch(e){}
+  if (navigator.vibrate) navigator.vibrate(40);
+}
+function tone(dur){
+  if(!ctx) return;
+  const o=ctx.createOscillator(), g=ctx.createGain();
+  o.type='square'; o.frequency.value=880; g.gain.value=0.3;
+  o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime+dur);
+}
+
+// ---------- keep screen awake ----------
+async function keepAwake(){
+  if (!('wakeLock' in navigator) || document.visibilityState!=='visible') return renderStatus();
+  try { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', ()=>{ wakeLock=null; renderStatus(); }); }
+  catch(e){ wakeLock = null; }
+  renderStatus();
+}
+document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState==='visible' && ticket && !wakeLock) keepAwake(); });
+
+// ---------- lock-screen push ----------
+function b64ToBytes(s){ const p='='.repeat((4-s.length%4)%4); const b=atob((s+p).replace(/-/g,'+').replace(/_/g,'/')); return Uint8Array.from(b,c=>c.charCodeAt(0)); }
+async function enablePush(fromTap, permPromise){
+  if (!pushSupported || !ticket) return renderStatus();
+  try {
+    const perm = permPromise ? await permPromise : (fromTap ? await Notification.requestPermission() : Notification.permission);
+    if (perm !== 'granted') return renderStatus();
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:b64ToBytes(VAPID) });
+    await fetch('/api/subscribe/'+ticket.id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(sub)});
+    pushOn = true;
+  } catch(e){ console.log('push error', e); }
+  renderStatus();
+}
+
+function renderStatus(){
+  if (!ticket) return;
+  const perm = ('Notification' in window) ? Notification.permission : 'n/a';
+  const row = (ok, text) => (ok ? '✅ ' : '⚪️ ') + text;
+  $('status').innerHTML = [
+    row(soundOn, 'Sound & on-screen alert'),
+    row(pushOn, 'Lock-screen alert' + (!secure ? ' (needs https)' : perm==='denied' ? ' (blocked in settings)' : '')),
+    row(!!wakeLock, 'Screen stays on' + (!secure ? ' (needs https)' : '')),
+  ].join('<br>');
+  $('pushBtn').classList.toggle('hide', pushOn || !pushSupported || perm==='denied');
+  $('iosTip').classList.toggle('hide', !(isIOS && !standalone && secure));
+}
+
+// ---------- join ----------
+// One random key per page: a double tap or a retry after a network error gets the same ticket back.
+const joinKey = [...crypto.getRandomValues(new Uint8Array(16))].map(b=>b.toString(16).padStart(2,'0')).join('');
+let joining = false, permP = null;
+async function join(){
+  if (joining) return;
+  joining = true;
+  unlockSound();
+  // ask for notification permission inside this same tap (browsers require a tap)
+  if (!permP && pushSupported && Notification.permission==='default') permP = Notification.requestPermission();
+  $('joinBtn').disabled = true; $('joinBtn').textContent = 'Joining…'; $('joinErr').textContent = '';
+  try {
+    const r = await fetch('/api/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:$('name').value, key:joinKey})});
+    if (r.status === 429) throw new Error('The queue is full right now. Please ask the staff.');
+    if (!r.ok) throw new Error('Could not join. Please try again.');
+    ticket = await r.json();
+  } catch(e) {
+    $('joinErr').textContent = e.message && !/fetch|network/i.test(e.message) ? e.message : 'No connection. Check your internet and try again.';
+    $('joinBtn').disabled = false; $('joinBtn').textContent = 'Join queue'; joining = false;
+    return;
+  }
+  try { localStorage.setItem('buzzerTicket', ticket.id); } catch(e){}
+  history.replaceState(null,'','/t/'+ticket.id);
+  $('mf').href = '/manifest/'+ticket.id+'.json';
+  showTicket();
+  armed();
+  keepAwake();
+  enablePush(false, permP);
+}
+
+function showTicket(){
+  $('joinView').classList.add('hide'); $('ticketView').classList.remove('hide');
+  $('num').textContent = ticket.num;
+  $('who').textContent = ticket.name ? 'Hi, '+ticket.name+'!' : '';
+  document.title = 'Order #'+ticket.num;
+  connect(); renderStatus();
+}
+function armed(){ $('msg').textContent='You\'re in the queue. Keep this page open.'; $('btn').classList.add('hide'); renderStatus(); }
+function setBtn(text, fn){ const b=$('btn'); b.textContent=text; b.onclick=fn; b.classList.remove('hide'); }
+
+// ---------- buzz ----------
+function buzz(){
+  document.body.className='alarm';
+  $('msg').innerHTML='<b style="font-size:28px">YOUR ORDER IS READY!</b><br>Please come to the counter.';
+  setBtn('OK, coming! 👍', ack); $('pushBtn').classList.add('hide');
+  clearInterval(beepTimer);
+  const ring=()=>{ tone(0.25); setTimeout(()=>tone(0.25),350); if(navigator.vibrate) navigator.vibrate([400,150,400]); };
+  ring(); beepTimer=setInterval(ring,1200);
+}
+function stop(text, end){
+  clearInterval(beepTimer); if(navigator.vibrate) navigator.vibrate(0);
+  document.body.className='ready'; $('btn').classList.add('hide'); $('msg').textContent=text;
+  if (end) {
+    try{localStorage.removeItem('buzzerTicket')}catch(e){}
+    if (wakeLock) wakeLock.release();
+    setBtn('Join again', ()=>location.href='/join');
+  }
+}
+function ack(){ state='coming'; stop('Thanks! See you at the counter.'); fetch('/api/ack/'+ticket.id,{method:'POST'}).catch(()=>{}); }
+
+// ---------- live connection (WebSocket), with slow polling while it is down ----------
+let state = null, ended = false, ws = null, tries = 0, pollTimer = null;
+function applyStatus(status){
+  if (ended || status === state) return;
+  const prev = state; state = status;
+  if (status === 'buzzing') buzz();
+  else if (status === 'done') finish('Order collected. Thank you!', true);
+  else if (status === 'reset') finish('The queue was reset for a new day. Please join again.');
+  else if (status === 'gone') finish('Your ticket was removed from the queue.');
+  else if (prev === 'buzzing' && status === 'waiting') armed();
+}
+function finish(text, collected){
+  ended = true; stopPolling();
+  if (ws) { try { ws.close(); } catch(e){} ws = null; }
+  $('conn').textContent = '';
+  stop(text, true);
+  if (!collected) document.body.className = ''; // green only for a collected order
+}
+function connect(){
+  if (ended) return;
+  try { ws = new WebSocket((location.protocol==='https:'?'wss:':'ws:')+'//'+location.host+'/ws/t/'+ticket.id); }
+  catch(e){ ws = null; startPolling(); return; }
+  ws.onopen = () => { tries = 0; stopPolling(); $('conn').textContent = '● Connected'; };
+  ws.onmessage = e => { try { const d = JSON.parse(e.data); if (d.type === 'status') applyStatus(d.status); } catch(_){} };
+  ws.onclose = () => {
+    ws = null; if (ended) return;
+    $('conn').textContent = 'Reconnecting…'; startPolling();
+    setTimeout(connect, Math.min(1000 * 2 ** tries++, 15000));
+  };
+}
+async function poll(){
+  try { const r = await fetch('/api/status/'+ticket.id, {cache:'no-store'}); applyStatus((await r.json()).status); }
+  catch(e){ $('conn').textContent = 'Reconnecting…'; }
+}
+function startPolling(){ if (!pollTimer && !ended) { poll(); pollTimer = setInterval(poll, 10000); } }
+function stopPolling(){ clearInterval(pollTimer); pollTimer = null; }
+setInterval(() => { if (ws && ws.readyState === 1) ws.send('ping'); }, 30000);
+// Phones pause connections in the background; reconnect as soon as the page is visible again.
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && ticket && !ended && !ws) connect(); });
+
+// Re-opened ticket (refresh, rescan, or opened from iPhone home screen)
+if (ticket) {
+  showTicket();
+  $('msg').textContent='Tap below to turn your buzzer back on.';
+  setBtn('🔔 Turn on buzzer', ()=>{ unlockSound(); armed(); keepAwake(); enablePush(true); });
+  if (pushSupported && Notification.permission==='granted') enablePush(false);
+} else {
+  if (location.pathname.startsWith('/t/')) {
+    try{localStorage.removeItem('buzzerTicket')}catch(e){}
+    history.replaceState(null,'','/join');
+  }
+  if (NOTICE) { $('notice').textContent = NOTICE; $('notice').classList.remove('hide'); }
+}
+</script></body></html>

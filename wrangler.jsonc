@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "qr-queue-buzzer",
+  "main": "src/index.js",
+  "compatibility_date": "2025-11-01",
+  "observability": { "enabled": true },
+  // 127.0.0.1, not localhost: on WSL, Windows browsers can't reach "localhost" (IPv6) inside WSL.
+  "dev": { "ip": "127.0.0.1", "port": 8787 },
+  // Page templates are bundled into the Worker as text.
+  "rules": [{ "type": "Text", "globs": ["**/*.html", "**/*.txt", "**/*.svg"], "fallthrough": true }],
+  "durable_objects": {
+    "bindings": [{ "name": "QUEUE", "class_name": "QueueDO" }]
+  },
+  // The free plan only allows SQLite-backed Durable Objects.
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["QueueDO"] }],
+  "vars": {
+    // Public half of the push key (safe to publish). The private half is a secret:
+    //   local: VAPID_PRIVATE_KEY in .dev.vars    deployed: npx wrangler secret put VAPID_PRIVATE_KEY
+    "VAPID_PUBLIC_KEY": "BASvt5_OUiBwIjzKMhhAANAw79gwBrz3d5qLGcjou0DGSDNKyfdzAXRoyYQOWqdRZ8CgdI6sOnHnIF_Pwj3B6ZU",
+    // Contact the push services can use. Change to a real mailto: or https: address before going live.
+    "VAPID_SUBJECT": "mailto:test@example.com"
+  }
+}
