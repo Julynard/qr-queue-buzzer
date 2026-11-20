@@ -4,7 +4,7 @@ Customers scan one QR code at the counter, get a queue number, and their phone f
 vibrates and (if allowed) shows a lock-screen alert when staff tap **Buzz**. No app, no sign-up,
 no phone number.
 
-Runs on Cloudflare Workers with a Durable Object holding the queue (free plan is enough).
+Runs on Cloudflare Workers with a Durable Object holding the queue (free plan is enough). Server code is TypeScript; the customer and staff pages are plain HTML and JavaScript.
 
 ## Pages
 - `/staff` – staff dashboard: QR code, queue, Buzz / Done / Remove, daily reset settings
@@ -47,7 +47,12 @@ the time and time zone, turn the automatic reset off, or tap **Start new day now
 
 ## Test
 
-    npm test
+    npm test          # unit tests (node --test, TypeScript run directly by Node)
+    npm run check     # type check (wrangler types + tsc)
+    npm run smoke     # end-to-end checks; needs `npm run dev` running in another terminal
+
+`npm run smoke` starts a new day on the queue it talks to, so only point it at your local server.
+After changing `wrangler.jsonc`, run `npm run types` to refresh `worker-configuration.d.ts`.
 
 ## Testing on phones
 1. Scan the QR with your phone, enter a name (optional) and tap **Join queue**.
