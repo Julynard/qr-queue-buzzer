@@ -1,16 +1,20 @@
-// End-to-end check against a running server. Start `npm run dev` first, then:
+// End-to-end check against a running local server. Start `npm run dev` first, then:
 //   npm run smoke                      (default http://127.0.0.1:8787)
 //   npm run smoke -- http://host:port
-// It starts a new day on that queue, so never point it at the live site.
+// It signs up throwaway accounts with email codes read from the LOCAL database, so it only works
+// against `wrangler dev` (EMAIL_MODE=console). Never point it at the live site.
+import { devLogin } from "./dev-login.ts";
 
 interface TicketJson { id: string; num: number; name: string; status: string }
 interface StateJson { type: "state"; tickets: { id: string; num: number; online: boolean }[] }
 interface StatusJson { status: string }
 interface StatusMsg { type: "status"; status: string; place: number | null; waitMin: number | null; claimLeftMs: number | null }
 type Msg = StateJson | StatusMsg;
-export {};
 
 const B = process.argv[2] ?? "http://127.0.0.1:8787";
+// Set once the owner has signed up: the queue's address and the owner's session cookie.
+let Q = "";
+let COOKIE = "";
 let fails = 0;
 let passes = 0;
 function check(name: string, cond: boolean, extra = ""): void {
@@ -18,11 +22,15 @@ function check(name: string, cond: boolean, extra = ""): void {
   else fails++;
   console.log((cond ? "PASS " : "FAIL ") + name + (cond ? "" : " " + extra));
 }
+// Queue calls (paths inside the queue, e.g. "/api/join"), made as the owner.
 const post = (p: string, body?: unknown): Promise<Response> =>
-  fetch(B + p, { method: "POST", headers: { "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) });
-const getJson = async <T>(p: string): Promise<T> => (await (await fetch(B + p)).json()) as T;
+  fetch(B + Q + p, { method: "POST", headers: { "Content-Type": "application/json", Cookie: COOKIE }, body: body === undefined ? undefined : JSON.stringify(body) });
+const getJson = async <T>(p: string): Promise<T> => (await (await fetch(B + Q + p, { headers: { Cookie: COOKIE } })).json()) as T;
 const postJson = async <T>(p: string, body?: unknown): Promise<T> => (await (await post(p, body)).json()) as T;
-const pageText = async (p: string): Promise<string> => (await fetch(B + p)).text();
+const pageText = async (p: string): Promise<string> => (await fetch(B + Q + p, { headers: { Cookie: COOKIE } })).text();
+// Site calls (full paths), with a given cookie (or none).
+const site = (p: string, cookie = "", init: RequestInit = {}): Promise<Response> =>
+  fetch(B + p, { redirect: "manual", ...init, headers: { "Content-Type": "application/json", Origin: B, ...(cookie ? { Cookie: cookie } : {}), ...(init.headers as Record<string, string> | undefined) } });
 const scripts = (html: string): string => [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]).join("\n");
 function parses(js: string): boolean {
   try { new Function(js); return true; } catch { return false; }
@@ -34,8 +42,9 @@ class Socket {
   waiters: ((m: Msg) => boolean)[] = [];
   opened: Promise<void>;
   closed: Promise<number>;
-  constructor(path: string) {
-    this.ws = new WebSocket(B.replace(/^http/, "ws") + path);
+  constructor(path: string, cookie = COOKIE) {
+    // Node's WebSocket accepts extra headers (the session cookie for the staff connection).
+    this.ws = new WebSocket(B.replace(/^http/, "ws") + Q + path, { headers: cookie ? { Cookie: cookie } : {} } as unknown as string[]);
     this.ws.addEventListener("message", (e: MessageEvent) => {
       const d = JSON.parse(String(e.data)) as Msg;
       this.msgs.push(d);
@@ -66,11 +75,49 @@ class Socket {
 const isState = (m: Msg): m is StateJson => m.type === "state";
 const isStatus = (status?: string) => (m: Msg): boolean => m.type === "status" && (status === undefined || m.status === status);
 
-for (const p of ["/staff", "/", "/qr", "/join", "/sw.js", "/icon.svg", "/manifest.json"]) {
-  const r = await fetch(B + p);
+// ---------- public site, old addresses ----------
+for (const p of ["/", "/login", "/start", "/privacy", "/sw.js", "/icon.svg", "/manifest.json"]) {
+  const r = await site(p);
   check(`GET ${p} -> 200`, r.status === 200, String(r.status));
 }
-check("unknown path -> 404", (await fetch(B + "/nope")).status === 404);
+check("unknown path -> 404", (await site("/nope")).status === 404);
+check("unknown queue -> 404", (await site("/q/does-not-exist-zz")).status === 404);
+check("dashboard needs log-in", (await site("/app")).headers.get("location") === "/login?next=/app");
+check("old staff page -> log-in", (await site("/staff")).headers.get("location") === "/login");
+check("old join page -> home", (await site("/join")).headers.get("location") === "/");
+check("old ticket page -> home", (await site("/t/abc123abc123")).headers.get("location") === "/");
+check("old queue API is gone", (await site("/api/state")).status === 404);
+
+// ---------- sign up two shops ----------
+const run = Date.now().toString(36);
+const cookieA = await devLogin(`smoke-a-${run}@example.com`, B);
+const cookieB = await devLogin(`smoke-b-${run}@example.com`, B);
+check("email-code sign-in gives a session", !!cookieA && !!cookieB);
+const meEmpty = await (await site("/api/app/me", cookieA)).json() as { workspaces: unknown[] };
+check("a new account has no workspace yet", meEmpty.workspaces.length === 0);
+const onboardA = await (await site("/api/app/onboard", cookieA, { method: "POST", body: JSON.stringify({ businessName: `Smoke Shop ${run}`, yourName: "Ana" }) })).json() as { slug: string; workspaceId: string };
+check("Start free creates a workspace and its queue", /^smoke-shop-/.test(onboardA.slug ?? ""), JSON.stringify(onboardA));
+await site("/api/app/onboard", cookieB, { method: "POST", body: JSON.stringify({ businessName: `Other Shop ${run}` }) });
+Q = `/q/${onboardA.slug}`;
+COOKIE = cookieA;
+check("onboarding twice is refused", (await site("/api/app/onboard", cookieA, { method: "POST", body: JSON.stringify({ businessName: "Again" }) })).status === 409);
+const second = await site("/api/app/queues", cookieA, { method: "POST", body: JSON.stringify({ workspaceId: onboardA.workspaceId, name: "Counter 2" }) });
+check("Free plan: a second queue needs an upgrade (402)", second.status === 402, String(second.status));
+check("Better Auth's own create-organization is switched off", (await site("/api/auth/organization/create", cookieA, { method: "POST", body: JSON.stringify({ name: "x", slug: `x-${run}` }) })).status === 404);
+
+// ---------- who may do what ----------
+check("customer join page is public", (await site(Q)).status === 200);
+check("logged-out staff page -> log-in", (await site(Q + "/staff")).headers.get("location") === "/login?next=" + encodeURIComponent(Q + "/staff"));
+check("logged-out staff list -> 401", (await site(Q + "/api/state")).status === 401);
+check("logged-out notify -> 401", (await site(Q + "/api/buzz/abc123abc123", "", { method: "POST" })).status === 401);
+check("logged-out poster -> log-in", (await site(Q + "/qr")).status === 302);
+check("another shop's owner can't open the staff page (403)", (await site(Q + "/staff", cookieB)).status === 403);
+check("another shop's owner can't notify (403)", (await site(Q + "/api/buzz/abc123abc123", cookieB, { method: "POST" })).status === 403);
+check("internal queue routes are not reachable from outside", (await site(Q + "/internal/wipe", cookieA, { method: "POST" })).status === 404);
+const anonStaff = new Socket("/ws/staff", "");
+check("logged-out staff live connection is refused", await anonStaff.opened.then(() => false, () => true));
+check("owner opens the staff page", (await site(Q + "/staff", cookieA)).status === 200);
+
 check("manual reset", (await post("/api/reset")).ok);
 
 const joins = await Promise.all(Array.from({ length: 20 }, (_, i) => postJson<TicketJson>("/api/join", { name: "C" + i })));
@@ -80,7 +127,7 @@ check("20 parallel joins get numbers 1..20, no duplicates", nums.join(",") === A
 const key = "c".repeat(32);
 const [d1, d2] = await Promise.all([postJson<TicketJson>("/api/join", { key }), postJson<TicketJson>("/api/join", { key })]);
 check("same join key twice in parallel -> one ticket", d1!.id === d2!.id && d1!.num === 21, JSON.stringify([d1, d2]));
-check("bad JSON body -> 400", (await fetch(B + "/api/join", { method: "POST", body: "{nope" })).status === 400);
+check("bad JSON body -> 400", (await fetch(B + Q + "/api/join", { method: "POST", body: "{nope" })).status === 400);
 
 const byNum = (n: number): TicketJson => joins.find((t) => t.num === n)!;
 const t1 = byNum(1), t2 = byNum(2), t3 = byNum(3);
@@ -113,7 +160,10 @@ check("status stays done", (await getJson<StatusJson>("/api/status/" + t1.id)).s
 cust.close();
 
 const page1 = await pageText("/t/" + t1.id);
-check("ticket page has the ticket", page1.includes(`"id":"${t1.id}"`) && page1.includes(`/manifest/${t1.id}.json`));
+check("ticket page has the ticket", page1.includes(`"id":"${t1.id}"`) && page1.includes(`${Q}/manifest/${t1.id}.json`));
+check("ticket page remembers the ticket per queue", page1.includes(`const BASE = "${Q}"`) && page1.includes("'buzzerTicket:' + BASE.split('/').pop()"));
+const mf = (await getJson<{ start_url: string; scope: string }>(`/manifest/${t1.id}.json`));
+check("home-screen app opens this queue's ticket", mf.start_url === `${Q}/t/${t1.id}` && mf.scope === `${Q}/`, JSON.stringify(mf));
 
 await post("/api/remove/" + t2.id);
 check("removed ticket reports gone", (await getJson<StatusJson>("/api/status/" + t2.id)).status === "gone");
@@ -126,14 +176,15 @@ check("name can't break out of the page script", !evilPage.includes("</script><b
 const dollar = await postJson<TicketJson>("/api/join", { name: "a$'b$&c" });
 const dollarPage = await pageText("/t/" + dollar.id);
 check("a name with $' or $& doesn't break the ticket page", parses(scripts(dollarPage)) && dollarPage.includes("a$'b$&c"));
-for (const p of ["/staff", "/qr", "/join", "/t/" + dollar.id]) check(`page scripts parse: ${p}`, parses(scripts(await pageText(p))));
+for (const p of ["/staff", "/qr", "", "/t/" + dollar.id]) check(`page scripts parse: ${p || "join"}`, parses(scripts(await pageText(p))));
+for (const p of ["/", "/login", "/start", "/app"]) check(`page scripts parse: ${p}`, parses(scripts(await (await site(p, cookieA)).text())));
 const sneaky = await postJson<TicketJson>("/api/join", { name: "__VIEW____VAPID__" });
 const sneakyPage = await pageText("/t/" + sneaky.id);
 check("a name that looks like a placeholder stays a name", parses(scripts(sneakyPage)) && sneakyPage.includes('"name":"__VIEW____VAPID__"') && !sneakyPage.includes("'__VAPID__'"));
 
 const evilQueue = "</script><b>x $' $& __NOTICE__ __JOIN__ · Counter";
 check("queue name saves", (await postJson<{ ok: boolean }>("/api/settings", { queueName: evilQueue })).ok === true);
-for (const p of ["/join", "/t/" + dollar.id]) {
+for (const p of ["", "/t/" + dollar.id]) {
   const page = await pageText(p);
   check(`queue name can't break out of the page script: ${p}`, !page.includes("</script><b>x") && parses(scripts(page)) && page.includes("$' $& __NOTICE__"));
 }
@@ -141,7 +192,7 @@ const poster = await pageText("/qr");
 check("poster shows the queue name as text", poster.includes("&lt;/script&gt;&lt;b&gt;x $&#39; $&amp; __NOTICE__ __JOIN__") && parses(scripts(poster)));
 check("bad claim time refused", (await post("/api/settings", { claimMinutes: 0 })).status === 400);
 check("queue name cleared", (await postJson<{ ok: boolean }>("/api/settings", { queueName: "" })).ok === true);
-check("service worker parses", parses(await pageText("/sw.js")));
+check("service worker parses", parses(await (await site("/sw.js")).text()));
 
 const c3 = new Socket("/ws/t/" + t3.id);
 await c3.opened;
@@ -161,6 +212,25 @@ const s = await postJson<{ ok: boolean; nextResetAt: number }>("/api/settings", 
 const next = new Date(s.nextResetAt);
 check("default next reset is midnight Manila (16:00 UTC)", s.ok && next.getUTCHours() === 16 && next.getUTCMinutes() === 0 && s.nextResetAt > Date.now(), JSON.stringify(s));
 staff.close();
+
+// ---------- deleting ----------
+const meA = await (await site("/api/app/me", cookieA)).json() as { workspaces: { queues: { id: string }[] }[] };
+const queueId = meA.workspaces[0]!.queues[0]!.id;
+const last = await postJson<TicketJson>("/api/join", {});
+const phone = new Socket("/ws/t/" + last.id, "");
+await phone.opened;
+await phone.next(isStatus());
+check("another shop's owner can't delete the queue", (await site("/api/app/queues/" + queueId, cookieB, { method: "DELETE" })).status === 403);
+check("owner deletes the queue", (await site("/api/app/queues/" + queueId, cookieA, { method: "DELETE" })).ok);
+check("connected phones are told the ticket is gone", (await phone.next<StatusMsg>(isStatus("gone"))).status === "gone");
+// (The page closes its own connection on "gone"; a server-side close takes ~10 s to finish under wrangler dev.)
+phone.close();
+check("deleted queue's address -> 404", (await site(Q)).status === 404);
+check("account delete needs DELETE typed", (await site("/api/app/account", cookieA, { method: "DELETE", body: JSON.stringify({ confirm: "yes" }) })).status === 400);
+for (const [who, c] of [["A", cookieA], ["B", cookieB]] as const) {
+  check(`account ${who} deleted`, (await site("/api/app/account", c, { method: "DELETE", body: JSON.stringify({ confirm: "DELETE" }) })).ok);
+  check(`account ${who}'s session no longer works`, (await site("/api/app/me", c)).status === 401);
+}
 
 console.log(fails ? `\n${fails} FAILED, ${passes} passed` : `\n${passes} checks, ALL PASSED`);
 process.exit(fails ? 1 : 0);
