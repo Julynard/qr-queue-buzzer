@@ -34,7 +34,11 @@
   .count{font-size:12px;font-weight:800;padding:2px 8px;border-radius:999px;background:var(--hi);color:var(--ink)}
   .navfoot{margin-top:auto;display:flex;flex-direction:column;gap:10px;padding:0 4px}
   .plan{border:2px dashed #9AA6B2;border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px}
-  .plan .t{font-size:13px;font-weight:800}.plan .u{font-size:12px;color:var(--soft)}
+  .plan .t{font-size:13px;font-weight:800}
+  .account{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 8px;color:var(--ink);text-decoration:none;font-size:14px}
+  .account:hover{color:var(--ink);background:var(--ground);border-radius:8px}
+  .avatar{width:30px;height:30px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex:none}
+  .signout{min-height:44px;border:0;background:none;color:var(--ink);font-weight:700;text-decoration:underline;text-align:left;padding:0 8px}.plan .u{font-size:12px;color:var(--soft)}
 
   /* main */
   main{flex:999 1 560px;min-width:0;padding:28px 32px;display:flex;flex-direction:column;gap:20px}
@@ -121,6 +125,8 @@
         <div class="u" id="usage"></div>
         <button class="btn ink" style="min-height:40px;font-size:13px;border-radius:4px;justify-content:center" onclick="go('plan')">See Plus</button>
       </div>
+      <a class="account" href="/app"><span class="avatar" id="avatar" aria-hidden="true"></span><span><b id="meName"></b><span class="small" style="display:block">All queues</span></span></a>
+      <button class="signout" onclick="signOut()">Sign out</button>
     </div>
   </nav>
 
@@ -151,7 +157,7 @@
           <div style="font-size:18px;font-weight:800;word-break:break-all">__JOIN__</div>
           <div style="font-size:14px;color:var(--soft);line-height:1.5">This address never changes, so printed posters keep working.</div>
           <div class="row" style="margin-top:6px">
-            <a class="btn acc" href="/qr" target="_blank" rel="noopener">Print poster</a>
+            <a class="btn acc" href="__BASE__/qr" target="_blank" rel="noopener">Print poster</a>
             <button class="btn" onclick="downloadQr()">Download PNG</button>
             <button class="btn" onclick="copyLink(this)">Copy link</button>
           </div>
@@ -166,7 +172,7 @@
       <div class="card locked" style="margin-top:20px">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0A2A4A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         <div class="head">Invite your staff by email.</div>
-        <div class="body">Staff will sign in to run the queue; only the owner changes settings. This comes with owner accounts. Until then, anyone with this page's link can run the queue.</div>
+        <div class="body">Staff will sign in with their own email to run the queue; only the owner changes settings. Until invites arrive, only you can open this page.</div>
         <div class="row" style="margin-top:6px"><button class="btn" onclick="go('queue')">Back to queue</button></div>
       </div>
     </section>
@@ -219,6 +225,7 @@
 
 <script>
 const JOIN = '__JOIN__';
+const BASE = '__BASE__'; // this queue's address, e.g. /q/anas-milk-tea
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pad = n => String(n).padStart(3, '0');
@@ -285,7 +292,7 @@ async function copyLink(btn){
 let ws = null, tries = 0, pollTimer = null;
 function setConn(on, text){ $('conn').classList.toggle('off', !on); $('connText').textContent = text; }
 function connect(){
-  try { ws = new WebSocket((location.protocol==='https:'?'wss:':'ws:')+'//'+location.host+'/ws/staff'); }
+  try { ws = new WebSocket((location.protocol==='https:'?'wss:':'ws:')+'//'+location.host+BASE+'/ws/staff'); }
   catch(e){ ws = null; startPolling(); return; }
   ws.onopen = () => { tries = 0; stopPolling(); setConn(true, 'Live'); };
   ws.onmessage = e => { try { const d = JSON.parse(e.data); if (d.type === 'state') render(d); } catch(_){} };
@@ -294,7 +301,7 @@ function connect(){
     setTimeout(connect, Math.min(1000 * 2 ** tries++, 15000));
   };
 }
-async function poll(){ try { const r = await fetch('/api/state', {cache:'no-store'}); render(await r.json()); } catch(e){} }
+async function poll(){ try { const r = await fetch(BASE+'/api/state', {cache:'no-store'}); render(await r.json()); } catch(e){} }
 function startPolling(){ if (!pollTimer) { poll(); pollTimer = setInterval(poll, 10000); } }
 function stopPolling(){ clearInterval(pollTimer); pollTimer = null; }
 setInterval(() => { if (ws && ws.readyState === 1) ws.send('ping'); }, 30000);
@@ -302,8 +309,20 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 connect();
 
 async function act(a, id){
-  try { await fetch('/api/'+a+'/'+id, {method:'POST'}); } catch(e){}
+  try { await fetch(BASE+'/api/'+a+'/'+id, {method:'POST'}); } catch(e){}
   if (!ws || ws.readyState !== 1) poll();
+}
+
+// Who is signed in (the account chip at the bottom of the sidebar).
+fetch('/api/auth/get-session', {cache:'no-store'}).then(r => r.json()).then(d => {
+  const u = d && d.user; if (!u) return;
+  const label = u.name || u.email;
+  $('meName').textContent = label;
+  $('avatar').textContent = label.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+}).catch(() => {});
+async function signOut(){
+  try { await fetch('/api/auth/sign-out', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'}); } catch(e){}
+  location.href = '/';
 }
 
 const time12 = hhmm => { const [h, m] = hhmm.split(':').map(Number); return ((h % 12) || 12) + ':' + String(m).padStart(2, '0') + (h < 12 ? ' AM' : ' PM'); };
@@ -362,7 +381,7 @@ async function saveSettings(e){
   };
   $('settingsMsg').textContent = 'Saving…';
   try {
-    const r = await fetch('/api/settings', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+    const r = await fetch(BASE+'/api/settings', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
     const d = await r.json();
     if (!r.ok) { $('settingsMsg').textContent = d.error || 'Could not save'; return; }
     $('settingsMsg').textContent = 'Saved';
@@ -377,7 +396,7 @@ async function startNewDay(){
     (open ? ' (' + open + ' still waiting or called; their phones will be told to join again)' : '') +
     ' and numbering starts again at 001.';
   if (!confirm(msg)) return;
-  try { await fetch('/api/reset', {method:'POST'}); $('settingsMsg').textContent = 'New day started'; }
+  try { await fetch(BASE+'/api/reset', {method:'POST'}); $('settingsMsg').textContent = 'New day started'; }
   catch(e) { $('settingsMsg').textContent = 'Could not reset. Check the connection.'; }
   if (!ws || ws.readyState !== 1) poll();
 }
