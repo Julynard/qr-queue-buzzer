@@ -160,17 +160,6 @@
       </div>
     </section>
 
-    <!-- Display screen (not built yet) -->
-    <section data-tab="display" class="hide">
-      <div class="row"><h1>Display screen</h1><span class="tag">Coming soon</span></div>
-      <div class="card locked" style="margin-top:20px">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0A2A4A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
-        <div class="head">A "Now calling" screen for your counter.</div>
-        <div class="body">Optional. Open a link on a TV or tablet at the counter and it shows the numbers being called and the ones still preparing. Ticket numbers only, never names.</div>
-        <div class="row" style="margin-top:6px"><button class="btn" onclick="go('queue')">Back to queue</button></div>
-      </div>
-    </section>
-
     <!-- Team (not built yet) -->
     <section data-tab="team" class="hide">
       <div class="row"><h1>Team</h1><span class="tag">Coming soon</span></div>
@@ -244,15 +233,16 @@ const PILLS = {
   noshow:  { bg:'#FFEDD5', fg:'#9A3412', label:'No show' },
 };
 const LOCKED = {
+  display:  ['Display screen', 'A "Now calling" screen for your counter.', 'Open a link on a TV or tablet at the counter. It shows the numbers being called and the ones still preparing, so customers without alerts know when it\'s their turn. Ticket numbers only, never names.'],
   branding: ['Branding', 'Make every ticket yours.', 'Use your own colours and logo on the customer ticket, the QR poster and the display screen. Status colours stay fixed so customers are never confused.'],
   reports:  ['Reports', 'See your busiest hours.', 'Average wait time, customers per day, no-show rate and busiest hours, so you know when to add staff.'],
   log:      ['Activity log', 'Know who did what.', 'Every notify, done, removal and new day, with the staff member and the time. Useful when a customer says they were skipped.'],
-  plan:     ['Plus plan', 'Grow past the Free limits.', 'Unlimited tickets, more staff and queues, your own branding, reports and the activity log.'],
+  plan:     ['Plus plan', 'Grow past the Free limits.', 'Unlimited tickets, more staff and queues, a display screen for your counter, your own branding, reports and the activity log.'],
 };
 const GROUPS = [
-  ['Run the queue', [['queue','Queue'], ['qr','QR code'], ['display','Display screen']]],
+  ['Run the queue', [['queue','Queue'], ['qr','QR code']]],
   ['Manage', [['team','Team'], ['settings','Settings']]],
-  ['Plus', [['branding','Branding',1], ['reports','Reports',1], ['log','Activity log',1]]],
+  ['Plus', [['display','Display screen',1], ['branding','Branding',1], ['reports','Reports',1], ['log','Activity log',1]]],
 ];
 let state = null, settingsShown = false, tab = 'queue';
 
@@ -266,7 +256,7 @@ function renderNav(){
       (locked ? LOCK : '') + (key === 'queue' ? '<span class="count">' + open + '</span>' : '') + '</button>').join('') + '</div>').join('');
 }
 function go(key){
-  tab = LOCKED[key] || ['queue','qr','display','team','settings'].includes(key) ? key : 'queue';
+  tab = LOCKED[key] || ['queue','qr','team','settings'].includes(key) ? key : 'queue';
   if (location.hash.slice(1) !== tab) history.replaceState(null, '', '#' + tab);
   const lk = LOCKED[tab];
   document.querySelectorAll('main > section').forEach(s => s.classList.toggle('hide', s.dataset.tab !== (lk ? 'locked' : tab)));
