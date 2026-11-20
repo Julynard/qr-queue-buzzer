@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { QueueCore, MAX_TICKETS_PER_DAY } from "../src/queue-core.ts";
+import { QueueCore, MAX_TICKETS_PER_DAY, pushPayload } from "../src/queue-core.ts";
 import type { Settings, Ticket } from "../src/queue-core.ts";
 
 let counter = 0;
@@ -369,4 +369,18 @@ test("state saved and loaded again gives the same queue", () => {
   assert.deepEqual(again.list(), q.list());
   assert.equal(join(again).ticket.num, 3);
   assert.equal(again.meta.nextResetAt, q.meta.nextResetAt);
+});
+
+test("push payload links to the ticket under its queue's address", () => {
+  const q = new QueueCore();
+  const t = join(q, { name: "Ana" }).ticket;
+  assert.deepEqual(pushPayload(t, "/q/anas-milk-tea", "Ana's Milk Tea"), {
+    title: "Your order is ready · No. 001",
+    body: "Ana, come to the counter at Ana's Milk Tea.",
+    url: `/q/anas-milk-tea/t/${t.id}`,
+    tag: `ticket-${t.id}`,
+  });
+  const nameless = join(q).ticket;
+  assert.equal(pushPayload(nameless, "", "").body, "Come to the counter.");
+  assert.equal(pushPayload(nameless, "", "").url, `/t/${nameless.id}`);
 });

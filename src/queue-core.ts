@@ -42,6 +42,8 @@ export interface Meta {
   nextResetAt: number | null;
   dayStartedAt: number | null;
   lastResetIds: string[];
+  /** The queue's public address prefix, e.g. "/q/anas-milk-tea" (set by the Worker). "" for the old single queue. */
+  base?: string;
 }
 
 export interface Changes {
@@ -113,6 +115,17 @@ export const isTicketId = (s: unknown): s is string => typeof s === "string" && 
 
 interface PendingChanges { put: Set<string>; del: Set<string>; clearAll: boolean; meta: boolean }
 
+/** Lock-screen notification for a notified ticket. `base` is the queue's address prefix. */
+export function pushPayload(t: Ticket, base: string, queueName: string): { title: string; body: string; url: string; tag: string } {
+  const no = String(t.num).padStart(3, "0");
+  return {
+    title: `Your order is ready · No. ${no}`,
+    body: (t.name ? t.name + ", c" : "C") + "ome to the counter" + (queueName ? " at " + queueName : "") + ".",
+    url: `${base}/t/${t.id}`,
+    tag: `ticket-${t.id}`,
+  };
+}
+
 export class QueueCore {
   tickets: Map<string, Ticket>;
   meta: Meta;
@@ -137,6 +150,8 @@ export class QueueCore {
   #resetChanges(): void { this.changes = { put: new Set(), del: new Set(), clearAll: false, meta: false }; }
   #touch(t: Ticket): void { this.changes.put.add(t.id); }
   #touchMeta(): void { this.changes.meta = true; }
+  /** Mark meta as changed after setting a field directly (e.g. `base`). */
+  touchMeta(): void { this.#touchMeta(); }
 
   /** Returns and clears what changed since the last call, for the storage layer to save. */
   takeChanges(): Changes {
