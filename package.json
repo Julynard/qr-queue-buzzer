@@ -20,5 +20,9 @@
     "http_ece": "^1.2.1",
     "typescript": "^7.0.2",
     "wrangler": "^4.165.0"
+  },
+  "dependencies": {
+    "@better-auth/infra": "^0.4.31",
+    "better-auth": "^1.7.26"
   }
 }
