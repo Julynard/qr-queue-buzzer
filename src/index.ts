@@ -6,9 +6,15 @@ import POSTER_HTML from "./pages/poster.html";
 import CUSTOMER_HTML from "./pages/customer.html";
 import SW_JS from "./pages/sw.txt";
 import ICON_SVG from "./pages/icon.svg";
+import HOME_HTML from "./pages/home.html";
+import LOGIN_HTML from "./pages/login.html";
+import START_HTML from "./pages/start.html";
+import APP_HTML from "./pages/app.html";
+import PRIVACY_HTML from "./pages/privacy.html";
 
 export { QueueDO } from "./queue-do.ts";
-import { createAuth, getSession } from "./auth.ts";
+import { createAuth, getSession, signInMethods } from "./auth.ts";
+import { handleAppApi } from "./app-api.ts";
 import { classifyQueuePath } from "./access.ts";
 import { findQueueBySlug, isMember, renameQueue } from "./queues.ts";
 import type { QueueRow } from "./queues.ts";
@@ -35,6 +41,21 @@ export default {
     let m: RegExpMatchArray | null;
 
     if (p.startsWith("/api/auth/")) return createAuth(env, request).handler(request);
+
+    if (p === "/") return html(HOME_HTML);
+    if (p === "/privacy") return html(PRIVACY_HTML);
+    if (p === "/start") return html(fill(START_HTML, { METHODS: safeJson(signInMethods(env)) }));
+    if (p === "/login" || p === "/app" || p.startsWith("/api/app/")) {
+      const auth = createAuth(env, request);
+      const session = await getSession(auth, request);
+      if (p === "/login") {
+        const next = url.searchParams.get("next") ?? "";
+        if (session) return redirect(/^\/(?!\/)/.test(next) ? next : "/app");
+        return html(fill(LOGIN_HTML, { METHODS: safeJson(signInMethods(env)), TURNSTILE_SITE: env.TURNSTILE_SITE_KEY }));
+      }
+      if (p === "/app") return session ? html(APP_HTML) : redirect("/login?next=/app");
+      return handleAppApi(request, env, auth, session);
+    }
 
     if (p === "/sw.js") return send(SW_JS, "application/javascript", { "Service-Worker-Allowed": "/", "Cache-Control": "no-cache" });
     if (p === "/icon.svg") return send(ICON_SVG, "image/svg+xml");

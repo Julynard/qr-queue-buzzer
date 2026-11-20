@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aqona · Ako na! Queue alerts on your customers' phones</title>
+<meta name="description" content="Print one QR code. Customers scan it, take a number, and get notified on their own phone when it's their turn. No app, no sign-up, no phone number.">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root{--accent:#0B6FB8;--paper:#CFE4F5}
+  body{margin:0}
+  a{color:#0A2A4A}a:hover{color:#0B6FB8}
+  a:focus-visible{outline:3px solid #0B6FB8;outline-offset:2px}
+  @media (max-width:640px){.navlinks{display:none!important}}
+</style></head><body>
+<div style="background: #F6F7F9; color: #0A2A4A; font-family: Inter, system-ui, sans-serif; min-height: 100vh">
+
+  <header style="background: #FFFFFF; border-bottom: 1px solid #E3E6EA">
+    <nav aria-label="Main" style="max-width: 1200px; margin: 0 auto; padding: 14px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 28px">
+      <a href="/" style="font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; font-size: 28px; letter-spacing: -0.03em; text-decoration: none; color: #0A2A4A"><span style="color: var(--accent)">aqo</span>na</a>
+      <div class="navlinks" style="flex: 1 1 auto; display: flex; flex-wrap: wrap; gap: 4px 22px; font-size: 15px; font-weight: 600">
+        <a href="#how" style="min-height: 44px; display: flex; align-items: center; text-decoration: none">How it works</a>
+        <a href="#why" style="min-height: 44px; display: flex; align-items: center; text-decoration: none">Why not pagers</a>
+        <a href="#plans" style="min-height: 44px; display: flex; align-items: center; text-decoration: none">Free plan</a>
+        <a href="#faq" style="min-height: 44px; display: flex; align-items: center; text-decoration: none">Questions</a>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center">
+        <a href="/login" style="min-height: 44px; padding: 0 14px; display: flex; align-items: center; font-weight: 800; text-decoration: none">Log in</a>
+        <a href="/start" style="min-height: 46px; padding: 0 18px; display: flex; align-items: center; border: 2px solid #0A2A4A; border-radius: 4px; background: var(--accent); color: #FFFFFF; font-weight: 800; text-decoration: none">Start free</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section aria-labelledby="hero-title" style="max-width: 1200px; margin: 0 auto; padding: 64px 24px 72px; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 48px; align-items: center">
+      <div style="display: flex; flex-direction: column; gap: 22px">
+        <span style="align-self: flex-start; padding: 6px 12px; background: #FFE58A; font-size: 14px; font-weight: 800">No app · No sign-up · No phone number</span>
+        <h1 id="hero-title" style="margin: 0; font-family: Anton, Impact, sans-serif; font-weight: 400; line-height: 0.92; display: flex; flex-direction: column">
+          <span style="font-size: clamp(56px, 9vw, 112px); color: var(--accent)">Ako na!</span>
+          <span style="font-size: clamp(36px, 5vw, 64px)">Tell customers it's their turn, on their own phone.</span>
+        </h1>
+        <p style="margin: 0; font-size: 19px; line-height: 1.55; color: #33506E; max-width: 34em">Print one QR code. Customers scan it and take a number. When their order is ready, tap Notify: their phone beeps, vibrates and shows it on the lock screen. No pager discs to buy, charge or lose.</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px">
+          <a href="/start" style="min-height: 56px; padding: 0 26px; display: flex; align-items: center; border: 3px solid #0A2A4A; border-radius: 4px; background: var(--accent); color: #FFFFFF; font-size: 18px; font-weight: 800; text-decoration: none">Start free</a>
+          <a href="#how" style="min-height: 56px; padding: 0 22px; display: flex; align-items: center; border: 2px solid #0A2A4A; border-radius: 4px; background: #FFFFFF; font-size: 17px; font-weight: 800; text-decoration: none">See how it works</a>
+        </div>
+        <div style="font-size: 14px; color: #33506E">Free plan, no card needed. Set up in about a minute.</div>
+      </div>
+
+      <div aria-hidden="true" style="display: flex; justify-content: center; gap: 20px; align-items: flex-end; flex-wrap: wrap">
+        <div style="width: 260px; display: flex; flex-direction: column; transform: rotate(-2deg)">
+          <div style="background: var(--paper); border: 3px solid #0A2A4A; border-top: 0; border-bottom: 0; border-radius: 4px 4px 0 0; position: relative; padding: 22px 16px 16px">
+            <div style="position: absolute; left: -3px; right: -3px; top: -1px; height: 10px; background: radial-gradient(circle at 8px 0, #F6F7F9 7px, transparent 7.5px) repeat-x; background-size: 16px 10px"></div>
+            <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 800"><span>Ana's Milk Tea</span><span>No. 027</span></div>
+            <div style="font-family: Anton, Impact, sans-serif; font-size: 28px; line-height: 1; margin-top: 12px">You're</div>
+            <div style="display: flex; align-items: flex-start; font-family: Anton, Impact, sans-serif; line-height: 0.82"><span style="font-size: 150px">4</span><span style="font-size: 34px; margin-top: 10px">th</span></div>
+            <div style="font-family: Anton, Impact, sans-serif; font-size: 28px; line-height: 1">in line</div>
+            <div style="display: inline-block; margin-top: 12px; padding: 5px 9px; background: #FFE58A; font-size: 13px; font-weight: 800">About 16 minutes</div>
+          </div>
+          <div style="height: 20px; background: var(--paper); position: relative">
+            <div style="position: absolute; left: -10px; top: 0; width: 20px; height: 20px; border-radius: 50%; background: #F6F7F9"></div>
+            <div style="position: absolute; right: -10px; top: 0; width: 20px; height: 20px; border-radius: 50%; background: #F6F7F9"></div>
+            <div style="position: absolute; left: 16px; right: 16px; top: 8px; border-top: 3px dotted #0A2A4A; opacity: 0.55"></div>
+          </div>
+          <div style="background: var(--paper); border: 3px solid #0A2A4A; border-top: 0; border-radius: 0 0 6px 6px; padding: 6px 14px 12px; display: flex; gap: 12px; align-items: center">
+            <div style="font-family: Anton, Impact, sans-serif; font-size: 34px; line-height: 1; writing-mode: vertical-rl; transform: rotate(180deg)">027</div>
+            <div style="font-size: 12px; font-weight: 700; line-height: 1.4">We'll buzz this phone when your order is ready.</div>
+          </div>
+        </div>
+        <div style="width: 220px; display: flex; flex-direction: column; transform: rotate(3deg); margin-bottom: 30px">
+          <div style="height: 44px; background: var(--paper); padding: 10px 14px 0; box-sizing: border-box; display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; border-radius: 4px 4px 0 0; clip-path: polygon(0 0, 100% 0, 100% 62%, 94% 80%, 86% 64%, 77% 86%, 68% 66%, 59% 88%, 50% 68%, 41% 86%, 32% 66%, 23% 84%, 14% 66%, 6% 82%, 0 64%)"><span>Ana's Milk Tea</span><span>No. 026</span></div>
+          <div style="margin-top: -16px; background: var(--accent); color: #FFFFFF; border-radius: 0 0 4px 4px; padding: 30px 16px 16px; display: flex; flex-direction: column; gap: 8px">
+            <div style="font-family: Anton, Impact, sans-serif; font-size: 40px; line-height: 0.95">Your order is ready.</div>
+            <div style="font-size: 13px; font-weight: 800">Come to the counter.</div>
+            <div style="font-family: Anton, Impact, sans-serif; font-size: 52px; line-height: 1; margin-top: 10px">4:58</div>
+            <div style="font-size: 12px; font-weight: 700">left to claim it</div>
+            <div style="margin-top: 6px; min-height: 40px; display: flex; align-items: center; justify-content: center; background: #FFFFFF; color: #0A2A4A; border-radius: 2px; font-size: 14px; font-weight: 800">I'm on my way</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-label="Made for" style="background: #0A2A4A; color: #FFFFFF">
+      <div style="max-width: 1200px; margin: 0 auto; padding: 22px 24px; display: flex; flex-wrap: wrap; gap: 10px 26px; align-items: center; font-size: 16px; font-weight: 700">
+        <span style="font-size: 13px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #CFE4F5">Made for</span>
+        <span>Milk tea &amp; coffee</span>
+<span>Food stalls &amp; food parks</span>
+<span>Clinics</span>
+<span>Pharmacies</span>
+<span>Barbers &amp; salons</span>
+<span>Car washes</span>
+<span>Banks</span>
+<span>School registrars</span>
+<span>Events</span>
+      </div>
+    </section>
+
+    <section id="how" aria-labelledby="how-title" style="max-width: 1200px; margin: 0 auto; padding: 88px 24px 40px; display: flex; flex-direction: column; gap: 36px">
+      <h2 id="how-title" style="margin: 0; font-family: Anton, Impact, sans-serif; font-weight: 400; font-size: clamp(40px, 5vw, 64px); line-height: 1">How it works</h2>
+      <ol style="list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px">
+        <li style="background: #FFFFFF; border: 3px solid #0A2A4A; border-radius: 6px; padding: 24px; display: flex; flex-direction: column; gap: 12px">
+            <span style="font-family: Anton, Impact, sans-serif; font-size: 72px; line-height: 0.9; color: var(--accent)">1</span>
+            <h3 style="margin: 0; font-size: 22px; font-weight: 800">Print your QR</h3>
+            <p style="margin: 0; font-size: 16px; line-height: 1.55; color: #33506E">Sign up, name your queue and print the poster. One QR at the counter is all the hardware you need.</p>
+          </li>
+<li style="background: #FFFFFF; border: 3px solid #0A2A4A; border-radius: 6px; padding: 24px; display: flex; flex-direction: column; gap: 12px">
+            <span style="font-family: Anton, Impact, sans-serif; font-size: 72px; line-height: 0.9; color: var(--accent)">2</span>
+            <h3 style="margin: 0; font-size: 22px; font-weight: 800">Customers take a number</h3>
+            <p style="margin: 0; font-size: 16px; line-height: 1.55; color: #33506E">They scan with their phone camera and tap Take a number. They see their place in line and about how long it will take.</p>
+          </li>
+<li style="background: #FFFFFF; border: 3px solid #0A2A4A; border-radius: 6px; padding: 24px; display: flex; flex-direction: column; gap: 12px">
+            <span style="font-family: Anton, Impact, sans-serif; font-size: 72px; line-height: 0.9; color: var(--accent)">3</span>
+            <h3 style="margin: 0; font-size: 22px; font-weight: 800">Tap Notify</h3>
+            <p style="margin: 0; font-size: 16px; line-height: 1.55; color: #33506E">Their phone beeps, vibrates and shows an alert, even when locked. They tap I'm on my way, and you see they are coming.</p>
+          </li>
+      </ol>
+    </section>
+
+    <section id="why" aria-labelledby="why-title" style="max-width: 1200px; margin: 0 auto; padding: 72px 24px; display: flex; flex-direction: column; gap: 36px">
+      <div style="display: flex; flex-direction: column; gap: 12px; max-width: 760px">
+        <h2 id="why-title" style="margin: 0; font-family: Anton, Impact, sans-serif; font-weight: 400; font-size: clamp(40px, 5vw, 64px); line-height: 1">What pager discs can't do</h2>
+        <p style="margin: 0; font-size: 18px; line-height: 1.55; color: #33506E">Discs work fine until you run out, one goes home in a bag, or the customer steps outside. A phone is already in their hand.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px">
+        <div style="background: #FFFFFF; border: 1px solid #E3E6EA; border-radius: 8px; padding: 22px; display: flex; flex-direction: column; gap: 10px">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+            <h3 style="margin: 0; font-size: 19px; font-weight: 800">Nothing to buy or charge</h3>
+            <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #33506E">No disc sets, chargers or cleaning. If you have a printer, you are set up.</p>
+          </div>
+<div style="background: #FFFFFF; border: 1px solid #E3E6EA; border-radius: 8px; padding: 22px; display: flex; flex-direction: column; gap: 10px">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+            <h3 style="margin: 0; font-size: 19px; font-weight: 800">Never run out</h3>
+            <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #33506E">A rush of 80 customers gets 80 numbers. Disc sets stop at their count.</p>
+          </div>
+<div style="background: #FFFFFF; border: 1px solid #E3E6EA; border-radius: 8px; padding: 22px; display: flex; flex-direction: column; gap: 10px">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+            <h3 style="margin: 0; font-size: 19px; font-weight: 800">Buzz them anywhere</h3>
+            <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #33506E">Next stall, across the mall, in the car outside the clinic. Radio pagers only work nearby.</p>
+          </div>
+<div style="background: #FFFFFF; border: 1px solid #E3E6EA; border-radius: 8px; padding: 22px; display: flex; flex-direction: column; gap: 10px">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+            <h3 style="margin: 0; font-size: 19px; font-weight: 800">They know where they stand</h3>
+            <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #33506E">Place in line and an estimated wait, live on their phone. Fewer people asking how much longer.</p>
+          </div>
+<div style="background: #FFFFFF; border: 1px solid #E3E6EA; border-radius: 8px; padding: 22px; display: flex; flex-direction: column; gap: 10px">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+            <h3 style="margin: 0; font-size: 19px; font-weight: 800">No-shows handled</h3>
+            <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #33506E">After Notify, a claim timer counts down. If nobody comes, the ticket is marked No show and you move on.</p>
+          </div>
+<div style="background: #FFFFFF; border: 1px solid #E3E6EA; border-radius: 8px; padding: 22px; display: flex; flex-direction: column; gap: 10px">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+            <h3 style="margin: 0; font-size: 19px; font-weight: 800">Nothing goes home in a bag</h3>
+            <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #33506E">The ticket lives on the customer's phone. There is nothing to collect at the end of the day.</p>
+          </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="privacy-title" style="background: var(--paper); border-top: 3px solid #0A2A4A; border-bottom: 3px solid #0A2A4A">
+      <div style="max-width: 1200px; margin: 0 auto; padding: 64px 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; align-items: center">
+        <h2 id="privacy-title" style="margin: 0; font-family: Anton, Impact, sans-serif; font-weight: 400; font-size: clamp(44px, 6vw, 80px); line-height: 0.95">No phone numbers. Ever.</h2>
+        <div style="display: flex; flex-direction: column; gap: 12px; font-size: 17px; line-height: 1.6">
+          <p style="margin: 0">Customers never sign up and never give a phone number. A first name is optional, so staff can call it out.</p>
+          <p style="margin: 0">Every ticket is cleared at the end of the day. No SMS, no mailing lists, nothing to leak.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="plans" aria-labelledby="plans-title" style="max-width: 1200px; margin: 0 auto; padding: 88px 24px 72px; display: flex; flex-direction: column; gap: 36px">
+      <h2 id="plans-title" style="margin: 0; font-family: Anton, Impact, sans-serif; font-weight: 400; font-size: clamp(40px, 5vw, 64px); line-height: 1">Start free. Grow when you're busy.</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; align-items: stretch">
+        <div style="background: #FFFFFF; border: 3px solid #0A2A4A; border-radius: 6px; padding: 28px; display: flex; flex-direction: column; gap: 16px">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px">
+            <h3 style="margin: 0; font-family: Anton, Impact, sans-serif; font-weight: 400; font-size: 44px; line-height: 1">Free</h3>
+            <span style="padding: 4px 12px; background: #FFE58A; font-size: 13px; font-weight: 800">No card needed</span>
+          </div>
+          <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; font-size: 16px">
+            <li style="display: flex; gap: 10px; align-items: flex-start"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M20 6 9 17l-5-5"/></svg><span>1 queue with its own QR code</span></li>
+<li style="display: flex; gap: 10px; align-items: flex-start"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M20 6 9 17l-5-5"/></svg><span>Owner + 2 staff</span></li>
+<li style="display: flex; gap: 10px; align-items: flex-start"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M20 6 9 17l-5-5"/></svg><span>Lock-screen alerts, sound and vibration</span></li>
+<li style="display: flex; gap: 10px; align-items: flex-start"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M20 6 9 17l-5-5"/></svg><span>Place in line and wait estimate</span></li>
+<li style="display: flex; gap: 10px; align-items: flex-start"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M20 6 9 17l-5-5"/></svg><span>Claim timer and No show</span></li>
+<li style="display: flex; gap: 10px; align-items: flex-start"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M20 6 9 17l-5-5"/></svg><span>Automatic new day every night</span></li>
+          </ul>
+          <a href="/start" style="margin-top: auto; min-height: 54px; display: flex; align-items: center; justify-content: center; border: 3px solid #0A2A4A; border-radius: 4px; background: var(--accent); color: #FFFFFF; font-size: 17px; font-weight: 800; text-decoration: none">Start free</a>
+        </div>
+        <div style="background: #FFFFFF; border: 2px dashed #9AA6B2; border-radius: 6px; padding: 28px; display: flex; flex-direction: column; gap: 16px">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px">
+            <h3 style="margin: 0; font-family: Anton, Impact, sans-serif; font-weight: 400; font-size: 44px; line-height: 1">Plus</h3>
+            <span style="padding: 4px 12px; background: #0A2A4A; color: #FFFFFF; font-size: 13px; font-weight: 800; border-radius: 999px">Coming soon</span>
+          </div>
+          <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; font-size: 16px; color: #33506E">
+            <li style="display: flex; gap: 10px; align-items: flex-start"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M12 5v14"/><path d="M5 12h14"/></svg><span>More queues and staff</span></li>
+<li style="display: flex; gap: 10px; align-items: flex-start"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M12 5v14"/><path d="M5 12h14"/></svg><span>Display screen for a TV at the counter</span></li>
+<li style="display: flex; gap: 10px; align-items: flex-start"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M12 5v14"/><path d="M5 12h14"/></svg><span>Your own colours and logo</span></li>
+<li style="display: flex; gap: 10px; align-items: flex-start"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M12 5v14"/><path d="M5 12h14"/></svg><span>Reports: wait times and busiest hours</span></li>
+<li style="display: flex; gap: 10px; align-items: flex-start"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M12 5v14"/><path d="M5 12h14"/></svg><span>Activity log: who did what</span></li>
+          </ul>
+          <div style="margin-top: auto; font-size: 14px; color: #33506E">Price to be announced. Free shops can switch any time.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq" aria-labelledby="faq-title" style="max-width: 1200px; margin: 0 auto; padding: 40px 24px 88px; display: flex; flex-direction: column; gap: 28px">
+      <h2 id="faq-title" style="margin: 0; font-family: Anton, Impact, sans-serif; font-weight: 400; font-size: clamp(40px, 5vw, 64px); line-height: 1">Honest answers</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px 28px">
+        <div style="border-top: 2px dashed #0A2A4A; padding-top: 16px; display: flex; flex-direction: column; gap: 8px">
+            <h3 style="margin: 0; font-size: 18px; font-weight: 800">Do customers need to install an app?</h3>
+            <p style="margin: 0; font-size: 16px; line-height: 1.55; color: #33506E">No. They scan the QR and the ticket opens in their browser. No sign-up and no phone number.</p>
+          </div>
+<div style="border-top: 2px dashed #0A2A4A; padding-top: 16px; display: flex; flex-direction: column; gap: 8px">
+            <h3 style="margin: 0; font-size: 18px; font-weight: 800">What if a customer has no phone?</h3>
+            <p style="margin: 0; font-size: 16px; line-height: 1.55; color: #33506E">Their number is still yours to call out loud. Many shops keep a few paper tickets or discs for them.</p>
+          </div>
+<div style="border-top: 2px dashed #0A2A4A; padding-top: 16px; display: flex; flex-direction: column; gap: 8px">
+            <h3 style="margin: 0; font-size: 18px; font-weight: 800">Do alerts work on iPhone?</h3>
+            <p style="margin: 0; font-size: 16px; line-height: 1.55; color: #33506E">Yes, while the page is open. For alerts on a locked iPhone, the customer adds the ticket to their Home Screen first; the page shows how.</p>
+          </div>
+<div style="border-top: 2px dashed #0A2A4A; padding-top: 16px; display: flex; flex-direction: column; gap: 8px">
+            <h3 style="margin: 0; font-size: 18px; font-weight: 800">What if our internet goes down?</h3>
+            <p style="margin: 0; font-size: 16px; line-height: 1.55; color: #33506E">Staff need a connection to notify. Customers can still see their number, so calling it out works as a backup.</p>
+          </div>
+<div style="border-top: 2px dashed #0A2A4A; padding-top: 16px; display: flex; flex-direction: column; gap: 8px">
+            <h3 style="margin: 0; font-size: 18px; font-weight: 800">Is it really free?</h3>
+            <p style="margin: 0; font-size: 16px; line-height: 1.55; color: #33506E">Yes. The Free plan has no time limit and needs no card. Paid plans add more queues, branding and reports later.</p>
+          </div>
+<div style="border-top: 2px dashed #0A2A4A; padding-top: 16px; display: flex; flex-direction: column; gap: 8px">
+            <h3 style="margin: 0; font-size: 18px; font-weight: 800">What do you store?</h3>
+            <p style="margin: 0; font-size: 16px; line-height: 1.55; color: #33506E">Your name and email, and your queue names. For customers, only the optional first name, cleared every night.</p>
+          </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="cta-title" style="max-width: 1200px; margin: 0 auto; padding: 0 24px 88px">
+      <div style="background: var(--accent); color: #FFFFFF; border: 3px solid #0A2A4A; border-radius: 6px; padding: 48px 36px; display: flex; flex-wrap: wrap; gap: 28px; align-items: center; justify-content: space-between">
+        <div style="display: flex; flex-direction: column; gap: 10px; max-width: 640px">
+          <h2 id="cta-title" style="margin: 0; font-family: Anton, Impact, sans-serif; font-weight: 400; font-size: clamp(44px, 6vw, 76px); line-height: 0.95">Your queue, ticket #1.</h2>
+          <p style="margin: 0; font-size: 18px; line-height: 1.5">Sign up with Google or a code by email. Print your QR today.</p>
+        </div>
+        <a href="/start" style="min-height: 58px; padding: 0 30px; display: flex; align-items: center; background: #FFFFFF; color: #0A2A4A; border-radius: 2px; font-size: 18px; font-weight: 800; text-decoration: none">Start free</a>
+      </div>
+    </section>
+  </main>
+
+  <footer style="background: #FFFFFF; border-top: 1px solid #E3E6EA">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 28px 24px; display: flex; flex-wrap: wrap; gap: 16px 28px; align-items: center; justify-content: space-between; font-size: 14px">
+      <span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; font-size: 20px; letter-spacing: -0.02em"><span style="color: var(--accent)">aqo</span>na</span> <span style="color: #6B7280">· Ako na! · Made in the Philippines</span></span>
+      <div style="display: flex; flex-wrap: wrap; gap: 4px 22px; font-weight: 600">
+        <a href="/privacy" style="min-height: 44px; display: flex; align-items: center">Privacy notice</a>
+        <a href="/login" style="min-height: 44px; display: flex; align-items: center">Log in</a>
+      </div>
+    </div>
+  </footer>
+</div>
+</body></html>

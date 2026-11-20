@@ -56,7 +56,9 @@ export function authOptions(env: Env, baseURL: string): BetterAuthOptions {
       storage: "database",
       customRules: { [SEND_CODE_PATH]: { window: 60, max: 3 }, "/sign-in/email-otp": { window: 60, max: 10 } },
     },
-    user: { deleteUser: { enabled: true } },
+    // Workspaces and accounts are created and deleted only through /api/app/*, which also creates or wipes
+    // the queues' live data. Better Auth's own endpoints for these are switched off.
+    disabledPaths: ["/organization/create", "/organization/delete", "/delete-user"],
     socialProviders: methods.google ? { google: { clientId: env.GOOGLE_CLIENT_ID!, clientSecret: env.GOOGLE_CLIENT_SECRET! } } : {},
     plugins,
   };
