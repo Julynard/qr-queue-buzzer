@@ -1,6 +1,6 @@
 # Aqona accounts: design
 
-Status: approved by the owner (2026-11-20). Additions for account management and super admin: draft for approval.
+Status: approved by the owner (2026-11-20), including account settings and super admin.
 
 ## Intent
 
@@ -272,4 +272,4 @@ Each slice is its own pull request and leaves the site working.
 5. The builder's calls on workspaces and people, privacy in slice 1, and local-only testing are agreed.
 6. Server code moves to **TypeScript first**, as its own pull request before slice 1. Customer-page scripts stay plain JavaScript.
 7. Shop owners manage their account and staff from one settings page; the Aqona owner gets a super admin panel
-   (requested 2026-11-20). The details above are the builder's proposal, awaiting approval.
+   (requested and approved 2026-11-20).
