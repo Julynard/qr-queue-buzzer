@@ -18,8 +18,8 @@
     "bindings": [{ "name": "QUEUE", "class_name": "QueueDO" }]
   },
   // Accounts, sessions, login codes, workspaces and the list of queues.
-  // database_id: replace with the id from `npx wrangler d1 create aqona` before the first remote deploy.
-  "d1_databases": [{ "binding": "DB", "database_name": "aqona", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }],
+  // Created in the Cloudflare dashboard (Storage & Databases → D1). `npm run deploy` applies migrations/ to it first.
+  "d1_databases": [{ "binding": "DB", "database_name": "aqona", "database_id": "20348698-6725-4973-817f-61e455b73fca", "migrations_dir": "migrations" }],
   // The free plan only allows SQLite-backed Durable Objects.
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["QueueDO"] }],
   "vars": {
