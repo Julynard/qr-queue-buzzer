@@ -1,11 +1,16 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { QueueCore, MAX_TICKETS_PER_DAY } from "../src/queue-core.js";
+import { QueueCore, MAX_TICKETS_PER_DAY } from "../src/queue-core.ts";
+import type { Ticket } from "../src/queue-core.ts";
 
 let counter = 0;
 const newId = () => (++counter).toString(16).padStart(12, "0");
 const NOW = Date.UTC(2026, 10, 20, 2, 0); // 2026-11-20 10:00 in Manila
-const join = (q, body = {}) => q.join(body, { now: NOW, newId });
+function join(q: QueueCore, body: { name?: unknown; key?: unknown } = {}): { ticket: Ticket; created: boolean } {
+  const r = q.join(body, { now: NOW, newId });
+  if ("error" in r) throw new Error("queue unexpectedly full");
+  return r;
+}
 const KEY = "a".repeat(32);
 const sub = (n = 1) => ({ endpoint: `https://push.example.com/${n}`, keys: { p256dh: "x", auth: "y" } });
 
@@ -43,7 +48,7 @@ test("names are trimmed and cut to 30 characters", () => {
 test("the queue refuses new tickets after 999 in one day", () => {
   const q = new QueueCore({ meta: { nextNum: MAX_TICKETS_PER_DAY } });
   assert.equal(join(q).ticket.num, MAX_TICKETS_PER_DAY);
-  assert.deepEqual(join(q), { error: "full" });
+  assert.deepEqual(q.join({}, { now: NOW, newId }), { error: "full" });
 });
 
 test("buzz, ack, done follow the normal flow", () => {
@@ -117,9 +122,9 @@ test("push subscriptions: validated, de-duplicated by address, dead ones dropped
   q.subscribe(id, sub(1));
   q.subscribe(id, sub(1));
   q.subscribe(id, sub(2));
-  assert.equal(q.tickets.get(id).subs.length, 2);
+  assert.equal(q.tickets.get(id)?.subs.length, 2);
   q.dropSub(id, sub(1).endpoint);
-  assert.deepEqual(q.tickets.get(id).subs.map((s) => s.endpoint), [sub(2).endpoint]);
+  assert.deepEqual(q.tickets.get(id)?.subs.map((s) => s.endpoint), [sub(2).endpoint]);
 });
 
 test("starting a new day clears every ticket and restarts numbering at #1", () => {
@@ -134,7 +139,7 @@ test("starting a new day clears every ticket and restarts numbering at #1", () =
   assert.equal(join(q).ticket.num, 1);
   const c = q.takeChanges();
   assert.equal(c.clearAll, true);
-  assert.equal(c.meta.nextNum, 2);
+  assert.equal(c.meta?.nextNum, 2);
 });
 
 test("yesterday's ticket reports 'reset', a removed one reports 'gone'", () => {
@@ -169,7 +174,7 @@ test("automatic reset runs once its time has passed, then schedules the next day
   join(q);
   assert.equal(q.autoResetIfDue(Date.UTC(2026, 10, 20, 15, 59)), null);
   const cleared = q.autoResetIfDue(Date.UTC(2026, 10, 20, 16, 0, 5));
-  assert.equal(cleared.length, 2);
+  assert.equal(cleared?.length, 2);
   assert.equal(q.tickets.size, 0);
   assert.equal(q.meta.nextResetAt, Date.UTC(2026, 10, 21, 16, 0));
   assert.equal(q.autoResetIfDue(Date.UTC(2026, 10, 20, 16, 1)), null, "does not reset twice");
@@ -180,8 +185,8 @@ test("a reset missed while nobody was around happens on the next request", () =>
   q.scheduleNextReset(NOW);
   join(q);
   const threeDaysLater = NOW + 3 * 86400_000;
-  assert.equal(q.autoResetIfDue(threeDaysLater).length, 1);
-  assert.ok(q.meta.nextResetAt > threeDaysLater);
+  assert.equal(q.autoResetIfDue(threeDaysLater)?.length, 1);
+  assert.ok((q.meta.nextResetAt ?? 0) > threeDaysLater);
 });
 
 test("turning automatic reset off stops it", () => {

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { nextResetAfter, isValidResetTime, isValidTimeZone } from "../src/reset-time.js";
+import { nextResetAfter, isValidResetTime, isValidTimeZone } from "../src/reset-time.ts";
 
 test("midnight Manila is 16:00 UTC the same UTC day", () => {
   const now = Date.UTC(2026, 10, 20, 2, 0); // 10:00 Manila

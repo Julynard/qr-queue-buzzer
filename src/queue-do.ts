@@ -3,34 +3,42 @@
 // and runs the automatic daily reset with a Durable Object alarm.
 
 import { DurableObject } from "cloudflare:workers";
-import { QueueCore, ACTIONS } from "./queue-core.js";
-import { sendPush } from "./push.js";
+import { QueueCore, isAction } from "./queue-core.ts";
+import type { Meta, Ticket } from "./queue-core.ts";
+import { sendPush } from "./push.ts";
+import type { VapidKeys } from "./push.ts";
 
 const POLL_ONLINE_MS = 25_000; // phone counts as "page open" if it polled this recently (fallback mode)
 const MAX_BODY = 10_000;
 
-const json = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json" } });
+const json = (obj: unknown, status = 200): Response => new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json" } });
 
-async function readJson(request) {
+async function readJson(request: Request): Promise<Record<string, unknown> | null> {
   const text = await request.text();
   if (text.length > MAX_BODY) return null;
-  try { return JSON.parse(text || "{}"); } catch { return null; }
+  try {
+    const v: unknown = JSON.parse(text || "{}");
+    return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
+  } catch { return null; }
 }
 
-function newId() {
+function newId(): string {
   return [...crypto.getRandomValues(new Uint8Array(6))].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-export class QueueDO extends DurableObject {
-  constructor(ctx, env) {
+export class QueueDO extends DurableObject<Env> {
+  sql: SqlStorage;
+  core: QueueCore;
+  lastSeen = new Map<string, number>(); // ticket id -> last poll time (memory only)
+
+  constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
     this.sql = ctx.storage.sql;
     this.sql.exec("CREATE TABLE IF NOT EXISTS tickets (id TEXT PRIMARY KEY, data TEXT NOT NULL)");
     this.sql.exec("CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT NOT NULL)");
-    const tickets = this.sql.exec("SELECT data FROM tickets").toArray().map((r) => JSON.parse(r.data));
-    const metaRow = this.sql.exec("SELECT v FROM meta WHERE k = 'state'").toArray()[0];
-    this.core = new QueueCore({ tickets, meta: metaRow ? JSON.parse(metaRow.v) : {} });
-    this.lastSeen = new Map(); // ticket id -> last poll time (memory only)
+    const tickets = this.sql.exec<{ data: string }>("SELECT data FROM tickets").toArray().map((r) => JSON.parse(r.data) as Ticket);
+    const metaRow = this.sql.exec<{ v: string }>("SELECT v FROM meta WHERE k = 'state'").toArray()[0];
+    this.core = new QueueCore({ tickets, meta: metaRow ? (JSON.parse(metaRow.v) as Meta) : {} });
 
     // Phones send "ping" every 30s to keep the connection alive; answered without waking this object.
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair("ping", "pong"));
@@ -41,7 +49,7 @@ export class QueueDO extends DurableObject {
   }
 
   // ---------- storage ----------
-  #save() {
+  #save(): void {
     const c = this.core.takeChanges();
     if (c.clearAll) this.sql.exec("DELETE FROM tickets");
     for (const id of c.del) this.sql.exec("DELETE FROM tickets WHERE id = ?", id);
@@ -49,7 +57,7 @@ export class QueueDO extends DurableObject {
     if (c.meta) this.sql.exec("INSERT OR REPLACE INTO meta (k, v) VALUES ('state', ?)", JSON.stringify(c.meta));
   }
 
-  async #syncAlarm() {
+  async #syncAlarm(): Promise<void> {
     const want = this.core.meta.nextResetAt;
     const have = await this.ctx.storage.getAlarm();
     if (want == null) { if (have != null) await this.ctx.storage.deleteAlarm(); }
@@ -57,7 +65,7 @@ export class QueueDO extends DurableObject {
   }
 
   // ---------- live updates ----------
-  #isOnline = (id) =>
+  #isOnline = (id: string): boolean =>
     this.ctx.getWebSockets("t:" + id).some((ws) => ws.readyState === WebSocket.OPEN) ||
     Date.now() - (this.lastSeen.get(id) || 0) < POLL_ONLINE_MS;
 
@@ -66,20 +74,20 @@ export class QueueDO extends DurableObject {
     return { type: "state", tickets: this.core.list(this.#isOnline), settings, nextResetAt, dayStartedAt };
   }
 
-  #send(ws, msg) { try { ws.send(JSON.stringify(msg)); } catch {} }
-  #broadcastStaff() {
+  #send(ws: WebSocket, msg: unknown): void { try { ws.send(JSON.stringify(msg)); } catch {} }
+  #broadcastStaff(): void {
     const sockets = this.ctx.getWebSockets("staff");
     if (!sockets.length) return;
     const msg = this.staffState();
     for (const ws of sockets) this.#send(ws, msg);
   }
-  #notifyTicket(id) {
+  #notifyTicket(id: string): void {
     const msg = { type: "status", status: this.core.status(id) };
     for (const ws of this.ctx.getWebSockets("t:" + id)) this.#send(ws, msg);
   }
 
   /** After a reset: tell every waiting phone, then close their connections. */
-  #applyReset(clearedIds) {
+  #applyReset(clearedIds: string[] | null): void {
     if (!clearedIds) { this.#save(); return; }
     this.#save();
     for (const id of clearedIds) {
@@ -93,9 +101,10 @@ export class QueueDO extends DurableObject {
   }
 
   // ---------- push ----------
-  async #pushTicket(t) {
-    const vapid = { publicKey: this.env.VAPID_PUBLIC_KEY, privateKey: this.env.VAPID_PRIVATE_KEY, subject: this.env.VAPID_SUBJECT };
-    if (!vapid.publicKey || !vapid.privateKey || !vapid.subject) { console.log("push skipped: VAPID keys not set"); return; }
+  async #pushTicket(t: Ticket): Promise<void> {
+    const { VAPID_PUBLIC_KEY: publicKey, VAPID_PRIVATE_KEY: privateKey, VAPID_SUBJECT: subject } = this.env;
+    if (!publicKey || !privateKey || !subject) { console.log("push skipped: VAPID keys not set"); return; }
+    const vapid: VapidKeys = { publicKey, privateKey, subject };
     const payload = JSON.stringify({
       title: `🔔 Order #${t.num} is ready!`,
       body: (t.name ? t.name + ", p" : "P") + "lease come to the counter.",
@@ -107,13 +116,13 @@ export class QueueDO extends DurableObject {
         const r = await sendPush(sub, payload, vapid);
         if (!r.ok) console.log(`push failed for #${t.num}: ${r.status}`);
         if (r.gone) { this.core.dropSub(t.id, sub.endpoint); changed = true; }
-      } catch (e) { console.log(`push error for #${t.num}: ${e.message}`); }
+      } catch (e) { console.log(`push error for #${t.num}: ${e instanceof Error ? e.message : String(e)}`); }
     }
     if (changed) { this.#save(); this.#broadcastStaff(); }
   }
 
   // ---------- requests ----------
-  async fetch(request) {
+  async fetch(request: Request): Promise<Response> {
     const now = Date.now();
     const cleared = this.core.autoResetIfDue(now);
     if (cleared) { this.#applyReset(cleared); await this.#syncAlarm(); }
@@ -121,11 +130,11 @@ export class QueueDO extends DurableObject {
     const url = new URL(request.url);
     const p = url.pathname;
     const post = request.method === "POST";
-    let m;
+    let m: RegExpMatchArray | null;
 
     if (p === "/ws/staff") return this.#acceptSocket(request, "staff", () => this.staffState());
     if ((m = p.match(/^\/ws\/t\/([a-f0-9]{12})$/))) {
-      const id = m[1];
+      const id = m[1]!;
       return this.#acceptSocket(request, "t:" + id, () => ({ type: "status", status: this.core.status(id) }), () => this.#broadcastStaff());
     }
 
@@ -135,19 +144,20 @@ export class QueueDO extends DurableObject {
       const body = await readJson(request);
       if (!body) return json({ error: "bad request" }, 400);
       const r = this.core.join(body, { now, newId });
-      if (r.error === "full") return json({ error: "full" }, 429);
+      if ("error" in r) return json({ error: "full" }, 429);
       this.#save();
       if (r.created) this.#broadcastStaff();
       return json(this.core.publicTicket(r.ticket));
     }
 
     if ((m = p.match(/^\/api\/ticket\/([a-f0-9]{12})$/))) {
-      const t = this.core.tickets.get(m[1]);
-      return json({ ticket: t ? this.core.publicTicket(t) : null, status: this.core.status(m[1]) });
+      const id = m[1]!;
+      const t = this.core.tickets.get(id);
+      return json({ ticket: t ? this.core.publicTicket(t) : null, status: this.core.status(id) });
     }
 
     if ((m = p.match(/^\/api\/status\/([a-f0-9]{12})$/))) {
-      const id = m[1];
+      const id = m[1]!;
       const status = this.core.status(id);
       if (this.core.tickets.has(id)) {
         const wasOnline = this.#isOnline(id);
@@ -159,13 +169,14 @@ export class QueueDO extends DurableObject {
 
     if ((m = p.match(/^\/api\/subscribe\/([a-f0-9]{12})$/)) && post) {
       const sub = await readJson(request);
-      const ok = this.core.subscribe(m[1], sub);
+      const ok = this.core.subscribe(m[1]!, sub);
       if (ok) { this.#save(); this.#broadcastStaff(); }
       return json({ ok });
     }
 
-    if ((m = p.match(/^\/api\/([a-z]+)\/([a-f0-9]{12})$/)) && post && ACTIONS.includes(m[1])) {
-      const [, action, id] = m;
+    if ((m = p.match(/^\/api\/([a-z]+)\/([a-f0-9]{12})$/)) && post && isAction(m[1]!)) {
+      const action = m[1]!;
+      const id = m[2]!;
       const r = this.core.act(action, id);
       if (r.ok) {
         this.#save();
@@ -173,7 +184,7 @@ export class QueueDO extends DurableObject {
         if (r.removed) for (const ws of this.ctx.getWebSockets("t:" + id)) try { ws.close(1000, "removed"); } catch {}
         if (r.changed) this.#broadcastStaff();
         // Push goes out after the state is saved; a re-buzz sends it again even though nothing changed.
-        if (action === "buzz" && r.ticket.subs.length) this.ctx.waitUntil(this.#pushTicket(r.ticket));
+        if (action === "buzz" && r.ticket?.subs.length) this.ctx.waitUntil(this.#pushTicket(r.ticket));
       }
       return json({ ok: r.ok, status: this.core.status(id) });
     }
@@ -197,7 +208,7 @@ export class QueueDO extends DurableObject {
     return new Response("Not found", { status: 404 });
   }
 
-  #acceptSocket(request, tag, firstMessage, onOpen) {
+  #acceptSocket(request: Request, tag: string, firstMessage: () => unknown, onOpen?: () => void): Response {
     if (request.headers.get("Upgrade") !== "websocket") return new Response("Expected WebSocket", { status: 426 });
     const { 0: client, 1: server } = new WebSocketPair();
     this.ctx.acceptWebSocket(server, [tag]);
@@ -206,7 +217,7 @@ export class QueueDO extends DurableObject {
     return new Response(null, { status: 101, webSocket: client });
   }
 
-  async alarm() {
+  async alarm(): Promise<void> {
     const now = Date.now();
     const cleared = this.core.autoResetIfDue(now);
     if (cleared) this.#applyReset(cleared);
@@ -214,12 +225,12 @@ export class QueueDO extends DurableObject {
     await this.#syncAlarm();
   }
 
-  webSocketMessage() {} // only "ping", answered by the auto-response
+  webSocketMessage(): void {} // only "ping", answered by the auto-response
 
-  webSocketClose(ws) {
+  webSocketClose(ws: WebSocket): void {
     try { ws.close(1000, "closing"); } catch {}
     if (this.ctx.getTags(ws).some((t) => t.startsWith("t:"))) this.#broadcastStaff();
   }
 
-  webSocketError(ws) { this.webSocketClose(ws); }
+  webSocketError(ws: WebSocket): void { this.webSocketClose(ws); }
 }
