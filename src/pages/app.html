@@ -157,7 +157,7 @@ async function addQueue(workspaceId){
   const name = prompt('Name of the new queue (for example "Counter 2"):');
   if (!name) return;
   try { await api('/queues', { method: 'POST', body: JSON.stringify({ workspaceId, name }) }); await load(); }
-  catch(err) { msg.textContent = err.status === 402 ? 'The Free plan has 1 queue. More queues come with Plus (coming soon).' : err.message; }
+  catch(err) { msg.textContent = err.status === 402 ? 'The Free plan has 1 queue. More counters come with Pro (coming soon).' : err.message; }
 }
 async function deleteQueue(id, name){
   if (!confirm('Delete "' + name + '"?\n\nIts QR address, every ticket and all its settings are removed. Printed QR codes stop working. This cannot be undone.')) return;

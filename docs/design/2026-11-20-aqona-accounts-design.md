@@ -47,7 +47,8 @@ Customers waiting in a queue never sign up and never give personal data. That pr
 
 - Cloudflare Workers: the owner agreed to move to **Workers Paid** (about US$5/month) when needed. That removes the free
   plan's shared 100,000 requests/day ceiling and its Worker size limit, and allows Cloudflare Email Service.
-- The GitHub repository is public: no secrets, prices or business strategy in the repo.
+- The GitHub repository is public: no secrets or business strategy in the repo. Prices are public on the pricing page
+  (owner, 2026-11-21: Free ₱0, Pro ₱499/month, Max ₱1,499/month; yearly = 2 months free).
 - Email sending needs an owned domain (`aqona.app`; the owner will buy it before real shops print QR codes).
   Login codes and invites are sent with **Cloudflare Email Service** (needs Workers Paid and the domain onboarded).
 - Production Google sign-in should run on the owned domain. The `workers.dev` address is the live site (preview builds are off),
@@ -89,7 +90,7 @@ The user chose A.
 
   | Limit | Free | Enforcement |
   |---|---|---|
-  | Queues per workspace | 1 | Hard: creating a second queue is refused with an "upgrade to Plus" message |
+  | Queues per workspace | 1 | Hard: creating a second queue is refused with an "upgrade to Pro" message |
   | People per workspace | Owner + 2 staff | Hard: a fourth invite is refused (pending invites count) |
   | Tickets per queue per day | 300 | **Soft**: customers are never blocked; past 300, the staff page shows "over the Free limit today" |
 
@@ -177,7 +178,7 @@ What they can do:
   **block / unblock** (blocked users cannot log in and their sessions end immediately); **delete** (same full deletion as
   self-delete, including the queues' live data).
 - **Workspaces**: search by name or queue address; see owner, members, queues, plan, tickets today;
-  **change plan by hand** (Free / Plus / Business), so early paying shops can be served before online payments exist;
+  **change plan by hand** (Free / Pro / Max), so early paying shops can be served before online payments exist;
   **transfer ownership** to another member; **delete**.
 - **Queues**: **pause** a queue (its QR shows "This queue is not available right now"; staff page shows why) and resume it.
 - **Audit log**: every admin action is recorded (who, what, which account, when) and shown in `/admin/log`.

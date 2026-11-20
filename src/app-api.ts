@@ -79,7 +79,7 @@ export async function handleAppApi(request: Request, env: Env, auth: Auth, sessi
     const w = (await workspacesOf(env.DB, userId)).find((x) => x.id === workspaceId);
     if (!w || w.role !== "owner") return json({ error: "Only the owner can add queues." }, 403);
     if ((await queuesOf(env.DB, w.id)).length >= limitsFor(w.plan).queues) {
-      return json({ error: "upgrade", limit: "queues", message: "The Free plan has 1 queue. More queues come with Plus." }, 402);
+      return json({ error: "upgrade", limit: "queues", message: "The Free plan has 1 queue. More counters come with Pro." }, 402);
     }
     const q = await newQueue(env, w.id, name);
     return json({ id: q.id, slug: q.slug });
