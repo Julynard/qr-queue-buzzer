@@ -1,11 +1,11 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "qr-queue-buzzer",
+  "name": "aqona",
   "main": "src/index.ts",
   "compatibility_date": "2025-11-01",
   // Better Auth needs Node.js APIs (crypto, AsyncLocalStorage).
   "compatibility_flags": ["nodejs_compat"],
-  // Keep the public https://qr-queue-buzzer.<account>.workers.dev address on after every deploy.
+  // Keep the public https://aqona.<account>.workers.dev address on after every deploy.
   // Preview addresses stay off: preview versions would share the live queue.
   "workers_dev": true,
   "preview_urls": false,

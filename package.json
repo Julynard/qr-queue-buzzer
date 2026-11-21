@@ -1,5 +1,5 @@
 {
-  "name": "qr-queue-buzzer",
+  "name": "aqona",
   "version": "1.0.0",
   "private": true,
   "description": "QR code queue buzzer: customers scan, staff buzz their phone. Runs on Cloudflare Workers.",

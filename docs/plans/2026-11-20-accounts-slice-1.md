@@ -143,6 +143,6 @@
 ## Owner-only steps (before deploy)
 
 1. `npx wrangler login`, then `npx wrangler d1 create aqona` (or let the builder run it after login).
-2. Google Cloud OAuth client (Web app): authorized redirect `https://qr-queue-buzzer.<account>.workers.dev/api/auth/callback/google` and `http://127.0.0.1:8787/api/auth/callback/google`.
+2. Google Cloud OAuth client (Web app): authorized redirect `https://aqona.<account>.workers.dev/api/auth/callback/google` and `http://127.0.0.1:8787/api/auth/callback/google`.
 3. `npx wrangler secret put` for `BETTER_AUTH_SECRET` (`openssl rand -base64 32`), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `TURNSTILE_SECRET_KEY`, `BETTER_AUTH_API_KEY`.
 4. Turnstile site in the Cloudflare dashboard (site key goes in `wrangler.jsonc` vars, it is public).
