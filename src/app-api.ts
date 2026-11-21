@@ -4,7 +4,8 @@
 import type { Auth, SessionInfo } from "./auth.ts";
 import { uniqueSlug, randomSuffix } from "./slug.ts";
 import { isPlan, limitsFor } from "./plans.ts";
-import { createQueue, deleteQueueRow, queuesOf, roleIn, slugTaken } from "./queues.ts";
+import { createQueue, deleteQueueRow, memberRole, queuesOf, roleIn, slugTaken } from "./queues.ts";
+import { acceptProblem, addMember, createInvite, inviteById, inviteProblem, invitesForEmail, invitesOf, membersOf, normEmail, removeMember, seatsLeft, setInviteStatus } from "./team.ts";
 import { allows, isSuperadmin } from "./access.ts";
 import type { QueueRow } from "./queues.ts";
 
@@ -57,7 +58,10 @@ export async function handleAppApi(request: Request, env: Env, auth: Auth, sessi
       id: w.id, name: w.name, role: w.role, plan: w.plan ?? "free", limits: limitsFor(w.plan),
       queues: (await queuesOf(env.DB, w.id)).map((q) => ({ id: q.id, slug: q.slug, name: q.name })),
     })));
-    return json({ user: { name: session.user.name, email: session.user.email }, superadmin: isSuperadmin(session.user.email, env.SUPERADMIN_EMAILS), workspaces });
+    // Invites waiting for this email, so invited staff join a shop instead of making their own.
+    const invites = (await invitesForEmail(env.DB, session.user.email, Date.now()))
+      .filter((i) => !workspaces.some((w) => w.id === i.organizationId)).map((i) => ({ id: i.id, shop: i.shop }));
+    return json({ user: { name: session.user.name, email: session.user.email }, superadmin: isSuperadmin(session.user.email, env.SUPERADMIN_EMAILS), workspaces, invites });
   }
 
   if (p === "/api/app/onboard" && request.method === "POST") {
@@ -85,6 +89,71 @@ export async function handleAppApi(request: Request, env: Env, auth: Auth, sessi
     }
     const q = await newQueue(env, w.id, name);
     return json({ id: q.id, slug: q.slug });
+  }
+
+  // ---------- team: invites and staff (owner only, checked on every call) ----------
+  const origin = (env.PUBLIC_URL || new URL(request.url).origin).replace(/\/$/, "");
+  const ownerOf = async (workspaceId: string): Promise<boolean> => !!workspaceId && allows("owner", await roleIn(env, session.user, workspaceId));
+  const teamOf = async (workspaceId: string) => {
+    const now = Date.now();
+    const plan = (await env.DB.prepare('select plan from "organization" where id = ?').bind(workspaceId).first<{ plan: string | null }>())?.plan ?? "free";
+    const members = await membersOf(env.DB, workspaceId);
+    const invites = await invitesOf(env.DB, workspaceId, now);
+    const limits = limitsFor(plan);
+    return { plan, limits, members, invites, seatsLeft: seatsLeft(limits.people, members.length, invites.length) };
+  };
+  const inviteLink = (id: string) => `${origin}/invite/${id}`;
+
+  if (p === "/api/app/team" && request.method === "GET") {
+    const workspaceId = new URL(request.url).searchParams.get("workspaceId") ?? "";
+    if (!(await ownerOf(workspaceId))) return json({ error: "Only the owner can see the team." }, 403);
+    const t = await teamOf(workspaceId);
+    return json({
+      plan: t.plan, limits: t.limits, seatsLeft: t.seatsLeft,
+      members: t.members.map((m) => ({ userId: m.userId, name: m.name, email: m.email, role: m.role, joined: m.createdAt, you: m.userId === userId })),
+      invites: t.invites.map((i) => ({ id: i.id, email: i.email, createdAt: i.createdAt, expiresAt: i.expiresAt, link: inviteLink(i.id) })),
+    });
+  }
+
+  if (p === "/api/app/invites" && request.method === "POST") {
+    const workspaceId = typeof body.workspaceId === "string" ? body.workspaceId : "";
+    if (!(await ownerOf(workspaceId))) return json({ error: "Only the owner can invite staff." }, 403);
+    const email = normEmail(body.email);
+    const t = await teamOf(workspaceId);
+    const problem = inviteProblem(email, { ownEmail: session.user.email, memberEmails: t.members.map((m) => m.email), liveInviteEmails: t.invites.map((i) => i.email), seatsLeft: t.seatsLeft });
+    if (problem) return json({ error: problem }, t.seatsLeft === 0 && !problem.startsWith("Enter") ? 402 : 400);
+    const inv = await createInvite(env.DB, workspaceId, email, userId, Date.now());
+    return json({ id: inv.id, email: inv.email, link: inviteLink(inv.id), expiresAt: inv.expiresAt });
+  }
+
+  if ((m = p.match(/^\/api\/app\/invites\/([a-f0-9]{24})\/cancel$/)) && request.method === "POST") {
+    const inv = await inviteById(env.DB, m[1]!);
+    if (!inv || !(await ownerOf(inv.organizationId))) return json({ error: "Only the owner can cancel this invite." }, 403);
+    if (inv.status === "pending") await setInviteStatus(env.DB, inv.id, "canceled");
+    return json({ ok: true });
+  }
+
+  if ((m = p.match(/^\/api\/app\/invites\/([a-f0-9]{24})\/accept$/)) && request.method === "POST") {
+    const now = Date.now();
+    const inv = await inviteById(env.DB, m[1]!);
+    const already = inv ? !!(await memberRole(env.DB, userId, inv.organizationId)) : false;
+    const seats = inv ? (await teamOf(inv.organizationId)).seatsLeft : null;
+    // This invite itself is one of the pending ones counted in seatsLeft, so give its seat back before checking.
+    const problem = acceptProblem(inv, session.user.email, now, already, seats === null ? null : seats + 1);
+    if (problem) return json({ error: problem }, 400);
+    if (!already) await addMember(env.DB, inv!.organizationId, userId, now);
+    if (inv!.status === "pending") await setInviteStatus(env.DB, inv!.id, "accepted");
+    const q = (await queuesOf(env.DB, inv!.organizationId))[0];
+    return json({ ok: true, workspaceId: inv!.organizationId, slug: q ? q.slug : null });
+  }
+
+  if (p === "/api/app/members/remove" && request.method === "POST") {
+    const workspaceId = typeof body.workspaceId === "string" ? body.workspaceId : "";
+    const target = typeof body.userId === "string" ? body.userId : "";
+    if (!(await ownerOf(workspaceId))) return json({ error: "Only the owner can remove staff." }, 403);
+    if (target === userId) return json({ error: "You can't remove yourself." }, 400);
+    if (!(await removeMember(env.DB, workspaceId, target))) return json({ error: "That person isn't staff on this team." }, 404);
+    return json({ ok: true });
   }
 
   // Aqona's own people (SUPERADMIN_EMAILS) can put a shop on any plan by hand, e.g. to try Pro before payments exist.
