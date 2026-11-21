@@ -37,8 +37,9 @@
     //   "console" local dev (set in .dev.vars): the code is printed in the wrangler dev terminal.
     //   "off"     Google sign-in only.
     "EMAIL_MODE": "log",
-    // Cloudflare Turnstile site key (public), used on log-in and "Take a number". This one is Cloudflare's
-    // always-pass test key. The checks run only where the TURNSTILE_SECRET_KEY secret is set.
-    "TURNSTILE_SITE_KEY": "1x00000000000000000000AA"
+    // Cloudflare Turnstile site key (public), used on log-in and "Take a number". Its secret is the
+    // TURNSTILE_SECRET_KEY secret; the checks run only where that is set. Local dev uses Cloudflare's
+    // always-pass test keys instead (TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY in .dev.vars).
+    "TURNSTILE_SITE_KEY": "0x4AAAAAAGL8WmsowPjx83wd"
   }
 }
