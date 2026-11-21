@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { allows, canManage, classifyQueuePath, isSuperadmin } from "../src/access.ts";
 import type { Need, Role } from "../src/access.ts";
-import { FREE_LIMITS, limitsFor } from "../src/plans.ts";
+import { FREE_LIMITS, MAX_LIMITS, PRO_LIMITS, isPlan, limitsFor } from "../src/plans.ts";
 
 const ID = "abc123abc123";
 
@@ -67,4 +67,17 @@ test("Free plan limits", () => {
   assert.deepEqual(FREE_LIMITS, { queues: 1, people: 3, softTicketsPerDay: 300 });
   assert.equal(limitsFor("free"), FREE_LIMITS);
   assert.equal(limitsFor("something-else"), FREE_LIMITS, "unknown plans get the Free limits");
+  assert.equal(limitsFor(null), FREE_LIMITS);
+});
+
+test("Pro and Max limits", () => {
+  assert.deepEqual(limitsFor("pro"), { queues: 5, people: 6, softTicketsPerDay: null });
+  assert.equal(limitsFor("pro"), PRO_LIMITS);
+  assert.deepEqual(limitsFor("max"), { queues: 10, people: null, softTicketsPerDay: null });
+  assert.equal(limitsFor("max"), MAX_LIMITS);
+});
+
+test("only free, pro and max are plans", () => {
+  for (const p of ["free", "pro", "max"]) assert.ok(isPlan(p), p);
+  for (const p of ["Pro", "plus", "", null, 1, undefined]) assert.equal(isPlan(p), false, String(p));
 });

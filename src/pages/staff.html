@@ -13,19 +13,29 @@
   a{color:var(--accent)}a:hover{color:#095A96}
   .hide{display:none!important}
   .anton{font-family:Anton,Impact,sans-serif;font-weight:400}
-  .brand{font-family:'Space Grotesk',Inter,sans-serif;font-weight:700;letter-spacing:-.03em}.brand b{color:var(--accent);font-weight:700}
+  .brand{font-family:'Space Grotesk',Inter,sans-serif;font-weight:700;letter-spacing:-.03em;color:var(--ink);text-decoration:none}.brand b{color:var(--accent);font-weight:700}
   button{font:inherit;cursor:pointer}
   button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
   /* top bar (same as the owner dashboard) */
   .topbar{position:sticky;top:0;z-index:20;height:64px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 20px}
   .topbar .brand{font-size:26px;flex:none}
+  .planmenu{position:relative;flex:none}
+  .planmenu summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:6px}
+  .planmenu summary::-webkit-details-marker{display:none}
+  .planmenu .menu{position:absolute;right:0;top:calc(100% + 6px);min-width:250px;background:#fff;border:2px solid var(--ink);border-radius:8px;box-shadow:0 14px 30px rgba(10,42,74,.14);padding:6px;display:flex;flex-direction:column;z-index:25}
+  .planmenu .menu button[aria-pressed=true]{background:var(--paper);font-weight:800}
+  .planmenu summary #planMenuName{color:var(--ink)}
+  .planmenu .note{padding:6px 12px 8px;font-size:12px;color:var(--mute)}
+  .menu .who .emailcopy{display:block;width:100%;min-height:0;padding:2px 0 0;border:0;border-radius:0;background:none;font:inherit;font-size:13px;font-weight:500;color:var(--soft);text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:copy}
+  .menu .who .emailcopy:hover{background:none;color:var(--ink);text-decoration:underline}
+  .menu .who .emailcopy.copied{color:#166534;font-weight:700;text-decoration:none}
   .acct{position:relative;flex:none}
   .acct summary{list-style:none;display:flex;align-items:center;gap:10px;min-height:44px;padding:0 8px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700}
   .acct summary::-webkit-details-marker{display:none}
   .acct summary:hover,.acct[open] summary{background:var(--ground)}
   .acct .caret{width:16px;height:16px;flex:none}
-  .acct .menu{position:absolute;right:0;top:calc(100% + 6px);min-width:250px;background:#fff;border:2px solid var(--ink);border-radius:8px;box-shadow:0 14px 30px rgba(10,42,74,.14);padding:6px;display:flex;flex-direction:column}
-  .acct .menu .who{padding:10px 12px 12px;font-size:13px;color:var(--soft);border-bottom:1px solid var(--line);margin-bottom:4px;word-break:break-all}
+  .acct .menu{position:absolute;right:0;top:calc(100% + 6px);min-width:250px;max-width:300px;background:#fff;border:2px solid var(--ink);border-radius:8px;box-shadow:0 14px 30px rgba(10,42,74,.14);padding:6px;display:flex;flex-direction:column}
+  .acct .menu .who{padding:10px 12px 12px;font-size:13px;color:var(--soft);border-bottom:1px solid var(--line);margin-bottom:4px;}
   .acct .menu .who b{display:block;color:var(--ink);font-size:14px}
   .acct .menu a,.acct .menu button{min-height:44px;padding:0 12px;border:0;border-radius:6px;background:none;color:var(--ink);font-weight:600;font-size:14px;text-align:left;text-decoration:none;display:flex;align-items:center}
   .acct .menu a:hover,.acct .menu button:hover{background:var(--ground);color:var(--ink)}
@@ -47,7 +57,10 @@
   .shopsw summary b{display:block;font-size:14px;line-height:1.2}.shopsw summary span{font-size:12px}
   .shopsw .menu{position:absolute;left:0;bottom:calc(100% + 8px);width:320px;background:#fff;border:2px solid var(--ink);border-radius:8px;box-shadow:0 14px 30px rgba(10,42,74,.14);padding:6px;display:flex;flex-direction:column;z-index:15}
     .phoneonly{display:flex!important}
-  .menu a,.menu button{justify-content:space-between;gap:10px}
+  .menu .who{padding:10px 12px 12px;font-size:13px;color:var(--soft);border-bottom:1px solid var(--line);margin-bottom:4px}
+  .menu .who b{display:block;color:var(--ink);font-size:14px}
+  .menu a,.menu button{min-height:44px;padding:0 12px;border:0;border-radius:6px;background:none;color:var(--ink);font-weight:600;font-size:14px;text-align:left;text-decoration:none;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .menu a:hover,.menu button:hover{background:var(--ground);color:var(--ink)}
   .caret{width:16px;height:16px;flex:none}
   a.item{text-decoration:none}a.item:hover{color:var(--ink);background:var(--ground)}
   .app{min-height:calc(100vh - 64px);display:flex;flex-wrap:wrap;align-items:stretch}
@@ -140,12 +153,21 @@
 <header class="topbar">
   <a class="brand" href="/app" style="text-decoration:none"><b>aqo</b>na</a>
   <span class="grow"></span>
-  <button class="planchip" onclick="go('plan')">Free plan · <span>See Pro</span></button>
+  <button class="planchip" id="planChip" onclick="go('plan')">Free plan · <span>See Pro</span></button>
+  <details class="planmenu hide" id="planMenu">
+    <summary class="planchip" aria-label="Change plan (super admin)"><span id="planMenuName">Free plan</span>
+      <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+    <div class="menu">
+      <div class="mtitle">Super admin · this shop's plan</div>
+      <button data-plan="free">Free</button><button data-plan="pro">Pro</button><button data-plan="max">Max</button>
+      <div class="note" id="planNote">Changes this shop's plan right away. No payment is taken.</div>
+    </div>
+  </details>
   <details class="acct" id="acct">
     <summary aria-label="Account menu"><span class="avatar" id="avatar" aria-hidden="true"></span><span class="nm" id="meName"></span>
       <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
     <div class="menu">
-      <div class="who"><b id="menuName"></b><span id="menuEmail"></span></div>
+      <div class="who"><b id="menuName"></b><button type="button" class="emailcopy" id="menuEmail"></button></div>
       <div class="phoneonly" style="flex-direction:column" id="menuShops"></div>
       <a href="/app#account">Account</a>
       <button onclick="signOut()">Sign out</button>
@@ -263,6 +285,17 @@ const JOIN = '__JOIN__';
 const BASE = '__BASE__'; // this queue's address, e.g. /q/anas-milk-tea
 const CAN_MANAGE = __CAN_MANAGE__; // owner (or superadmin): Team and Settings. Staff only run the queue.
 const $ = id => document.getElementById(id);
+// Email in the account menu: one line ("…" when long); click to copy it.
+function setMenuEmail(email){
+  const el = $('menuEmail');
+  el.textContent = email; el.title = email + ' (click to copy)'; el.setAttribute('aria-label', 'Copy email ' + email);
+  el.onclick = async () => {
+    try { await navigator.clipboard.writeText(email); } catch(e) { prompt('Copy your email:', email); return; }
+    el.textContent = 'Copied'; el.classList.add('copied');
+    clearTimeout(el._t); el._t = setTimeout(() => { el.textContent = email; el.classList.remove('copied'); }, 1500);
+  };
+}
+
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pad = n => String(n).padStart(3, '0');
 const LOCK = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="Locked, Pro plan"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
@@ -289,7 +322,29 @@ const GROUPS = [
   ...(CAN_MANAGE ? [['Manage', [['team','Team'], ['settings','Settings']]]] : []),
   ['Pro', [['branding','Branding',1], ['reports','Reports',1], ['log','Activity log',1]]],
 ];
-let state = null, settingsShown = false, tab = 'queue';
+let state = null, settingsShown = false, tab = 'queue', PLAN = 'free';
+// ---------- plan chip; super admins can switch the shop's plan here ----------
+const PLAN_LABEL = { free: 'Free', pro: 'Pro', max: 'Max' };
+function applyPlan(plan, superadmin, workspaceId){
+  const name = (PLAN_LABEL[plan] || 'Free') + ' plan';
+  $('planChip').innerHTML = plan === 'free' ? 'Free plan · <span>See Pro</span>' : name;
+  $('planChip').classList.toggle('hide', !!(superadmin && workspaceId));
+  $('planMenu').classList.toggle('hide', !(superadmin && workspaceId));
+  $('planMenuName').textContent = name;
+  document.querySelectorAll('#planMenu [data-plan]').forEach(b => {
+    b.setAttribute('aria-pressed', String(b.dataset.plan === plan));
+    b.onclick = async () => {
+      $('planNote').textContent = 'Saving…';
+      try {
+        const r = await fetch('/api/app/plan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ workspaceId, plan: b.dataset.plan }) });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d.error || 'Could not change the plan.');
+        location.reload();
+      } catch(e) { $('planNote').textContent = e.message; }
+    };
+  });
+}
+
 
 // ---------- sidebar + tabs (tab kept in the address, so a refresh stays put) ----------
 function renderNav(){
@@ -298,7 +353,7 @@ function renderNav(){
     '<div class="group"><div class="gtitle">' + title + '</div>' + items.map(([key, label, locked]) =>
       (key === 'home' ? '<a class="item" href="/app#home">' : '<button class="item" onclick="go(\'' + key + '\')"' + (tab === key ? ' aria-current="page"' : '') + '>') +
       '<span class="bar"></span><span class="lbl">' + label + '</span>' +
-      (locked ? LOCK : '') + (key === 'queue' ? '<span class="count">' + open + '</span>' : '') + (key === 'home' ? '</a>' : '</button>')).join('') + '</div>').join('');
+      (locked && PLAN === 'free' ? LOCK : '') + (key === 'queue' ? '<span class="count">' + open + '</span>' : '') + (key === 'home' ? '</a>' : '</button>')).join('') + '</div>').join('');
 }
 function go(key){
   tab = LOCKED[key] || SOON[key] || ['queue','qr'].includes(key) || (CAN_MANAGE && ['team','settings'].includes(key)) ? key : 'queue';
@@ -306,15 +361,21 @@ function go(key){
   const lk = LOCKED[tab] || SOON[tab];
   document.querySelectorAll('main > section').forEach(s => s.classList.toggle('hide', s.dataset.tab !== (lk ? 'locked' : tab)));
   if (lk) { $('lockedTitle').textContent = lk[0]; $('lockedHead').textContent = lk[1]; $('lockedBody').textContent = lk[2]; $('upgradeMsg').textContent = '';
-    $('lockedTag').textContent = SOON[tab] ? 'Coming soon · free on every plan' : 'Pro'; $('upgradeBtn').classList.toggle('hide', !!SOON[tab]); $('lockedIcon').classList.toggle('hide', !!SOON[tab]); }
+    const included = !!SOON[tab] || (PLAN !== 'free' && tab !== 'plan');
+    $('lockedTag').textContent = SOON[tab] ? 'Coming soon · free on every plan' : included ? 'In your plan · coming soon' : 'Pro';
+    $('upgradeBtn').classList.toggle('hide', included || PLAN !== 'free'); $('lockedIcon').classList.toggle('hide', included); }
   renderNav();
   $('acct').open = false;
 }
 window.addEventListener('hashchange', () => go(location.hash.slice(1)));
-document.addEventListener('click', e => { for (const d of [$('acct'), $('shopsw')]) if (d.open && !d.contains(e.target)) d.open = false; });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('acct').open = false; $('shopsw').open = false; } });
+document.addEventListener('click', e => { for (const d of [$('acct'), $('shopsw'), $('planMenu')]) if (d.open && !d.contains(e.target)) d.open = false; });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('acct').open = false; $('shopsw').open = false; $('planMenu').open = false; } });
 fetch('/api/app/me', {cache:'no-store'}).then(r => r.ok ? r.json() : null).then(me => {
   if (!me || !me.workspaces) return;
+  const here = me.workspaces.find(w => w.queues.some(q => BASE === '/q/' + q.slug));
+  PLAN = (here && here.plan) || 'free';
+  applyPlan(PLAN, me.superadmin, here && (here.role === 'owner' || me.superadmin) ? here.id : '');
+  go(tab);
   const links = me.workspaces.map(w => {
     const q = w.queues[0], here = q && BASE === '/q/' + q.slug;
     const href = w.role === 'owner' ? '/app?shop=' + encodeURIComponent(w.id) + '#home' : (q ? '/q/' + q.slug + '/staff' : '#');
@@ -404,7 +465,7 @@ fetch('/api/auth/get-session', {cache:'no-store'}).then(r => r.json()).then(d =>
   const label = u.name || u.email;
   $('meName').textContent = label;
   $('menuName').textContent = u.name || '';
-  $('menuEmail').textContent = u.email;
+  setMenuEmail(u.email);
   $('avatar').textContent = label.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
 }).catch(() => {});
 async function signOut(){
