@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Queue · Aqona</title>
+<title>Counter · Aqona</title>
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,13 +16,44 @@
   .brand{font-family:'Space Grotesk',Inter,sans-serif;font-weight:700;letter-spacing:-.03em}.brand b{color:var(--accent);font-weight:700}
   button{font:inherit;cursor:pointer}
   button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-  .app{min-height:100vh;display:flex;flex-wrap:wrap;align-items:stretch}
+  /* top bar (same as the owner dashboard) */
+  .topbar{position:sticky;top:0;z-index:20;height:64px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 20px}
+  .topbar .brand{font-size:26px;flex:none}
+  .acct{position:relative;flex:none}
+  .acct summary{list-style:none;display:flex;align-items:center;gap:10px;min-height:44px;padding:0 8px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700}
+  .acct summary::-webkit-details-marker{display:none}
+  .acct summary:hover,.acct[open] summary{background:var(--ground)}
+  .acct .caret{width:16px;height:16px;flex:none}
+  .acct .menu{position:absolute;right:0;top:calc(100% + 6px);min-width:250px;background:#fff;border:2px solid var(--ink);border-radius:8px;box-shadow:0 14px 30px rgba(10,42,74,.14);padding:6px;display:flex;flex-direction:column}
+  .acct .menu .who{padding:10px 12px 12px;font-size:13px;color:var(--soft);border-bottom:1px solid var(--line);margin-bottom:4px;word-break:break-all}
+  .acct .menu .who b{display:block;color:var(--ink);font-size:14px}
+  .acct .menu a,.acct .menu button{min-height:44px;padding:0 12px;border:0;border-radius:6px;background:none;color:var(--ink);font-weight:600;font-size:14px;text-align:left;text-decoration:none;display:flex;align-items:center}
+  .acct .menu a:hover,.acct .menu button:hover{background:var(--ground);color:var(--ink)}
+  .brand:hover{color:var(--ink)}
+  .topbar .grow{flex:1}
+  .planchip{font-size:12px;font-weight:800;padding:6px 12px;border-radius:999px;background:var(--ground);border:1px solid #CBD0D6;color:var(--ink);text-decoration:none;white-space:nowrap}
+  .planchip span{color:var(--accent)}
+  .planchip:hover{color:var(--ink);border-color:var(--ink)}
+  .menu .mtitle{padding:8px 12px 4px;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+  .menu a[aria-current]{background:var(--paper)}
+  .role{font-size:11px;font-weight:800;padding:2px 9px;border-radius:999px;background:var(--ground);border:1px solid #CBD0D6;color:var(--ink)}
+  .role.owner{background:var(--ink);border-color:var(--ink);color:#fff}
+  .phoneonly{display:none!important}
+  .usage{padding:12px;border-radius:8px;background:var(--ground);font-size:12px;color:var(--soft);line-height:1.5}
+  .usage b{color:var(--ink)}
+  .shopsw{position:relative}
+  .shopsw summary{list-style:none;cursor:pointer;min-height:52px;padding:0 12px;border:2px solid var(--ink);border-radius:6px;background:var(--paper);display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .shopsw summary::-webkit-details-marker{display:none}
+  .shopsw summary b{display:block;font-size:14px;line-height:1.2}.shopsw summary span{font-size:12px}
+  .shopsw .menu{position:absolute;left:0;bottom:calc(100% + 8px);width:320px;background:#fff;border:2px solid var(--ink);border-radius:8px;box-shadow:0 14px 30px rgba(10,42,74,.14);padding:6px;display:flex;flex-direction:column;z-index:15}
+    .phoneonly{display:flex!important}
+  .menu a,.menu button{justify-content:space-between;gap:10px}
+  .caret{width:16px;height:16px;flex:none}
+  a.item{text-decoration:none}a.item:hover{color:var(--ink);background:var(--ground)}
+  .app{min-height:calc(100vh - 64px);display:flex;flex-wrap:wrap;align-items:stretch}
 
   /* sidebar */
   nav{flex:1 1 240px;max-width:280px;background:#fff;border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:18px}
-  .navtop{padding:0 8px;display:flex;flex-direction:column;gap:14px}
-  .queuebox{min-height:52px;padding:8px 12px;border:2px solid var(--ink);border-radius:6px;background:var(--paper);display:flex;flex-direction:column;justify-content:center}
-  .queuebox b{font-size:15px}.queuebox span{font-size:12px}
   .groups{display:flex;flex-direction:column;gap:18px}
   .group{display:flex;flex-direction:column;gap:2px}
   .gtitle{padding:0 10px 6px;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
@@ -33,12 +64,7 @@
   .item[aria-current=page] .bar{background:var(--ink)}
   .count{font-size:12px;font-weight:800;padding:2px 8px;border-radius:999px;background:var(--hi);color:var(--ink)}
   .navfoot{margin-top:auto;display:flex;flex-direction:column;gap:10px;padding:0 4px}
-  .plan{border:2px dashed #9AA6B2;border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px}
-  .plan .t{font-size:13px;font-weight:800}
-  .account{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 8px;color:var(--ink);text-decoration:none;font-size:14px}
-  .account:hover{color:var(--ink);background:var(--ground);border-radius:8px}
   .avatar{width:30px;height:30px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex:none}
-  .signout{min-height:44px;border:0;background:none;color:var(--ink);font-weight:700;text-decoration:underline;text-align:left;padding:0 8px}.plan .u{font-size:12px;color:var(--soft)}
 
   /* main */
   main{flex:999 1 560px;min-width:0;padding:28px 32px;display:flex;flex-direction:column;gap:20px}
@@ -75,8 +101,6 @@
   .act.notify{background:var(--accent);color:#fff}
   .act:disabled{opacity:.7;cursor:progress}
   .act+.act{margin-left:8px}
-  .rm{min-height:44px;min-width:44px;margin-left:6px;border:0;border-radius:6px;background:transparent;color:var(--mute);vertical-align:middle;display:inline-flex;align-items:center;justify-content:center}
-  .rm:hover{color:var(--ink);background:var(--ground)}
   td.empty{text-align:center!important;color:var(--mute);padding:40px 20px}
 
   /* QR */
@@ -102,40 +126,50 @@
 
   @media (max-width:760px){
     nav{max-width:none;min-width:0;width:100%;flex-basis:100%;border-right:0;border-bottom:1px solid var(--line);padding:14px;gap:10px}
-    .navtop{flex-direction:row;align-items:center;gap:12px;padding:0 4px}
-    .queuebox{flex:1;min-width:0;min-height:44px;padding:4px 10px}
-    .queuebox b,.queuebox span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .groups{flex-direction:row;gap:4px;overflow-x:auto;padding-bottom:4px}
+          .groups{flex-direction:row;gap:4px;overflow-x:auto;padding-bottom:4px}
     .group{flex-direction:row;gap:4px}
     .gtitle,.navfoot{display:none}
     .item{white-space:nowrap}
+    .topbar{gap:10px;padding:0 14px}
+    .acct .nm,.planchip{display:none}
+    .phoneonly{display:flex!important}
     main{padding:20px 16px}
     h1{font-size:40px}
   }
 </style></head><body>
+<header class="topbar">
+  <a class="brand" href="/app" style="text-decoration:none"><b>aqo</b>na</a>
+  <span class="grow"></span>
+  <button class="planchip" onclick="go('plan')">Free plan · <span>See Pro</span></button>
+  <details class="acct" id="acct">
+    <summary aria-label="Account menu"><span class="avatar" id="avatar" aria-hidden="true"></span><span class="nm" id="meName"></span>
+      <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+    <div class="menu">
+      <div class="who"><b id="menuName"></b><span id="menuEmail"></span></div>
+      <div class="phoneonly" style="flex-direction:column" id="menuShops"></div>
+      <a href="/app#account">Account</a>
+      <button onclick="signOut()">Sign out</button>
+    </div>
+  </details>
+</header>
 <div class="app">
   <nav aria-label="Main">
-    <div class="navtop">
-      <span class="brand" style="font-size:26px"><b>aqo</b>na</span>
-      <div class="queuebox"><b id="qShop">Your queue</b><span id="qCounter"></span></div>
-    </div>
     <div class="groups" id="groups"></div>
     <div class="navfoot">
-      <div class="plan">
-        <div class="t">Free plan</div>
-        <div class="u" id="usage"></div>
-        <button class="btn ink" style="min-height:40px;font-size:13px;border-radius:4px;justify-content:center" onclick="go('plan')">See Pro</button>
-      </div>
-      <a class="account" href="/app"><span class="avatar" id="avatar" aria-hidden="true"></span><span><b id="meName"></b><span class="small" style="display:block">All queues</span></span></a>
-      <button class="signout" onclick="signOut()">Sign out</button>
+      <div class="usage" id="usage"></div>
+      <details class="shopsw" id="shopsw">
+        <summary aria-label="Switch shop"><span><b id="qShop">Your shop</b><span id="qCounter"></span></span>
+          <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="menu" id="swMenu"><div class="mtitle">Your shops</div></div>
+      </details>
     </div>
   </nav>
 
   <main>
-    <!-- Queue -->
+    <!-- Counter (the live list) -->
     <section data-tab="queue">
       <div class="titlerow">
-        <div><h1>Queue</h1><div class="sub" id="queueSub"></div></div>
+        <div><h1>Counter</h1><div class="sub" id="queueSub"></div></div>
         <span class="conn off" id="conn"><span class="dot"></span><span id="connText">Connecting…</span></span>
       </div>
       <div class="card" style="overflow:hidden;margin-top:20px">
@@ -173,8 +207,8 @@
       <div class="card locked" style="margin-top:20px">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0A2A4A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         <div class="head">Invite your staff by email.</div>
-        <div class="body">Staff will sign in with their own email to run the queue; only the owner changes settings. Until invites arrive, only you can open this page.</div>
-        <div class="row" style="margin-top:6px"><button class="btn" onclick="go('queue')">Back to queue</button></div>
+        <div class="body">Staff will sign in with their own email to run the counter; only the owner changes settings. Until invites arrive, only you can open this page.</div>
+        <div class="row" style="margin-top:6px"><button class="btn" onclick="go('queue')">Back to counter</button></div>
       </div>
     </section>
 
@@ -183,7 +217,7 @@
       <h1>Settings</h1>
       <form class="card" style="max-width:820px;margin-top:20px" onsubmit="saveSettings(event)">
         <div class="sec">
-          <h2>Queue</h2>
+          <h2>Counter</h2>
           <label for="qname" class="flabel">Name customers see</label>
           <input id="qname" class="field" maxlength="60" placeholder="Ana's Milk Tea · Counter 1" style="max-width:420px">
           <div class="muted">Shown on the customer ticket and the poster. Put " · " before a counter name to show it on the right. The join address stays the same, so printed QR codes keep working.</div>
@@ -209,14 +243,14 @@
 
     <!-- Pro (locked) -->
     <section data-tab="locked" class="hide">
-      <div class="row"><h1 id="lockedTitle"></h1><span class="tag">Pro</span></div>
+      <div class="row"><h1 id="lockedTitle"></h1><span class="tag" id="lockedTag">Pro</span></div>
       <div class="card locked" style="margin-top:20px">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0A2A4A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        <svg id="lockedIcon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0A2A4A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
         <div class="head" id="lockedHead"></div>
         <div class="body" id="lockedBody"></div>
         <div class="row" style="margin-top:6px">
-          <button class="btn ink" onclick="document.getElementById('upgradeMsg').textContent='Paid plans are coming soon.'">Upgrade to Pro</button>
-          <button class="btn" onclick="go('queue')">Back to queue</button>
+          <button class="btn ink" id="upgradeBtn" onclick="document.getElementById('upgradeMsg').textContent='Paid plans are coming soon.'">Upgrade to Pro</button>
+          <button class="btn" onclick="go('queue')">Back to counter</button>
           <span class="msg" id="upgradeMsg" role="status"></span>
         </div>
       </div>
@@ -233,7 +267,6 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>'
 const pad = n => String(n).padStart(3, '0');
 const LOCK = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="Locked, Pro plan"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
 const BELL = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
-const X = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
 const PILLS = {
   waiting: { bg:'#FEF3C7', fg:'#92400E', label:'Waiting' },
   buzzing: { bg:'#FEE4E2', fg:'#B42318', label:'Notified' },
@@ -241,17 +274,20 @@ const PILLS = {
   done:    { bg:'#DCFCE7', fg:'#166534', label:'Done' },
   noshow:  { bg:'#FFEDD5', fg:'#9A3412', label:'No show' },
 };
+// Free on every plan, not built yet.
+const SOON = {
+  display: ['Display screen', 'A "Now calling" screen for your counter.', 'Open a link on a TV or tablet at the counter. It shows the numbers being called and the ones still preparing, so customers without alerts know when it\'s their turn. Ticket numbers only, never names. Free on every plan.'],
+};
 const LOCKED = {
-  display:  ['Display screen', 'A "Now calling" screen for your counter.', 'Open a link on a TV or tablet at the counter. It shows the numbers being called and the ones still preparing, so customers without alerts know when it\'s their turn. Ticket numbers only, never names.'],
   branding: ['Branding', 'Make every ticket yours.', 'Use your own colours and logo on the customer ticket, the QR poster and the display screen. Status colours stay fixed so customers are never confused.'],
   reports:  ['Reports', 'See your busiest hours.', 'Average wait time, customers per day, no-show rate and busiest hours, so you know when to add staff.'],
   log:      ['Activity log', 'Know who did what.', 'Every notify, done, removal and new day, with the staff member and the time. Useful when a customer says they were skipped.'],
-  plan:     ['Pro plan', 'Grow past the Free limits.', '₱299 a month: up to 5 counters, owner + 5 staff, unlimited tickets, a display screen for your counter, your own branding, reports and the activity log. Need more? Max (₱999 a month) adds up to 10 counters, branches and a food-park QR.'],
+  plan:     ['Pro plan', 'Grow past the Free limits.', '₱299 a month: up to 5 counters, owner + 5 staff, unlimited tickets, your own branding, reports and the activity log. Need more? Max (₱999 a month) adds up to 10 counters, branches and a food-park QR.'],
 };
 const GROUPS = [
-  ['Run the queue', [['queue','Queue'], ['qr','QR code']]],
+  ['Your counter', [['home','Home'], ['queue','Counter'], ['qr','QR & poster'], ['display','Display screen']]],
   ...(CAN_MANAGE ? [['Manage', [['team','Team'], ['settings','Settings']]]] : []),
-  ['Pro', [['display','Display screen',1], ['branding','Branding',1], ['reports','Reports',1], ['log','Activity log',1]]],
+  ['Pro', [['branding','Branding',1], ['reports','Reports',1], ['log','Activity log',1]]],
 ];
 let state = null, settingsShown = false, tab = 'queue';
 
@@ -260,19 +296,35 @@ function renderNav(){
   const open = state ? state.tickets.filter(t => t.status !== 'done' && t.status !== 'noshow').length : 0;
   $('groups').innerHTML = GROUPS.map(([title, items]) =>
     '<div class="group"><div class="gtitle">' + title + '</div>' + items.map(([key, label, locked]) =>
-      '<button class="item" onclick="go(\'' + key + '\')"' + (tab === key ? ' aria-current="page"' : '') + '>' +
+      (key === 'home' ? '<a class="item" href="/app#home">' : '<button class="item" onclick="go(\'' + key + '\')"' + (tab === key ? ' aria-current="page"' : '') + '>') +
       '<span class="bar"></span><span class="lbl">' + label + '</span>' +
-      (locked ? LOCK : '') + (key === 'queue' ? '<span class="count">' + open + '</span>' : '') + '</button>').join('') + '</div>').join('');
+      (locked ? LOCK : '') + (key === 'queue' ? '<span class="count">' + open + '</span>' : '') + (key === 'home' ? '</a>' : '</button>')).join('') + '</div>').join('');
 }
 function go(key){
-  tab = LOCKED[key] || ['queue','qr'].includes(key) || (CAN_MANAGE && ['team','settings'].includes(key)) ? key : 'queue';
+  tab = LOCKED[key] || SOON[key] || ['queue','qr'].includes(key) || (CAN_MANAGE && ['team','settings'].includes(key)) ? key : 'queue';
   if (location.hash.slice(1) !== tab) history.replaceState(null, '', '#' + tab);
-  const lk = LOCKED[tab];
+  const lk = LOCKED[tab] || SOON[tab];
   document.querySelectorAll('main > section').forEach(s => s.classList.toggle('hide', s.dataset.tab !== (lk ? 'locked' : tab)));
-  if (lk) { $('lockedTitle').textContent = lk[0]; $('lockedHead').textContent = lk[1]; $('lockedBody').textContent = lk[2]; $('upgradeMsg').textContent = ''; }
+  if (lk) { $('lockedTitle').textContent = lk[0]; $('lockedHead').textContent = lk[1]; $('lockedBody').textContent = lk[2]; $('upgradeMsg').textContent = '';
+    $('lockedTag').textContent = SOON[tab] ? 'Coming soon · free on every plan' : 'Pro'; $('upgradeBtn').classList.toggle('hide', !!SOON[tab]); $('lockedIcon').classList.toggle('hide', !!SOON[tab]); }
   renderNav();
+  $('acct').open = false;
 }
 window.addEventListener('hashchange', () => go(location.hash.slice(1)));
+document.addEventListener('click', e => { for (const d of [$('acct'), $('shopsw')]) if (d.open && !d.contains(e.target)) d.open = false; });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('acct').open = false; $('shopsw').open = false; } });
+fetch('/api/app/me', {cache:'no-store'}).then(r => r.ok ? r.json() : null).then(me => {
+  if (!me || !me.workspaces) return;
+  const links = me.workspaces.map(w => {
+    const q = w.queues[0], here = q && BASE === '/q/' + q.slug;
+    const href = w.role === 'owner' ? '/app?shop=' + encodeURIComponent(w.id) + '#home' : (q ? '/q/' + q.slug + '/staff' : '#');
+    return '<a href="' + esc(href) + '"' + (here ? ' aria-current="true"' : '') + '><span><b style="display:block">' + esc(w.name) + '</b>' +
+      '<span style="font-size:12px;font-weight:500">' + esc(q ? (q.name.split(' · ')[1] || 'Counter 1') : 'No counter') + '</span></span>' +
+      '<span class="role' + (w.role === 'owner' ? ' owner' : '') + '">' + (w.role === 'owner' ? 'Owner' : 'Staff') + '</span></a>';
+  }).join('');
+  $('swMenu').innerHTML = '<div class="mtitle">Your shops</div>' + links;
+  if (me.workspaces.length > 1) $('menuShops').innerHTML = '<div class="mtitle">Your shops</div>' + links;
+}).catch(() => {});
 go(location.hash.slice(1));
 
 // ---------- QR ----------
@@ -346,11 +398,13 @@ async function act(a, id, btn){
   if (!ws || ws.readyState !== 1) poll();
 }
 
-// Who is signed in (the account chip at the bottom of the sidebar).
+// Who is signed in (the account menu in the top bar).
 fetch('/api/auth/get-session', {cache:'no-store'}).then(r => r.json()).then(d => {
   const u = d && d.user; if (!u) return;
   const label = u.name || u.email;
   $('meName').textContent = label;
+  $('menuName').textContent = u.name || '';
+  $('menuEmail').textContent = u.email;
   $('avatar').textContent = label.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
 }).catch(() => {});
 async function signOut(){
@@ -367,11 +421,10 @@ function render(d){
   const s = d.settings || {};
   const open = rows.filter(t => t.status !== 'done' && t.status !== 'noshow').length;
   $('queueSub').innerHTML = '<b>' + open + '</b> waiting or called · ' + (s.autoReset ? 'daily reset at ' + time12(s.resetTime) : 'automatic reset off');
-  $('usage').textContent = (d.ticketsToday ?? rows.length) + ' of ' + (d.maxTickets || 999) + ' tickets today';
+  $('usage').innerHTML = 'Today: <b>' + (d.ticketsToday ?? rows.length) + '</b> of ' + (d.maxTickets || 999) + ' tickets';
   const [shop, ...counter] = (s.queueName || '').split(' · ');
-  $('qShop').textContent = shop || 'Your queue';
-  $('qCounter').textContent = counter.join(' · ');
-  $('qCounter').classList.toggle('hide', !counter.length);
+  $('qShop').textContent = shop || 'Your shop';
+  $('qCounter').textContent = (counter.join(' · ') || 'Counter 1') + ' · ' + (CAN_MANAGE ? 'Owner' : 'Staff');
   renderNav();
 
   const el = $('list');
@@ -386,7 +439,7 @@ function render(d){
       '<td><span class="pill" style="background:' + p.bg + ';color:' + p.fg + '">' + p.label + '</span></td>' +
       '<td style="white-space:nowrap">' +
         (isOpen ? notifyBtn(t.id, q) + '<button class="act" onclick="act(\'done\',' + q + ')">Done</button>' : '') +
-        '<button class="rm" aria-label="Remove ticket ' + pad(t.num) + '" title="Remove" onclick="act(\'remove\',' + q + ')">' + X + '</button></td></tr>';
+        '</td></tr>';
   }).join('');
   if (!settingsShown && d.settings) { showSettings(d.settings); settingsShown = true; }
   showNextReset(d);
