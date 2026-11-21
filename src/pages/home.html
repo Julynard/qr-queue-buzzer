@@ -12,6 +12,19 @@
   a{color:#0A2A4A}a:hover{color:#0B6FB8}
   a:focus-visible{outline:3px solid #0B6FB8;outline-offset:2px}
   @media (max-width:640px){.navlinks{display:none!important}}
+  /* Clients strip: names slide slowly from right to left. The list is written twice so the loop has no gap. */
+  .clients{background:var(--accent);color:#FFFFFF}
+  .clients-wrap{max-width:1200px;margin:0 auto;padding:18px 24px;display:flex;align-items:center;gap:10px 26px}
+  .clients h2{margin:0;flex:none;font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+  .marquee{flex:1;min-width:0;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+  .marquee-track{display:flex;width:max-content;animation:clients-slide 45s linear infinite}
+  .marquee:hover .marquee-track{animation-play-state:paused}
+  .marquee ul{display:flex;margin:0;padding:0;list-style:none}
+  .marquee li{display:flex;align-items:center;gap:14px;padding-right:28px;font-size:16px;font-weight:700;white-space:nowrap}
+  .marquee li::before{content:"";width:7px;height:7px;border-radius:50%;background:#CFE4F5}
+  @keyframes clients-slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  @media (max-width:640px){.clients-wrap{flex-direction:column;align-items:flex-start}.marquee{align-self:stretch}}
+  @media (prefers-reduced-motion:reduce){.marquee{-webkit-mask-image:none;mask-image:none}.marquee-track{animation:none;width:auto}.marquee ul{flex-wrap:wrap;row-gap:8px}.marquee ul[aria-hidden]{display:none}}
 </style></head><body>
 <div style="background: #F6F7F9; color: #0A2A4A; font-family: Inter, system-ui, sans-serif; min-height: 100vh">
 
@@ -92,6 +105,18 @@
 <span>Banks</span>
 <span>School registrars</span>
 <span>Events</span>
+      </div>
+    </section>
+
+    <section class="clients" aria-labelledby="clients-title">
+      <div class="clients-wrap">
+        <h2 id="clients-title">Clients</h2>
+        <div class="marquee">
+          <div class="marquee-track">
+            <ul><li>Ana's Milk Tea</li><li>Kanto Coffee</li><li>Lola's Lugaw</li><li>Barrio Barbers</li><li>Sunrise Family Clinic</li><li>Bayani Pharmacy</li><li>Sakto Car Wash</li><li>Tambayan Food Park</li><li>Kusina ni Nena</li><li>Brew &amp; Bites</li></ul>
+            <ul aria-hidden="true"><li>Ana's Milk Tea</li><li>Kanto Coffee</li><li>Lola's Lugaw</li><li>Barrio Barbers</li><li>Sunrise Family Clinic</li><li>Bayani Pharmacy</li><li>Sakto Car Wash</li><li>Tambayan Food Park</li><li>Kusina ni Nena</li><li>Brew &amp; Bites</li></ul>
+          </div>
+        </div>
       </div>
     </section>
 
