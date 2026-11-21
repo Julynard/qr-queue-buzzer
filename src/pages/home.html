@@ -8,6 +8,20 @@
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
 <style>
   :root{--accent:#0B6FB8;--paper:#CFE4F5}
+  /* Depth: faint dot grid on the page, a soft blue glow behind the hero cards; Made for slides left to right. */
+  .page-bg{background-color:#F6F7F9;background-image:radial-gradient(rgba(10,42,74,.07) 1px,transparent 1.6px);background-size:22px 22px}
+  .hero-glow{background:radial-gradient(ellipse 560px 440px at 76% 52%,rgba(11,111,184,.16),rgba(207,228,245,.55) 48%,rgba(246,247,249,0) 74%)}
+  .madefor{background:#0A2A4A;color:#FFFFFF;background-image:radial-gradient(rgba(207,228,245,.08) 1px,transparent 1.6px);background-size:22px 22px}
+  .madefor-wrap{max-width:1200px;margin:0 auto;padding:20px 24px;display:flex;align-items:center;gap:22px}
+  .madefor h2{margin:0;flex:none;font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#CFE4F5}
+  .mf-row{flex:1;min-width:0;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+  .mf-track{display:flex;width:max-content;animation:madefor-slide 60s linear infinite reverse}
+  .mf-row:hover .mf-track{animation-play-state:paused}
+  .mf-row ul{display:flex;margin:0;padding:0;list-style:none}
+  .mf-row li{display:flex;align-items:center;gap:14px;padding-right:26px;font-size:16px;font-weight:700;white-space:nowrap}
+  .mf-row li::before{content:"";width:6px;height:6px;border-radius:50%;background:#0B6FB8}
+  @keyframes madefor-slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  @media (prefers-reduced-motion:reduce){.mf-row{-webkit-mask-image:none;mask-image:none}.mf-track{animation:none;width:auto}.mf-row ul{flex-wrap:wrap;row-gap:8px}.mf-row ul[aria-hidden]{display:none}}
   body{margin:0}
   a{color:#0A2A4A}a:hover{color:#0B6FB8}
   /* Hero: the printed QR poster sits behind the tickets. The group shrinks on tablets; on phones the poster hides and the tickets stack. */
@@ -42,7 +56,7 @@
   @keyframes logos-slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
   @media (prefers-reduced-motion:reduce){.logo-row{-webkit-mask-image:none;mask-image:none}.logo-track{animation:none;width:auto}.logo-row ul{flex-wrap:wrap;justify-content:center;padding:0}.logo-row ul[aria-hidden]{display:none}}
 </style></head><body>
-<div style="background: #F6F7F9; color: #0A2A4A; font-family: Inter, system-ui, sans-serif; min-height: 100vh">
+<div class="page-bg" style="color: #0A2A4A; font-family: Inter, system-ui, sans-serif; min-height: 100vh">
 
   <header style="background: #FFFFFF; border-bottom: 1px solid #E3E6EA">
     <nav aria-label="Main" style="max-width: 1200px; margin: 0 auto; padding: 14px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 28px">
@@ -61,7 +75,7 @@
   </header>
 
   <main>
-    <section aria-labelledby="hero-title" style="max-width: 1200px; margin: 0 auto; padding: 64px 24px 72px; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 48px; align-items: center">
+    <section class="hero-glow" aria-labelledby="hero-title" style="max-width: 1200px; margin: 0 auto; padding: 64px 24px 72px; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 48px; align-items: center">
       <div style="display: flex; flex-direction: column; gap: 22px">
         <span style="align-self: flex-start; padding: 6px 12px; background: #FFE58A; font-size: 14px; font-weight: 800">No app · No sign-up · No phone number</span>
         <h1 id="hero-title" style="margin: 0; font-family: Anton, Impact, sans-serif; font-weight: 400; line-height: 0.92; display: flex; flex-direction: column">
@@ -116,18 +130,15 @@
       </div>
     </section>
 
-    <section aria-label="Made for" style="background: #0A2A4A; color: #FFFFFF">
-      <div style="max-width: 1200px; margin: 0 auto; padding: 22px 24px; display: flex; flex-wrap: wrap; gap: 10px 26px; align-items: center; font-size: 16px; font-weight: 700">
-        <span style="font-size: 13px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #CFE4F5">Made for</span>
-        <span>Milk tea &amp; coffee</span>
-<span>Food stalls &amp; food parks</span>
-<span>Clinics</span>
-<span>Pharmacies</span>
-<span>Barbers &amp; salons</span>
-<span>Car washes</span>
-<span>Banks</span>
-<span>School registrars</span>
-<span>Events</span>
+    <section class="madefor" aria-labelledby="madefor-title">
+      <div class="madefor-wrap">
+        <h2 id="madefor-title">Made for</h2>
+        <div class="mf-row">
+          <div class="mf-track">
+            <ul><li>Milk tea &amp; coffee</li><li>Food stalls &amp; food parks</li><li>Restaurants</li><li>Bakeries</li><li>Clinics &amp; dentists</li><li>Diagnostic labs</li><li>Pharmacies</li><li>Barbers &amp; salons</li><li>Spas &amp; nail salons</li><li>Car washes</li><li>Repair shops</li><li>Laundry shops</li><li>Pet groomers</li><li>Banks &amp; remittance</li><li>Government offices</li><li>School registrars</li><li>Events &amp; pop-ups</li></ul>
+            <ul aria-hidden="true"><li>Milk tea &amp; coffee</li><li>Food stalls &amp; food parks</li><li>Restaurants</li><li>Bakeries</li><li>Clinics &amp; dentists</li><li>Diagnostic labs</li><li>Pharmacies</li><li>Barbers &amp; salons</li><li>Spas &amp; nail salons</li><li>Car washes</li><li>Repair shops</li><li>Laundry shops</li><li>Pet groomers</li><li>Banks &amp; remittance</li><li>Government offices</li><li>School registrars</li><li>Events &amp; pop-ups</li></ul>
+          </div>
+        </div>
       </div>
     </section>
 
