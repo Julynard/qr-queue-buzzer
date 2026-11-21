@@ -3,9 +3,9 @@
 
 import type { Auth, SessionInfo } from "./auth.ts";
 import { uniqueSlug, randomSuffix } from "./slug.ts";
-import { limitsFor } from "./plans.ts";
+import { isPlan, limitsFor } from "./plans.ts";
 import { createQueue, deleteQueueRow, queuesOf, roleIn, slugTaken } from "./queues.ts";
-import { allows } from "./access.ts";
+import { allows, isSuperadmin } from "./access.ts";
 import type { QueueRow } from "./queues.ts";
 
 const NAME_MAX = 60;
@@ -57,7 +57,7 @@ export async function handleAppApi(request: Request, env: Env, auth: Auth, sessi
       id: w.id, name: w.name, role: w.role, plan: w.plan ?? "free", limits: limitsFor(w.plan),
       queues: (await queuesOf(env.DB, w.id)).map((q) => ({ id: q.id, slug: q.slug, name: q.name })),
     })));
-    return json({ user: { name: session.user.name, email: session.user.email }, workspaces });
+    return json({ user: { name: session.user.name, email: session.user.email }, superadmin: isSuperadmin(session.user.email, env.SUPERADMIN_EMAILS), workspaces });
   }
 
   if (p === "/api/app/onboard" && request.method === "POST") {
@@ -80,10 +80,21 @@ export async function handleAppApi(request: Request, env: Env, auth: Auth, sessi
     const w = (await workspacesOf(env.DB, userId)).find((x) => x.id === workspaceId);
     if (!w || w.role !== "owner") return json({ error: "Only the owner can add queues." }, 403);
     if ((await queuesOf(env.DB, w.id)).length >= limitsFor(w.plan).queues) {
-      return json({ error: "upgrade", limit: "queues", message: "The Free plan has 1 queue. More counters come with Pro." }, 402);
+      const n = limitsFor(w.plan).queues;
+      return json({ error: "upgrade", limit: "queues", message: `Your plan has ${n} counter${n === 1 ? "" : "s"}. More counters come with ${w.plan === "pro" ? "Max" : "Pro"}.` }, 402);
     }
     const q = await newQueue(env, w.id, name);
     return json({ id: q.id, slug: q.slug });
+  }
+
+  // Aqona's own people (SUPERADMIN_EMAILS) can put a shop on any plan by hand, e.g. to try Pro before payments exist.
+  if (p === "/api/app/plan" && request.method === "POST") {
+    if (!isSuperadmin(session.user.email, env.SUPERADMIN_EMAILS)) return json({ error: "Only Aqona admins can change a plan." }, 403);
+    const workspaceId = typeof body.workspaceId === "string" ? body.workspaceId : "";
+    if (!isPlan(body.plan)) return json({ error: "Plan must be free, pro or max." }, 400);
+    const r = await env.DB.prepare('update "organization" set plan = ? where id = ?').bind(body.plan, workspaceId).run();
+    if (!r.meta.changes) return json({ error: "No such shop." }, 404);
+    return json({ ok: true, plan: body.plan, limits: limitsFor(body.plan) });
   }
 
   if ((m = p.match(/^\/api\/app\/queues\/([0-9a-f-]{36})$/)) && request.method === "DELETE") {

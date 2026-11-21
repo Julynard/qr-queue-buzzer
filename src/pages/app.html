@@ -23,13 +23,23 @@
   .planchip{font-size:12px;font-weight:800;padding:6px 12px;border-radius:999px;background:var(--ground);border:1px solid #CBD0D6;color:var(--ink);text-decoration:none;white-space:nowrap}
   .planchip span{color:var(--accent)}
   .planchip:hover{color:var(--ink);border-color:var(--ink)}
+  .planmenu{position:relative;flex:none}
+  .planmenu summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:6px}
+  .planmenu summary::-webkit-details-marker{display:none}
+  .planmenu .menu{position:absolute;right:0;top:calc(100% + 6px);min-width:250px;background:#fff;border:2px solid var(--ink);border-radius:8px;box-shadow:0 14px 30px rgba(10,42,74,.14);padding:6px;display:flex;flex-direction:column;z-index:25}
+  .planmenu .menu button[aria-pressed=true]{background:var(--paper);font-weight:800}
+  .planmenu summary #planMenuName{color:var(--ink)}
+  .planmenu .note{padding:6px 12px 8px;font-size:12px;color:var(--mute)}
+  .menu .who .emailcopy{display:block;width:100%;min-height:0;padding:2px 0 0;border:0;border-radius:0;background:none;font:inherit;font-size:13px;font-weight:500;color:var(--soft);text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:copy}
+  .menu .who .emailcopy:hover{background:none;color:var(--ink);text-decoration:underline}
+  .menu .who .emailcopy.copied{color:#166534;font-weight:700;text-decoration:none}
   .acct{position:relative;flex:none}
   .acct summary{list-style:none;display:flex;align-items:center;gap:10px;min-height:44px;padding:0 8px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700}
   .acct summary::-webkit-details-marker{display:none}
   .acct summary:hover,.acct[open] summary{background:var(--ground)}
   .caret{width:16px;height:16px;flex:none}
-  .acct .menu{position:absolute;right:0;top:calc(100% + 6px);min-width:260px;background:#fff;border:2px solid var(--ink);border-radius:8px;box-shadow:0 14px 30px rgba(10,42,74,.14);padding:6px;display:flex;flex-direction:column}
-  .menu .who{padding:10px 12px 12px;font-size:13px;color:var(--soft);border-bottom:1px solid var(--line);margin-bottom:4px;word-break:break-all}
+  .acct .menu{position:absolute;right:0;top:calc(100% + 6px);min-width:260px;max-width:300px;background:#fff;border:2px solid var(--ink);border-radius:8px;box-shadow:0 14px 30px rgba(10,42,74,.14);padding:6px;display:flex;flex-direction:column}
+  .menu .who{padding:10px 12px 12px;font-size:13px;color:var(--soft);border-bottom:1px solid var(--line);margin-bottom:4px;}
   .menu .who b{display:block;color:var(--ink);font-size:14px}
   .menu a,.menu button{min-height:44px;padding:0 12px;border:0;border-radius:6px;background:none;color:var(--ink);font-weight:600;font-size:14px;text-align:left;text-decoration:none;display:flex;align-items:center;justify-content:space-between;gap:10px}
   .menu a:hover,.menu button:hover{background:var(--ground);color:var(--ink)}
@@ -122,11 +132,20 @@
   <a class="brand" href="/app#home"><b>aqo</b>na</a>
   <span class="grow"></span>
   <a class="planchip hide" id="planChip" href="/#pricing">Free plan · <span>See Pro</span></a>
+  <details class="planmenu hide" id="planMenu">
+    <summary class="planchip" aria-label="Change plan (super admin)"><span id="planMenuName">Free plan</span>
+      <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+    <div class="menu">
+      <div class="mtitle">Super admin · this shop's plan</div>
+      <button data-plan="free">Free</button><button data-plan="pro">Pro</button><button data-plan="max">Max</button>
+      <div class="note" id="planNote">Changes this shop's plan right away. No payment is taken.</div>
+    </div>
+  </details>
   <details class="acct" id="acct">
     <summary aria-label="Account menu"><span class="avatar" id="avatar" aria-hidden="true"></span><span class="nm" id="whoName"></span>
       <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
     <div class="menu">
-      <div class="who"><b id="menuName"></b><span id="menuEmail"></span></div>
+      <div class="who"><b id="menuName"></b><button type="button" class="emailcopy" id="menuEmail"></button></div>
       <div class="phoneonly" style="flex-direction:column" id="menuShops"></div>
       <a href="/app#account">Account</a>
       <button onclick="signOut()">Sign out</button>
@@ -169,11 +188,44 @@
 <script>
 const ORIGIN = location.origin;
 const $ = id => document.getElementById(id);
+// Email in the account menu: one line ("…" when long); click to copy it.
+function setMenuEmail(email){
+  const el = $('menuEmail');
+  el.textContent = email; el.title = email + ' (click to copy)'; el.setAttribute('aria-label', 'Copy email ' + email);
+  el.onclick = async () => {
+    try { await navigator.clipboard.writeText(email); } catch(e) { prompt('Copy your email:', email); return; }
+    el.textContent = 'Copied'; el.classList.add('copied');
+    clearTimeout(el._t); el._t = setTimeout(() => { el.textContent = email; el.classList.remove('copied'); }, 1500);
+  };
+}
+
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const LOCK = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="Locked, Pro plan"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
 const CHEV = '<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
 const counterName = q => (q.name.split(' · ')[1] || 'Counter 1');
 let me = null, shop = null, tab = 'home';
+// ---------- plan chip; super admins can switch the shop's plan here ----------
+const PLAN_LABEL = { free: 'Free', pro: 'Pro', max: 'Max' };
+function applyPlan(plan, superadmin, workspaceId){
+  const name = (PLAN_LABEL[plan] || 'Free') + ' plan';
+  $('planChip').innerHTML = plan === 'free' ? 'Free plan · <span>See Pro</span>' : name;
+  $('planChip').classList.toggle('hide', !!(superadmin && workspaceId));
+  $('planMenu').classList.toggle('hide', !(superadmin && workspaceId));
+  $('planMenuName').textContent = name;
+  document.querySelectorAll('#planMenu [data-plan]').forEach(b => {
+    b.setAttribute('aria-pressed', String(b.dataset.plan === plan));
+    b.onclick = async () => {
+      $('planNote').textContent = 'Saving…';
+      try {
+        const r = await fetch('/api/app/plan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ workspaceId, plan: b.dataset.plan }) });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d.error || 'Could not change the plan.');
+        location.reload();
+      } catch(e) { $('planNote').textContent = e.message; }
+    };
+  });
+}
+
 
 async function api(path, opts = {}){
   const r = await fetch('/api/app' + path, { ...opts, headers: { 'Content-Type': 'application/json' } });
@@ -188,7 +240,7 @@ async function load(){
   const label = me.user.name || me.user.email;
   $('whoName').textContent = label;
   $('menuName').textContent = me.user.name || '';
-  $('menuEmail').textContent = me.user.email;
+  setMenuEmail(me.user.email);
   $('avatar').textContent = label.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
   if (!me.workspaces.length) { $('loading').classList.add('hide'); return showOnboarding(); }
   const owned = me.workspaces.filter(w => w.role === 'owner');
@@ -199,8 +251,8 @@ async function load(){
   $('loading').classList.add('hide');
   $('onboard').classList.add('hide');
   $('side').classList.remove('hide');
-  $('planChip').classList.remove('hide');
   renderShell();
+  applyPlan(shop.plan || 'free', me.superadmin, shop.role === 'owner' || me.superadmin ? shop.id : '');
   render();
   go(location.hash.slice(1));
   loadToday();
@@ -211,6 +263,7 @@ function renderShell(){
   const q = shop.queues[0];
   const staffUrl = q ? '/q/' + q.slug + '/staff' : '#home';
   const owner = shop.role === 'owner';
+  const lock = (shop.plan || 'free') === 'free' ? LOCK : '';
   const link = (key, label, href, extra = '') =>
     '<a class="item" href="' + href + '" data-key="' + key + '"><span class="bar"></span><span class="lbl">' + label + '</span>' + extra + '</a>';
   $('groups').innerHTML =
@@ -218,8 +271,8 @@ function renderShell(){
       link('home', 'Home', '#home') + link('counter', 'Counter', staffUrl + '#queue', '<span class="count" id="navCount">0</span>') +
       link('qr', 'QR &amp; poster', staffUrl + '#qr') + link('display', 'Display screen', staffUrl + '#display') + '</div>' +
     (owner ? '<div class="group"><div class="gtitle">Manage</div>' + link('team', 'Team', staffUrl + '#team') + link('settings', 'Settings', staffUrl + '#settings') + '</div>' : '') +
-    '<div class="group"><div class="gtitle">Pro</div>' + link('branding', 'Branding', staffUrl + '#branding', LOCK) +
-      link('reports', 'Reports', staffUrl + '#reports', LOCK) + link('log', 'Activity log', staffUrl + '#log', LOCK) + '</div>';
+    '<div class="group"><div class="gtitle">Pro</div>' + link('branding', 'Branding', staffUrl + '#branding', lock) +
+      link('reports', 'Reports', staffUrl + '#reports', lock) + link('log', 'Activity log', staffUrl + '#log', lock) + '</div>';
   $('planChip').href = q ? staffUrl + '#plan' : '/#pricing';
   $('swShop').textContent = shop.name;
   $('swSub').textContent = (q ? counterName(q) + ' · ' : '') + (owner ? 'Owner' : 'Staff');
@@ -257,8 +310,8 @@ function go(key){
   $('acct').open = false;
 }
 window.addEventListener('hashchange', () => { if (shop) go(location.hash.slice(1)); });
-document.addEventListener('click', e => { for (const d of [$('acct'), $('shopsw')]) if (d.open && !d.contains(e.target)) d.open = false; });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('acct').open = false; $('shopsw').open = false; } });
+document.addEventListener('click', e => { for (const d of [$('acct'), $('shopsw'), $('planMenu')]) if (d.open && !d.contains(e.target)) d.open = false; });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('acct').open = false; $('shopsw').open = false; $('planMenu').open = false; } });
 
 function showOnboarding(){
   $('onboard').classList.remove('hide'); $('side').classList.add('hide');
