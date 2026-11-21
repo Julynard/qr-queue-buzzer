@@ -30,13 +30,14 @@
 
   /* the paper ticket */
   .ticket{flex:1;display:flex;flex-direction:column;min-height:0}
-  .top{flex:1;display:flex;flex-direction:column;background:var(--paper);border:3px solid var(--ink);border-top:0;border-bottom:0;border-radius:4px 4px 0 0;position:relative}
-  .scallop{position:absolute;left:-3px;right:-3px;top:-1px;height:10px;background:radial-gradient(circle at 8px 0,var(--ground) 7px,transparent 7.5px) repeat-x;background-size:16px 10px}
+  .top{flex:1;display:flex;flex-direction:column;border:3px solid var(--ink);border-top:0;border-bottom:0;position:relative}
+  /* Edges are real holes (transparent), with the ink rim painted into the paper, so they read as cuts on any background.
+     Top: a row of bites. Tile 16px, rim 6-9px: (16/2)^2 + 3^2 <= 9^2 keeps the rims touching, one continuous ink edge. */
+  .top{background:radial-gradient(circle at 50% 0,transparent 6px,var(--ink) 6.5px 9px,var(--paper) 9.5px) 0 0/16px 10px,linear-gradient(var(--paper),var(--paper)) 0 10px/100% 100%;background-repeat:round no-repeat,no-repeat;background-origin:border-box}
   .head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:15px;font-weight:800}
-  .tear{height:26px;flex:none;background:var(--paper);position:relative}
-  .tear::before,.tear::after{content:"";position:absolute;top:0;width:26px;height:26px;border-radius:50%;background:var(--ground)}
-  .tear::before{left:-13px}.tear::after{right:-13px}
-  .tear i{position:absolute;left:20px;right:20px;top:11px;border-top:4px dotted var(--ink);opacity:.55}
+  /* Side notches: rim outer radius = half the height, rim width = the 3px side border, so the arc meets both borders. */
+  .tear{height:32px;flex:none;position:relative;background:radial-gradient(circle at 0 50%,transparent 13px,var(--ink) 13.5px 16px,var(--paper) 16.5px) left/50% 100% no-repeat,radial-gradient(circle at 100% 50%,transparent 13px,var(--ink) 13.5px 16px,var(--paper) 16.5px) right/50% 100% no-repeat}
+  .tear i{position:absolute;left:22px;right:22px;top:14px;border-top:4px dotted var(--ink);opacity:.55}
   .stub{flex:none;background:var(--paper);border:3px solid var(--ink);border-top:0;border-radius:0 0 6px 6px;display:flex;gap:16px;align-items:stretch}
   .stubno{font-family:Anton,Impact,sans-serif;line-height:1;writing-mode:vertical-rl;transform:rotate(180deg);text-align:center}
   .stubtext{display:flex;flex-direction:column;justify-content:center;gap:8px;min-width:0}
@@ -117,7 +118,6 @@
       <div class="body"><span id="noticeText"></span></div>
     </div>
     <div class="top">
-      <div class="scallop"></div>
       <div class="head"><span class="shop"></span><span class="counter"></span></div>
       <h1 class="anton"><span style="font-size:min(52px,13vw)">Take a</span><span style="font-size:min(104px,26vw)">number</span></h1>
       <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:14px">
@@ -143,7 +143,6 @@
   <!-- ===== Waiting ticket ===== -->
   <div id="waitView" class="ticket hide">
     <div class="top">
-      <div class="scallop" style="left:0;right:0"></div>
       <div class="head"><span class="shop"></span><span class="ticketNo"></span></div>
       <div class="placebox">
         <div class="anton" style="font-size:46px;line-height:1">You're</div>
@@ -182,7 +181,6 @@
   <!-- ===== Finished ===== -->
   <div id="endView" class="ticket hide">
     <div class="top">
-      <div class="scallop"></div>
       <div class="head"><span class="shop"></span><span class="ticketNo"></span></div>
       <h1 class="anton" id="endTitle"></h1>
       <div id="endMsg" role="status"></div>
