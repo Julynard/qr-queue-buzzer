@@ -88,8 +88,16 @@ export class QueueDO extends DurableObject<Env> {
   #send(ws: WebSocket, msg: unknown): void { try { ws.send(JSON.stringify(msg)); } catch {} }
   #broadcastStaff(): void {
     const sockets = this.ctx.getWebSockets("staff");
+    if (sockets.length) {
+      const msg = this.staffState();
+      for (const ws of sockets) this.#send(ws, msg);
+    }
+    this.#broadcastDisplay(); // every change staff see can change what the TV shows
+  }
+  #broadcastDisplay(): void {
+    const sockets = this.ctx.getWebSockets("display");
     if (!sockets.length) return;
-    const msg = this.staffState();
+    const msg = this.core.displayView();
     for (const ws of sockets) this.#send(ws, msg);
   }
   #customerMsg(id: string) { return { type: "status", ...this.core.customerView(id, Date.now()) }; }
@@ -174,6 +182,9 @@ export class QueueDO extends DurableObject<Env> {
 
     // For the join page: queue name, people waiting, and the wait a new customer can expect.
     if (p === "/api/info") return json(this.#queueInfo());
+    // The "Now calling" TV: numbers only, live over a socket, with a JSON fallback for polling.
+    if (p === "/ws/display") return this.#acceptSocket(request, "display", () => this.core.displayView());
+    if (p === "/api/display") return json(this.core.displayView());
 
     if (p === "/api/join" && post) {
       const body = await readJson(request);

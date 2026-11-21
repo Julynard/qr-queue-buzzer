@@ -70,6 +70,15 @@ export interface ListedTicket {
   push: boolean;
 }
 
+/** What a "Now calling" TV shows: ticket numbers only, never names. */
+export interface DisplayView {
+  type: "display";
+  queueName: string;
+  calling: number[];   // notified or on the way, most recently notified first
+  preparing: number[]; // waiting, next in line first
+  waitMin: number | null;
+}
+
 /** What a customer's phone is told about its ticket (WebSocket and polling use the same shape). */
 export interface CustomerView {
   status: TicketStatus | "reset" | "gone";
@@ -457,6 +466,15 @@ export class QueueCore {
     return [...this.tickets.values()].sort((a, b) => b.num - a.num).map((t) => ({
       id: t.id, num: t.num, name: t.name, status: t.status, createdAt: t.createdAt, online: isOnline(t.id), push: t.subs.length > 0,
     }));
+  }
+
+  /** The display screen's view: numbers only, so a TV in a public place never shows names. */
+  displayView(): DisplayView {
+    const all = [...this.tickets.values()];
+    const calledAt = (t: Ticket) => t.claimBy ?? t.calledAt ?? 0; // every Notify restarts claimBy, so a repeat call moves to the front
+    const calling = all.filter((t) => t.status === "buzzing" || t.status === "coming").sort((a, b) => calledAt(b) - calledAt(a)).map((t) => t.num);
+    const preparing = all.filter((t) => t.status === "waiting").sort((a, b) => a.num - b.num).map((t) => t.num);
+    return { type: "display", queueName: this.meta.settings.queueName, calling, preparing, waitMin: this.waitMinutes(preparing.length + 1) };
   }
 
   publicTicket(t: Ticket): PublicTicket { return { id: t.id, num: t.num, name: t.name, status: t.status, createdAt: t.createdAt }; }

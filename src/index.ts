@@ -10,6 +10,8 @@ import HOME_HTML from "./pages/home.html";
 import LOGIN_HTML from "./pages/login.html";
 import APP_HTML from "./pages/app.html";
 import PRIVACY_HTML from "./pages/privacy.html";
+import INVITE_HTML from "./pages/invite.html";
+import DISPLAY_HTML from "./pages/display.html";
 
 export { QueueDO } from "./queue-do.ts";
 import { createAuth, getSession, signInMethods } from "./auth.ts";
@@ -21,6 +23,7 @@ import type { QueueRow } from "./queues.ts";
 import type { CustomerView, PublicTicket } from "./queue-core.ts";
 import { safeJson, fill, escHtml, safeNext } from "./html.ts";
 import { guardJoin } from "./join-guard.ts";
+import { inviteById, isLive } from "./team.ts";
 
 interface QueueInfo { queueName: string; waiting: number; waitMin: number | null; nextNum: number; nearbyOnly: boolean }
 
@@ -58,6 +61,17 @@ export default {
       }
       if (p === "/app") return session ? html(APP_HTML) : redirect("/login?next=/app");
       return handleAppApi(request, env, auth, session);
+    }
+
+    // A staff invite link. Anyone with the link sees which shop it's for; joining needs the invited email.
+    if ((m = p.match(/^\/invite\/([a-f0-9]{24})$/))) {
+      const inv = await inviteById(env.DB, m[1]!);
+      const session = await getSession(createAuth(env, request), request);
+      const names = inv ? await env.DB.prepare('select o.name as shop, u.name as inviter from "organization" o, "user" u where o.id = ? and u.id = ?')
+        .bind(inv.organizationId, inv.inviterId).first<{ shop: string; inviter: string }>() : null;
+      const state = !inv || !names ? "missing" : inv.status === "canceled" ? "canceled" : inv.status === "accepted" ? "used" : !isLive(inv, Date.now()) ? "expired" : "ok";
+      const info = { id: inv?.id ?? "", state, shop: names?.shop ?? "", inviter: names?.inviter ?? "", email: inv?.email ?? "", me: session?.user.email ?? null };
+      return html(fill(INVITE_HTML, { INVITE: safeJson(info) }));
     }
 
     if (p === "/sw.js") return send(SW_JS, "application/javascript", { "Service-Worker-Allowed": "/", "Cache-Control": "no-cache" });
@@ -125,6 +139,12 @@ async function queueRoute(request: Request, env: Env, row: QueueRow, forward: st
   let m: RegExpMatchArray | null;
 
   if (forward === "/staff") return html(fill(STAFF_HTML, { JOIN: origin + base, BASE: base, CAN_MANAGE: String(canManage(role)) }));
+  // The "Now calling" screen for a TV at the counter: public, ticket numbers only.
+  if (forward === "/display") {
+    const info = await internal<QueueInfo>("/api/info");
+    if (!info) return notFound();
+    return html(fill(DISPLAY_HTML, { JOIN: origin + base, BASE: base, QUEUE_NAME: escHtml(info.queueName || "Now calling") }));
+  }
   if (forward === "/qr") {
     const info = await internal<QueueInfo>("/api/info");
     if (!info) return notFound();

@@ -80,6 +80,7 @@
   .btn.danger{border-color:var(--danger);color:var(--danger)}
   .btn.sm{min-height:40px;font-size:14px;padding:0 14px}
   .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .linkbtn{font:inherit;border:0;background:none;padding:0;min-height:44px;font-weight:700;color:var(--ink);text-decoration:underline;cursor:pointer;display:inline-flex;align-items:center}
   .tag{font-size:12px;font-weight:800;padding:3px 10px;border-radius:999px;background:var(--ink);color:#fff}
   .tag.soft{background:var(--ground);border:1px solid #CBD0D6;color:var(--ink)}
   /* Home */
@@ -114,7 +115,29 @@
   details.risky[open] summary .chev{transform:rotate(90deg)}
   details.risky .inner{padding:4px 20px 20px;display:flex;flex-direction:column;gap:18px}
   .riskrow{display:flex;flex-direction:column;gap:8px;padding-top:16px;border-top:1px dashed #CBD0D6}
-  .onboard{background:var(--paper);border:3px solid var(--ink);border-radius:6px;padding:28px;display:flex;flex-direction:column;gap:12px;max-width:560px}
+  /* Onboarding: 1 plan, 2 shop, 3 staff */
+  .onb{display:flex;flex-direction:column;align-items:center;gap:24px;padding-top:8px}
+  .stepsbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
+  .stepsbar .s{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--mute)}
+  .stepsbar .s i{width:28px;height:28px;border-radius:50%;border:2px solid #CBD0D6;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:13px;font-weight:800;background:#fff}
+  .stepsbar .s.on{color:var(--ink);font-weight:800}.stepsbar .s.on i{background:var(--accent);border-color:var(--ink);color:#fff}
+  .stepsbar .s.done{color:var(--ink)}.stepsbar .s.done i{background:var(--ink);border-color:var(--ink);color:#fff}
+  .stepsbar .line{width:40px;border-top:2px dashed #CBD0D6}
+  .onbhead{text-align:center}.onbhead .sub{margin-top:8px;font-size:16px}
+  .plans{display:flex;flex-wrap:wrap;gap:20px;justify-content:center}
+  .plancard{position:relative;width:280px;text-align:left;font:inherit;color:var(--ink);cursor:pointer;background:#fff;border:2px solid var(--ink);border-radius:8px;padding:22px;display:flex;flex-direction:column;gap:10px}
+  .plancard[aria-pressed=true]{border:3px solid var(--accent);box-shadow:0 0 0 4px var(--paper)}
+  .plancard .badge{position:absolute;top:-14px;right:16px;padding:4px 12px;border-radius:999px;background:var(--ink);color:#fff;font-size:12px;font-weight:800;box-shadow:0 0 0 3px var(--ground)}
+  .plancard .nm{font-family:Anton,Impact,sans-serif;font-size:34px;line-height:1}
+  .plancard .pr{font-family:Anton,Impact,sans-serif;font-size:36px}.plancard .pr span{font-family:Inter,sans-serif;font-size:14px;font-weight:700;color:var(--soft)}
+  .plancard ul{margin:0;padding:0 0 0 18px;font-size:14px;line-height:1.6}
+  .notice{max-width:900px;width:100%;padding:12px 16px;background:var(--hi);border:2px solid var(--ink);border-radius:6px;font-size:15px;font-weight:600}
+  .onbcard{width:100%;max-width:620px;background:#fff;border:3px solid var(--ink);border-radius:6px;padding:28px;display:flex;flex-direction:column;gap:12px}
+  .onbcard.paper{background:var(--paper)}
+  .onbcard .field{max-width:none}
+  .invrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px dashed #CBD0D6}
+  .iconbtn{width:44px;height:44px;flex:none;border:2px solid var(--ink);border-radius:6px;background:#fff;color:var(--ink);display:inline-flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+  .invitedcard{width:100%;max-width:620px;background:var(--hi);border:2px solid var(--ink);border-radius:6px;padding:18px 20px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
   @media (max-width:760px){
     .topbar{gap:10px;padding:0 14px}
     .acct .nm,.planchip{display:none}
@@ -169,16 +192,46 @@
   <main>
     <div id="loading" class="sub">Loading…</div>
 
-    <!-- First visit: name the business -->
-    <form id="onboard" class="onboard hide" onsubmit="onboard(event)">
-      <h1>What's your shop called?</h1>
-      <div class="sub" style="margin:0">Customers see this on their ticket. We'll make your first counter for you.</div>
-      <label for="biz">Business name</label>
-      <input id="biz" class="field" maxlength="60" required placeholder="Ana's Milk Tea" autocomplete="organization">
-      <label for="you">Owner name</label>
-      <input id="you" class="field" maxlength="60" placeholder="Ana Reyes" autocomplete="name">
-      <div class="row" style="margin-top:6px"><button class="btn acc" id="onboardBtn">Create my shop</button><span class="msg bad" id="onboardMsg" role="alert"></span></div>
-    </form>
+    <!-- First visit: 1 pick a plan, 2 name the shop, 3 invite staff (optional) -->
+    <section id="onb" class="onb hide">
+      <div class="stepsbar" id="stepsbar"></div>
+      <div id="invitedBox" class="invitedcard hide"></div>
+      <div id="onb1" class="onb hide" style="padding:0">
+        <div class="onbhead"><h1>Pick a plan</h1><div class="sub">Start on Free. You can upgrade any time; your counter and settings carry over.</div></div>
+        <div class="plans">
+          <button type="button" class="plancard" data-plan="free" aria-pressed="true"><span class="badge">Available now</span><span class="nm">Free</span><span class="pr">₱0 <span>forever</span></span>
+            <ul><li>1 counter, 1 QR code</li><li>Owner + 2 staff</li><li>300 tickets a day</li><li>Display screen for a TV</li></ul></button>
+          <button type="button" class="plancard" data-plan="pro" aria-pressed="false"><span class="badge">Coming soon</span><span class="nm">Pro</span><span class="pr">₱299 <span>/ month</span></span>
+            <ul><li>Up to 5 counters</li><li>Owner + 5 staff</li><li>Your colours and logo</li><li>Reports and activity log</li></ul></button>
+          <button type="button" class="plancard" data-plan="max" aria-pressed="false"><span class="badge">Coming soon</span><span class="nm">Max</span><span class="pr">₱999 <span>/ month</span></span>
+            <ul><li>Up to 10 counters</li><li>Unlimited staff</li><li>Branches, food-park QR</li><li>Priority support</li></ul></button>
+        </div>
+        <div class="notice hide" id="planNotice" role="alert"></div>
+        <button class="btn acc" style="min-width:240px" onclick="onbStep(2)">Continue with Free</button>
+      </div>
+      <form id="onboard" class="onbcard paper hide" onsubmit="onboard(event)">
+        <h1>What's your shop called?</h1>
+        <div class="sub" style="margin:0">Customers see this on their ticket. We'll make your first counter for you: <b>Counter 1</b>.</div>
+        <label for="biz">Business name</label>
+        <input id="biz" class="field" maxlength="60" required placeholder="Ana's Milk Tea" autocomplete="organization">
+        <label for="you">Owner name</label>
+        <input id="you" class="field" maxlength="60" placeholder="Ana Reyes" autocomplete="name">
+        <div class="row" style="justify-content:space-between;margin-top:6px"><button type="button" class="linkbtn" onclick="onbStep(1)">Back</button>
+          <span class="row"><span class="msg bad" id="onboardMsg" role="alert"></span><button class="btn acc" id="onboardBtn">Continue</button></span></div>
+      </form>
+      <div id="onb3" class="onbcard hide">
+        <h1>Who helps at the counter?</h1>
+        <div class="sub" style="margin:0">Staff run the counter: they notify customers and mark orders done. Only you add or remove staff. Free includes 2.</div>
+        <form class="row" style="flex-wrap:nowrap" onsubmit="onbInvite(event)"><label for="invEmail" class="hide">Their email</label>
+          <input id="invEmail" class="field" type="email" placeholder="name@example.com" autocomplete="off" style="flex:1">
+          <button class="btn ink" id="invBtn">Invite</button></form>
+        <div class="msg bad" id="invMsg" role="alert"></div>
+        <div id="invList"></div>
+        <div class="sub" style="margin:0">They sign in with that email (Google or a code) and go straight to Counter 1. Copy each link and send it by Messenger or WhatsApp.</div>
+        <div class="row" style="justify-content:space-between;margin-top:8px"><a class="linkbtn" href="/app#home" onclick="location.href='/app#home';location.reload()">Skip for now</a>
+          <a class="btn acc" href="/app#home" onclick="location.href='/app#home';location.reload()">Finish and open my shop</a></div>
+      </div>
+    </section>
 
     <section id="tab-home" class="hide" style="display:flex;flex-direction:column;gap:22px"></section>
     <section id="tab-account" class="hide" style="display:flex;flex-direction:column;gap:22px"></section>
@@ -249,7 +302,7 @@ async function load(){
   const want = new URLSearchParams(location.search).get('shop');
   shop = me.workspaces.find(w => w.id === want) || owned[0] || me.workspaces[0];
   $('loading').classList.add('hide');
-  $('onboard').classList.add('hide');
+  $('onb').classList.add('hide');
   $('side').classList.remove('hide');
   renderShell();
   applyPlan(shop.plan || 'free', me.superadmin, shop.role === 'owner' || me.superadmin ? shop.id : '');
@@ -313,24 +366,61 @@ window.addEventListener('hashchange', () => { if (shop) go(location.hash.slice(1
 document.addEventListener('click', e => { for (const d of [$('acct'), $('shopsw'), $('planMenu')]) if (d.open && !d.contains(e.target)) d.open = false; });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('acct').open = false; $('shopsw').open = false; $('planMenu').open = false; } });
 
+// ---------- onboarding ----------
+let newShop = null;
+const COPY = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
 function showOnboarding(){
-  $('onboard').classList.remove('hide'); $('side').classList.add('hide');
+  $('onb').classList.remove('hide'); $('side').classList.add('hide');
   $('tab-home').classList.add('hide'); $('tab-account').classList.add('hide');
-  let start = null;
-  try { start = JSON.parse(sessionStorage.getItem('aqonaStart') || 'null'); } catch(e){}
-  if (start) { $('biz').value = start.businessName || ''; $('you').value = start.yourName || me.user.name || ''; }
-  else $('you').value = me.user.name || '';
-  // Came from "Start free": the names were already typed there, so create straight away.
-  if (start && start.businessName) onboard();
+  $('you').value = me.user.name || '';
+  renderInvited($('invitedBox'), ' Or set up your own shop below.');
+  document.querySelectorAll('.plancard').forEach(c => c.onclick = () => {
+    const paid = c.dataset.plan !== 'free';
+    $('planNotice').textContent = paid ? (c.dataset.plan === 'pro' ? 'Pro' : 'Max') + ' opens soon. For now every shop starts on Free; we\'ll tell you when you can switch.' : '';
+    $('planNotice').classList.toggle('hide', !paid);
+  });
+  onbStep(1);
+}
+function onbStep(n){
+  $('onb1').classList.toggle('hide', n !== 1); $('onboard').classList.toggle('hide', n !== 2); $('onb3').classList.toggle('hide', n !== 3);
+  $('stepsbar').innerHTML = ['Plan', 'Your shop', 'Your team'].map((t, i) =>
+    '<span class="s' + (i + 1 < n ? ' done' : i + 1 === n ? ' on' : '') + '"><i>' + (i + 1 < n ? '✓' : i + 1) + '</i>' + t + '</span>' + (i < 2 ? '<span class="line"></span>' : '')).join('');
+  if (n === 2) $('biz').focus();
+  if (n === 3) $('invEmail').focus();
 }
 async function onboard(e){
   if (e) e.preventDefault();
   $('onboardBtn').disabled = true; $('onboardMsg').textContent = '';
   try {
-    await api('/onboard', { method: 'POST', body: JSON.stringify({ businessName: $('biz').value, yourName: $('you').value }) });
-    try { sessionStorage.removeItem('aqonaStart'); } catch(e){}
-    await load();
+    newShop = await api('/onboard', { method: 'POST', body: JSON.stringify({ businessName: $('biz').value, yourName: $('you').value }) });
+    $('onboardBtn').disabled = false;
+    onbStep(3);
   } catch(err) { $('onboardMsg').textContent = err.message; $('onboardBtn').disabled = false; }
+}
+async function onbInvite(e){
+  e.preventDefault();
+  $('invMsg').textContent = ''; $('invBtn').disabled = true;
+  try {
+    const d = await api('/invites', { method: 'POST', body: JSON.stringify({ workspaceId: newShop.workspaceId, email: $('invEmail').value }) });
+    $('invEmail').value = '';
+    const row = document.createElement('div'); row.className = 'invrow';
+    row.innerHTML = '<span><b>' + esc(d.email) + '</b><span class="sub" style="display:block;margin:0">Invited · link works 7 days</span></span>' +
+      '<button class="iconbtn" title="Copy invite link" aria-label="Copy invite link for ' + esc(d.email) + '">' + COPY + '</button>';
+    row.querySelector('button').onclick = () => copyText(d.link, row.querySelector('.sub'), 'Invited · link works 7 days');
+    $('invList').appendChild(row);
+  } catch(err) { $('invMsg').textContent = err.message; }
+  $('invBtn').disabled = false;
+}
+async function copyText(text, note, back){
+  try { await navigator.clipboard.writeText(text); } catch(e) { prompt('Copy this link:', text); return; }
+  note.textContent = 'Link copied'; setTimeout(() => { note.textContent = back; }, 1500);
+}
+// Invites waiting for this email (staff who signed in without the link).
+function renderInvited(box, extra){
+  const inv = (me.invites || [])[0];
+  box.classList.toggle('hide', !inv);
+  if (!inv) return;
+  box.innerHTML = '<span><b>You\'re invited to ' + esc(inv.shop) + '.</b>' + (extra || '') + '</span><a class="btn acc" href="/invite/' + esc(inv.id) + '">Join ' + esc(inv.shop) + '</a>';
 }
 
 function render(){
@@ -339,7 +429,7 @@ function render(){
   const link = q ? ORIGIN + '/q/' + q.slug : '';
   const staffUrl = q ? '/q/' + q.slug + '/staff' : '#home';
   // Home: print the poster first, then the getting-started steps.
-  $('tab-home').innerHTML =
+  $('tab-home').innerHTML = '<div id="homeInvited" class="invitedcard hide"></div>' +
     '<div><h1>' + (first ? 'Welcome, ' + esc(first) : 'Welcome') + '</h1><div class="sub">' + esc(shop.name) +
       (q ? ' is ready. Print your poster and you can take your first customer.' : '') + '</div></div>' +
     (q ? '<div class="homegrid">' +
@@ -355,7 +445,7 @@ function render(){
       '<section class="card steps" aria-label="Getting started"><div class="eyebrow">Getting started</div>' +
         '<div class="step done"><span class="n">✓</span><div style="flex:1"><div class="t">Create your shop</div><div class="d">' + esc(counterName(q)) + ' is ready.</div></div></div>' +
         '<div class="step"><span class="n">2</span><div style="flex:1"><div class="t">Invite your staff</div><div class="d">They\'ll go straight to ' + esc(counterName(q)) + ' when they sign in.</div></div>' +
-          '<span class="tag soft">Coming soon</span></div>' +
+          (shop.role === 'owner' ? '<a class="btn sm" href="' + esc(staffUrl) + '#team">Invite</a>' : '') + '</div>' +
         '<div class="step"><span class="n">3</span><div style="flex:1"><div class="t">Try it with your phone</div><div class="d">Scan the poster, take a number, then tap Notify.</div></div>' +
           '<a class="btn sm" href="' + esc(staffUrl) + '#queue">Open counter</a></div>' +
       '</section></div>' +
@@ -397,6 +487,7 @@ function render(){
     };
   }
   document.querySelectorAll('[data-del]').forEach(b => b.onclick = () => deleteQueue(b.dataset.del, b.dataset.name));
+  renderInvited($('homeInvited'));
 }
 
 async function deleteQueue(id, name){

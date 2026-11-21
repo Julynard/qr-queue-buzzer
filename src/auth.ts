@@ -62,7 +62,14 @@ export function authOptions(env: Env, baseURL: string): BetterAuthOptions {
     },
     // Workspaces and accounts are created and deleted only through /api/app/*, which also creates or wipes
     // the queues' live data. Better Auth's own endpoints for these are switched off.
-    disabledPaths: ["/organization/create", "/organization/delete", "/delete-user"],
+    // Same for invites and team members: only /api/app/* (which checks the plan's seat limit) changes them.
+    disabledPaths: [
+      "/organization/create", "/organization/delete", "/delete-user", "/organization/update",
+      "/organization/invite-member", "/organization/accept-invitation", "/organization/reject-invitation",
+      "/organization/cancel-invitation", "/organization/get-invitation", "/organization/list-invitations",
+      "/organization/list-user-invitations", "/organization/remove-member", "/organization/update-member-role",
+      "/organization/leave", "/organization/add-member",
+    ],
     socialProviders: methods.google ? { google: { clientId: env.GOOGLE_CLIENT_ID!, clientSecret: env.GOOGLE_CLIENT_SECRET! } } : {},
     plugins,
   };

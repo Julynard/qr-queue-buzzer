@@ -475,3 +475,24 @@ test("today's code: always set and saved, and a new day gives a new one", () => 
   assert.equal(q.meta.joinCode, "5555");
   assert.equal(q.takeChanges().meta?.joinCode, "5555");
 });
+
+test("display view: numbers only, latest Notify first, waiting in order", () => {
+  const q = new QueueCore();
+  const a = join(q, { name: "Ana", key: "k".repeat(32) }).ticket;
+  const b = join(q, { name: "Ben", key: "l".repeat(32) }).ticket;
+  const c = join(q, { name: "Cy", key: "m".repeat(32) }).ticket;
+  join(q, { key: "n".repeat(32) });
+  q.act("buzz", a.id, NOW + MIN);
+  q.act("buzz", b.id, NOW + 2 * MIN);
+  q.act("ack", b.id, NOW + 3 * MIN);
+  let v = q.displayView();
+  assert.deepEqual(v.calling, [b.num, a.num], "on the way counts as called; latest Notify first");
+  assert.deepEqual(v.preparing, [c.num, c.num + 1]);
+  assert.equal(JSON.stringify(v).includes("Ana"), false, "never shows names");
+  q.act("buzz", a.id, NOW + 4 * MIN);
+  assert.deepEqual(q.displayView().calling, [a.num, b.num], "a repeat Notify moves to the front");
+  q.act("done", a.id, NOW + 5 * MIN);
+  v = q.displayView();
+  assert.deepEqual(v.calling, [b.num], "done leaves Now calling");
+  assert.equal(v.type, "display");
+});
