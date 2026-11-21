@@ -11,6 +11,7 @@ import LOGIN_HTML from "./pages/login.html";
 import APP_HTML from "./pages/app.html";
 import PRIVACY_HTML from "./pages/privacy.html";
 import INVITE_HTML from "./pages/invite.html";
+import DISPLAY_HTML from "./pages/display.html";
 
 export { QueueDO } from "./queue-do.ts";
 import { createAuth, getSession, signInMethods } from "./auth.ts";
@@ -137,6 +138,12 @@ async function queueRoute(request: Request, env: Env, row: QueueRow, forward: st
   let m: RegExpMatchArray | null;
 
   if (forward === "/staff") return html(fill(STAFF_HTML, { JOIN: origin + base, BASE: base, CAN_MANAGE: String(canManage(role)) }));
+  // The "Now calling" screen for a TV at the counter: public, ticket numbers only.
+  if (forward === "/display") {
+    const info = await internal<QueueInfo>("/api/info");
+    if (!info) return notFound();
+    return html(fill(DISPLAY_HTML, { JOIN: origin + base, BASE: base, QUEUE_NAME: escHtml(info.queueName || "Now calling") }));
+  }
   if (forward === "/qr") {
     const info = await internal<QueueInfo>("/api/info");
     if (!info) return notFound();

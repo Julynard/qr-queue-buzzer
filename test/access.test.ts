@@ -6,6 +6,13 @@ import { FREE_LIMITS, MAX_LIMITS, PRO_LIMITS, isPlan, limitsFor } from "../src/p
 
 const ID = "abc123abc123";
 
+test("the display screen (numbers only) is public, GET only", () => {
+  for (const p of ["/display", "/api/display", "/ws/display"]) {
+    assert.deepEqual(classifyQueuePath(p, "GET"), { need: "public", forward: p }, p);
+    assert.equal(classifyQueuePath(p, "POST"), null, p + " is GET only");
+  }
+});
+
 test("customer pages and calls are public", () => {
   assert.deepEqual(classifyQueuePath("", "GET"), { need: "public", forward: "/join" });
   assert.deepEqual(classifyQueuePath("/", "GET"), { need: "public", forward: "/join" });

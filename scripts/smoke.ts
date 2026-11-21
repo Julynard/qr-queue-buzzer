@@ -166,6 +166,25 @@ check("owner can't remove themselves", (await site("/api/app/members/remove", co
 check("owner removes B from the team", (await site("/api/app/members/remove", cookieA, { method: "POST", body: JSON.stringify({ workspaceId: WS, userId: bId }) })).ok);
 check("removed staff can't open the counter page (403)", (await site(Q + "/staff", cookieB)).status === 403);
 
+// ---------- display screen (public, numbers only) ----------
+check("display page opens logged out", (await site(Q + "/display")).status === 200);
+check("display page scripts parse", parses(scripts(await (await site(Q + "/display")).text())));
+check("display API is GET only", (await site(Q + "/api/display", "", { method: "POST" })).status === 404);
+const tv = new Socket("/ws/display", "");
+await tv.opened;
+const tvFirst = await tv.next<Msg>((m) => (m as unknown as { type: string }).type === "display") as unknown as { calling: number[]; preparing: number[] };
+check("display socket sends the current view", Array.isArray(tvFirst.calling) && Array.isArray(tvFirst.preparing));
+const zed = await (await fetch(B + Q + "/api/join", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: "Zed Secret", key: "z".repeat(32) }) })).json() as TicketJson;
+const afterJoin = await tv.next<Msg>((m) => (m as unknown as { type: string; preparing?: number[] }).type === "display" && !!(m as unknown as { preparing: number[] }).preparing?.includes(zed.num)) as unknown as { preparing: number[] };
+check("a new ticket shows under Preparing", afterJoin.preparing.includes(zed.num));
+const dj = await (await site(Q + "/api/display")).text();
+check("display never shows names", !dj.includes("Zed Secret") && dj.includes('"type":"display"'));
+await post("/api/buzz/" + zed.id);
+const afterBuzz = await tv.next<Msg>((m) => !!(m as unknown as { calling?: number[] }).calling?.includes(zed.num)) as unknown as { calling: number[] };
+check("Notify moves the number to Now calling (live)", afterBuzz.calling[0] === zed.num);
+await post("/api/done/" + zed.id);
+tv.close();
+
 check("manual reset", (await post("/api/reset")).ok);
 
 const joins = await Promise.all(Array.from({ length: 20 }, (_, i) => postJson<TicketJson>("/api/join", { name: "C" + i })));
