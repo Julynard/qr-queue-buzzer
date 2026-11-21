@@ -50,6 +50,10 @@ export function authOptions(env: Env, baseURL: string): BetterAuthOptions {
     secret: env.BETTER_AUTH_SECRET,
     database: env.DB,
     trustedOrigins: [baseURL],
+    // A failed Google log-in comes back to our log-in page with ?error=<code> instead of Better Auth's
+    // own error page. This covers failures before the flow's errorCallbackURL is known (expired or
+    // mismatched state); the log-in and start pages also pass errorCallbackURL (e.g. for "Cancel").
+    onAPIError: { errorURL: `${baseURL}/login` },
     advanced: { ipAddress: { ipAddressHeaders: ["cf-connecting-ip"] } },
     rateLimit: {
       enabled: true,

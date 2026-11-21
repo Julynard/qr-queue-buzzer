@@ -108,9 +108,23 @@ function renderTurnstile(){
 }
 renderTurnstile();
 
+// Back from Google with ?error=<code> (e.g. "Cancel" on Google's screen). Show a short note, then drop
+// the code from the address so a reload doesn't show it again. Never show error_description (URL text).
+const googleError = new URLSearchParams(location.search).get('error');
+if (googleError) {
+  const other = METHODS.email ? ' Or log in with your email below.' : '';
+  $('emailErr').textContent = (googleError === 'access_denied'
+    ? 'Google log-in was cancelled. Tap Continue with Google to try again.'
+    : 'Google log-in didn\'t work. Please try again.') + other;
+  const u = new URL(location.href);
+  u.searchParams.delete('error'); u.searchParams.delete('error_description');
+  history.replaceState(null, '', u.pathname + u.search + u.hash);
+}
+
 async function google(){
+  $('emailErr').textContent = '';
   try {
-    const r = await post('/sign-in/social', { provider: 'google', callbackURL: NEXT });
+    const r = await post('/sign-in/social', { provider: 'google', callbackURL: NEXT, errorCallbackURL: '/login?next=' + encodeURIComponent(NEXT) });
     const d = await r.json();
     if (d.url) location.href = d.url; else throw new Error();
   } catch(e) { $('emailErr').textContent = 'Google sign-in is not available right now. Please try again.'; }

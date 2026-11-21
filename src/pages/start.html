@@ -80,6 +80,16 @@ function preview(){ $('addr').textContent = location.host + '/q/' + (slugify($('
 try { const s = JSON.parse(sessionStorage.getItem('aqonaStart') || 'null'); if (s) { $('biz').value = s.businessName || ''; $('you').value = s.yourName || ''; } } catch(e){}
 preview();
 
+// Back from Google with ?error=<code> (e.g. "Cancel" on Google's screen). The names above are restored
+// from this tab. Show a short note, then drop the code from the address. Never show error_description.
+const googleError = new URLSearchParams(location.search).get('error');
+if (googleError) {
+  $('err').textContent = googleError === 'access_denied'
+    ? 'Google sign-up was cancelled. Tap Continue with Google to try again.'
+    : 'Google sign-up didn\'t work. Please try again.';
+  history.replaceState(null, '', location.pathname);
+}
+
 // The names wait in this tab until sign-in is done; the dashboard then creates the workspace and queue.
 function remember(){
   const businessName = $('biz').value.trim();
@@ -89,9 +99,10 @@ function remember(){
 }
 function withEmail(e){ e.preventDefault(); if (remember()) location.href = '/login?next=/app'; }
 async function withGoogle(){
+  $('err').textContent = '';
   if (!remember()) return;
   try {
-    const r = await fetch('/api/auth/sign-in/social', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ provider: 'google', callbackURL: '/app' }) });
+    const r = await fetch('/api/auth/sign-in/social', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ provider: 'google', callbackURL: '/app', errorCallbackURL: '/start' }) });
     const d = await r.json();
     if (d.url) location.href = d.url; else throw new Error();
   } catch(err) { $('err').textContent = 'Google sign-in is not available right now. Please try again.'; }
