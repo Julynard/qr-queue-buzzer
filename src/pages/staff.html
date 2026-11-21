@@ -227,6 +227,7 @@
 <script>
 const JOIN = '__JOIN__';
 const BASE = '__BASE__'; // this queue's address, e.g. /q/anas-milk-tea
+const CAN_MANAGE = __CAN_MANAGE__; // owner (or superadmin): Team and Settings. Staff only run the queue.
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pad = n => String(n).padStart(3, '0');
@@ -249,7 +250,7 @@ const LOCKED = {
 };
 const GROUPS = [
   ['Run the queue', [['queue','Queue'], ['qr','QR code']]],
-  ['Manage', [['team','Team'], ['settings','Settings']]],
+  ...(CAN_MANAGE ? [['Manage', [['team','Team'], ['settings','Settings']]]] : []),
   ['Pro', [['display','Display screen',1], ['branding','Branding',1], ['reports','Reports',1], ['log','Activity log',1]]],
 ];
 let state = null, settingsShown = false, tab = 'queue';
@@ -264,7 +265,7 @@ function renderNav(){
       (locked ? LOCK : '') + (key === 'queue' ? '<span class="count">' + open + '</span>' : '') + '</button>').join('') + '</div>').join('');
 }
 function go(key){
-  tab = LOCKED[key] || ['queue','qr','team','settings'].includes(key) ? key : 'queue';
+  tab = LOCKED[key] || ['queue','qr'].includes(key) || (CAN_MANAGE && ['team','settings'].includes(key)) ? key : 'queue';
   if (location.hash.slice(1) !== tab) history.replaceState(null, '', '#' + tab);
   const lk = LOCKED[tab];
   document.querySelectorAll('main > section').forEach(s => s.classList.toggle('hide', s.dataset.tab !== (lk ? 'locked' : tab)));

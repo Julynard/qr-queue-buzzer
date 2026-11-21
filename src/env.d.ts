@@ -14,6 +14,8 @@ interface Env {
   GOOGLE_CLIENT_SECRET?: string;
   /** Turnstile check on "Email me a code". */
   TURNSTILE_SECRET_KEY?: string;
+  /** Aqona's own people: emails, comma-separated. They pass every queue permission check. Deployed: a Secret. */
+  SUPERADMIN_EMAILS?: string;
 }
 
 // Durable Objects default to Cloudflare.Env; keep the two in step.
@@ -30,5 +32,7 @@ declare namespace Cloudflare {
     GOOGLE_CLIENT_SECRET?: string;
     /** Turnstile check on "Email me a code". */
     TURNSTILE_SECRET_KEY?: string;
+    /** Aqona's own people: emails, comma-separated. They pass every queue permission check. Deployed: a Secret. */
+    SUPERADMIN_EMAILS?: string;
   }
 }

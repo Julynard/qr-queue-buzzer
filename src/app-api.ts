@@ -4,7 +4,8 @@
 import type { Auth, SessionInfo } from "./auth.ts";
 import { uniqueSlug, randomSuffix } from "./slug.ts";
 import { limitsFor } from "./plans.ts";
-import { createQueue, deleteQueueRow, memberRole, queuesOf, slugTaken } from "./queues.ts";
+import { createQueue, deleteQueueRow, queuesOf, roleIn, slugTaken } from "./queues.ts";
+import { allows } from "./access.ts";
 import type { QueueRow } from "./queues.ts";
 
 const NAME_MAX = 60;
@@ -87,7 +88,7 @@ export async function handleAppApi(request: Request, env: Env, auth: Auth, sessi
 
   if ((m = p.match(/^\/api\/app\/queues\/([0-9a-f-]{36})$/)) && request.method === "DELETE") {
     const row = await env.DB.prepare("select id, workspace_id, slug, name, created_at from queue where id = ?").bind(m[1]).first<QueueRow>();
-    if (!row || (await memberRole(env.DB, userId, row.workspace_id)) !== "owner") return json({ error: "Only the owner can delete this queue." }, 403);
+    if (!row || !allows("owner", await roleIn(env, session.user, row.workspace_id))) return json({ error: "Only the owner can delete this queue." }, 403);
     await deleteQueue(env, row);
     return json({ ok: true });
   }

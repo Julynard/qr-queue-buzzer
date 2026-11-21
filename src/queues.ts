@@ -1,3 +1,6 @@
+import { isSuperadmin } from "./access.ts";
+import type { Role } from "./access.ts";
+
 // The list of queues (D1). A queue's live data is in its Durable Object, addressed by idFromName(queue.id).
 
 export interface QueueRow { id: string; workspace_id: string; slug: string; name: string; created_at: number }
@@ -22,13 +25,16 @@ export async function slugTaken(db: D1Database, slug: string): Promise<boolean> 
   return !!(await db.prepare("select 1 as x from queue where slug = ?1 union all select 1 from deleted_slug where slug = ?1 limit 1").bind(slug).first());
 }
 
-export async function isMember(db: D1Database, userId: string, workspaceId: string): Promise<boolean> {
-  return !!(await db.prepare('select 1 as x from "member" where "userId" = ? and "organizationId" = ?').bind(userId, workspaceId).first());
-}
-
 export async function memberRole(db: D1Database, userId: string, workspaceId: string): Promise<string | null> {
   const r = await db.prepare('select role from "member" where "userId" = ? and "organizationId" = ?').bind(userId, workspaceId).first<{ role: string }>();
   return r?.role ?? null;
+}
+
+/** This person's role for a workspace: superadmin first, else their member role, else null (not on the team). */
+export async function roleIn(env: Env, user: { id: string; email: string }, workspaceId: string): Promise<Role | null> {
+  if (isSuperadmin(user.email, env.SUPERADMIN_EMAILS)) return "superadmin";
+  const r = await memberRole(env.DB, user.id, workspaceId);
+  return r === "owner" || r === "admin" || r === "member" ? r : null;
 }
 
 export async function queuesOf(db: D1Database, workspaceId: string): Promise<QueueRow[]> {

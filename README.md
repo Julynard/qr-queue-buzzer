@@ -48,6 +48,7 @@ First time (owner):
     npx wrangler secret put GOOGLE_CLIENT_ID        # Google sign-in (see below)
     npx wrangler secret put GOOGLE_CLIENT_SECRET
     npx wrangler secret put BETTER_AUTH_API_KEY     # optional: Better Auth dashboard
+    npx wrangler secret put SUPERADMIN_EMAILS       # optional: Aqona staff who may open any queue (emails, comma-separated)
 
 Then every time:
 
