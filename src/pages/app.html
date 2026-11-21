@@ -346,7 +346,9 @@ async function loadToday(){
   try {
     const d = await (await fetch('/q/' + q.slug + '/api/state', { cache: 'no-store' })).json();
     const waiting = (d.tickets || []).filter(t => t.status !== 'done' && t.status !== 'noshow').length;
-    $('usage').innerHTML = 'Today: <b>' + (d.ticketsToday ?? 0) + '</b> of ' + (d.maxTickets || 999) + ' tickets';
+    // The plan's daily allowance (Free: 300); paid plans have none, so just the count.
+    const limit = shop.limits ? shop.limits.softTicketsPerDay : null;
+    $('usage').innerHTML = 'Today: <b>' + (d.ticketsToday ?? 0) + '</b>' + (limit ? ' of ' + limit : '') + ' tickets';
     if ($('navCount')) $('navCount').textContent = waiting;
     if ($('nowNum')) $('nowNum').textContent = waiting;
   } catch(e) { $('usage').textContent = 'Today: open the counter to see tickets'; }

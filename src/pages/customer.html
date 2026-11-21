@@ -180,8 +180,8 @@
   <div id="readyView" class="hide">
     <div class="strip"><span class="shop"></span><span class="ticketNo"></span></div>
     <div class="readybox" role="alert">
-      <h1 class="anton">Your order is ready.</h1>
-      <div style="margin-top:14px;font-size:18px;font-weight:800">Come to the counter.</div>
+      <h1 class="anton" id="readyHead">Your order is ready.</h1>
+      <div style="margin-top:14px;font-size:18px;font-weight:800" id="readySub">Come to the counter.</div>
       <div style="margin-top:8px;font-size:14px;font-weight:500" id="readyWho"></div>
       <div style="margin-top:auto;display:flex;flex-direction:column;gap:2px" id="clockBox">
         <div class="clock anton" id="clock"></div>
@@ -469,9 +469,12 @@ function tick(){
   const noshow = state === 'noshow';
   const left = noshow ? 0 : claimEnd ? Math.max(0, Math.ceil((claimEnd - Date.now()) / 1000)) : null;
   show('clockBox', left != null);
+  // Claim time over: the headline changes too, so it no longer says the order is ready.
+  $('readyHead').textContent = left === 0 ? "Time's up." : 'Your order is ready.';
+  $('readySub').textContent = left === 0 ? 'Please talk to the staff, they can still serve you.' : 'Come to the counter.';
   if (left == null) return;
   $('clock').textContent = Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0');
-  $('clockLabel').textContent = left > 0 ? 'left to claim it' : "Time's up. You're marked as a no-show. Please talk to the staff, they can still serve you.";
+  $('clockLabel').textContent = left > 0 ? 'left to claim it' : "You're marked as a no-show.";
   if (left === 0) { clearInterval(clockTimer); stopRing(); show('claimBtn', false); show('thanks', false); }
 }
 

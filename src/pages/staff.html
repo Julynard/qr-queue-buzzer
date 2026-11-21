@@ -437,6 +437,13 @@ async function removeStaff(userId, name){
 
 // ---------- plan chip; super admins can switch the shop's plan here ----------
 const PLAN_LABEL = { free: 'Free', pro: 'Pro', max: 'Max' };
+// The plan's daily ticket allowance (Free: 300; null = no allowance). Known once /api/app/me answers.
+let TICKET_LIMIT = null;
+function renderUsage(){
+  if (!state) return;
+  const n = state.ticketsToday ?? (state.tickets || []).length;
+  $('usage').innerHTML = 'Today: <b>' + n + '</b>' + (TICKET_LIMIT ? ' of ' + TICKET_LIMIT : '') + ' tickets';
+}
 function applyPlan(plan, superadmin, workspaceId){
   const name = (PLAN_LABEL[plan] || 'Free') + ' plan';
   $('planChip').innerHTML = plan === 'free' ? 'Free plan · <span>See Pro</span>' : name;
@@ -487,6 +494,8 @@ fetch('/api/app/me', {cache:'no-store'}).then(r => r.ok ? r.json() : null).then(
   if (!me || !me.workspaces) return;
   const here = me.workspaces.find(w => w.queues.some(q => BASE === '/q/' + q.slug));
   PLAN = (here && here.plan) || 'free';
+  TICKET_LIMIT = here && here.limits ? here.limits.softTicketsPerDay : null;
+  renderUsage();
   TEAM_WS = here ? here.id : '';
   applyPlan(PLAN, me.superadmin, here && (here.role === 'owner' || me.superadmin) ? here.id : '');
   go(tab);
@@ -596,7 +605,7 @@ function render(d){
   const s = d.settings || {};
   const open = rows.filter(t => t.status !== 'done' && t.status !== 'noshow').length;
   $('queueSub').innerHTML = '<b>' + open + '</b> waiting or called · ' + (s.autoReset ? 'daily reset at ' + time12(s.resetTime) : 'automatic reset off');
-  $('usage').innerHTML = 'Today: <b>' + (d.ticketsToday ?? rows.length) + '</b> of ' + (d.maxTickets || 999) + ' tickets';
+  renderUsage();
   const [shop, ...counter] = (s.queueName || '').split(' · ');
   $('qShop').textContent = shop || 'Your shop';
   $('qCounter').textContent = (counter.join(' · ') || 'Counter 1') + ' · ' + (CAN_MANAGE ? 'Owner' : 'Staff');
