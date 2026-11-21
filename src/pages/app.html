@@ -13,63 +13,147 @@
   a{color:var(--accent)}a:hover{color:#095A96}
   .hide{display:none!important}
   button{font:inherit;cursor:pointer}
-  button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-  header{background:#fff;border-bottom:1px solid var(--line)}
-  .wrap{max-width:960px;margin:0 auto;padding:0 20px}
-  .hbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;min-height:68px}
-  .brand{font-family:'Space Grotesk',Inter,sans-serif;font-weight:700;font-size:26px;letter-spacing:-.03em;text-decoration:none;color:var(--ink)}.brand b{color:var(--accent)}
-  .who{display:flex;align-items:center;gap:12px;font-size:14px;font-weight:600}
-  .avatar{width:32px;height:32px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
-  main.wrap{padding:28px 20px 64px;display:flex;flex-direction:column;gap:22px}
+  button:focus-visible,a:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .brand{font-family:'Space Grotesk',Inter,sans-serif;font-weight:700;letter-spacing:-.03em;text-decoration:none;color:var(--ink)}.brand b{color:var(--accent);font-weight:700}
+  .brand:hover{color:var(--ink)}
+  /* top bar (same as the staff page) */
+  .topbar{position:sticky;top:0;z-index:20;height:64px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 20px}
+  .topbar .brand{font-size:26px;flex:none}
+  .crumbs{flex:1;min-width:0;display:flex;align-items:center;gap:8px;font-size:14px;color:var(--soft);white-space:nowrap;overflow:hidden}
+  .crumbs a{color:var(--soft);font-weight:600;text-decoration:none}.crumbs a:hover{color:var(--ink)}
+  .crumbs b{color:var(--ink);overflow:hidden;text-overflow:ellipsis}
+  .crumbs .sep{color:#9AA6B2}
+  .acct{position:relative;flex:none}
+  .acct summary{list-style:none;display:flex;align-items:center;gap:10px;min-height:44px;padding:0 8px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700}
+  .acct summary::-webkit-details-marker{display:none}
+  .acct summary:hover,.acct[open] summary{background:var(--ground)}
+  .acct .caret{width:16px;height:16px;flex:none}
+  .acct .menu{position:absolute;right:0;top:calc(100% + 6px);min-width:250px;background:#fff;border:2px solid var(--ink);border-radius:8px;box-shadow:0 14px 30px rgba(10,42,74,.14);padding:6px;display:flex;flex-direction:column}
+  .acct .menu .who{padding:10px 12px 12px;font-size:13px;color:var(--soft);border-bottom:1px solid var(--line);margin-bottom:4px;word-break:break-all}
+  .acct .menu .who b{display:block;color:var(--ink);font-size:14px}
+  .acct .menu a,.acct .menu button{min-height:44px;padding:0 12px;border:0;border-radius:6px;background:none;color:var(--ink);font-weight:600;font-size:14px;text-align:left;text-decoration:none;display:flex;align-items:center}
+  .acct .menu a:hover,.acct .menu button:hover{background:var(--ground);color:var(--ink)}
+  .avatar{width:32px;height:32px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex:none}
+  /* sidebar + main (same as the staff page) */
+  .app{min-height:calc(100vh - 64px);display:flex;flex-wrap:wrap;align-items:stretch}
+  nav.side{flex:1 1 240px;max-width:280px;background:#fff;border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:18px}
+  .shopbox{min-height:52px;padding:8px 12px;margin:0 8px;border:2px solid var(--ink);border-radius:6px;background:var(--paper);display:flex;flex-direction:column;justify-content:center}
+  .shopbox b{font-size:15px}.shopbox span{font-size:12px}
+  .groups{display:flex;flex-direction:column;gap:18px}
+  .group{display:flex;flex-direction:column;gap:2px}
+  .gtitle{padding:0 10px 6px;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+  .item{font-size:15px;font-weight:600;min-height:44px;padding:0 10px;border:0;border-radius:8px;background:transparent;color:var(--ink);display:flex;align-items:center;gap:10px;text-align:left;text-decoration:none}
+  .item:hover{color:var(--ink);background:var(--ground)}
+  .item .bar{width:4px;height:20px;border-radius:2px;background:transparent}
+  .item .lbl{flex:1}
+  .item[aria-current=page]{background:var(--paper);font-weight:800}
+  .item[aria-current=page] .bar{background:var(--ink)}
+  .count{font-size:12px;font-weight:800;padding:2px 8px;border-radius:999px;background:var(--hi);color:var(--ink)}
+  .navfoot{margin-top:auto;padding:0 4px}
+  .plan{border:2px dashed #9AA6B2;border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px}
+  .plan .t{font-size:13px;font-weight:800}.plan .u{font-size:12px;color:var(--soft)}
+  main{flex:999 1 560px;min-width:0;padding:28px 32px 64px;display:flex;flex-direction:column;gap:22px}
   h1{margin:0;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:48px;line-height:1}
   h2{margin:0;font-size:18px;font-weight:800}
   .sub{font-size:14px;color:var(--soft);margin-top:6px}
   .card{background:#fff;border:2px solid var(--ink);border-radius:8px}
-  .btn{font-weight:800;min-height:48px;padding:0 18px;border:2px solid var(--ink);border-radius:6px;background:#fff;color:var(--ink);display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .btn{font-weight:800;min-height:48px;padding:0 18px;border:2px solid var(--ink);border-radius:6px;background:#fff;color:var(--ink);display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
   .btn:hover{color:var(--ink)}
   .btn.acc{background:var(--accent);color:#fff}.btn.ink{background:var(--ink);color:#fff}
   .btn.danger{border-color:var(--danger);color:var(--danger)}
-  .linkbtn{border:0;background:none;padding:0;min-height:44px;font-weight:700;color:var(--ink);text-decoration:underline}
   .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
   .tag{font-size:12px;font-weight:800;padding:3px 10px;border-radius:999px;background:var(--ink);color:#fff}
   .qcard{padding:24px;display:flex;flex-wrap:wrap;gap:28px;align-items:center}
-  .qr{width:200px;height:200px;border:2px solid var(--line);border-radius:8px;padding:8px;flex:none}
+  .qr{width:180px;height:180px;border:2px solid var(--line);border-radius:8px;padding:8px;flex:none}
   .qr img,.qr canvas{width:100%!important;height:auto!important}
   .addr{font-size:17px;font-weight:800;word-break:break-all}
+  .usage{background:#fff;border:2px dashed #9AA6B2;border-radius:8px;padding:14px 16px;font-size:14px;display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center}
+  .linkbtn{border:0;background:none;padding:0;min-height:44px;font-weight:700;color:var(--ink);text-decoration:underline}
   label{font-size:14px;font-weight:700}
   .field{font:inherit;font-size:16px;color:var(--ink);height:50px;padding:0 12px;border:2px solid var(--ink);border-radius:6px;background:#fff;width:100%;max-width:420px}
+  .field[readonly]{background:var(--ground);border-color:#CBD0D6;color:var(--soft)}
   .msg{font-size:14px;font-weight:700;min-height:20px}.msg.bad{color:var(--danger)}
-  .danger-zone{border:2px dashed var(--danger);border-radius:8px;padding:22px 24px;display:flex;flex-direction:column;gap:14px}
+  .sec{padding:22px 24px;display:flex;flex-direction:column;gap:10px}
+  .sec+.sec{border-top:2px dashed var(--ink)}
+  /* Deleting things is kept closed at the bottom of Account, so it is never the first thing an owner sees. */
+  details.risky{background:#fff;border:1px solid var(--line);border-radius:8px}
+  details.risky summary{list-style:none;cursor:pointer;min-height:52px;padding:0 20px;display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;color:var(--soft)}
+  details.risky summary::-webkit-details-marker{display:none}
+  details.risky summary .chev{transition:transform .15s}
+  details.risky[open] summary .chev{transform:rotate(90deg)}
+  details.risky .inner{padding:4px 20px 20px;display:flex;flex-direction:column;gap:18px}
+  .riskrow{display:flex;flex-direction:column;gap:8px;padding-top:16px;border-top:1px dashed #CBD0D6}
   .onboard{background:var(--paper);border:3px solid var(--ink);border-radius:6px;padding:28px;display:flex;flex-direction:column;gap:12px;max-width:560px}
-  .usage{border:2px dashed #9AA6B2;border-radius:8px;padding:14px 16px;font-size:14px;display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center}
+  @media (max-width:760px){
+    .topbar{gap:10px;padding:0 14px}
+    .acct .nm{display:none}
+    nav.side{max-width:none;width:100%;flex-basis:100%;border-right:0;border-bottom:1px solid var(--line);padding:12px 14px;gap:10px}
+    .shopbox{display:none}
+    .groups{flex-direction:row;gap:4px;overflow-x:auto}
+    .group{flex-direction:row;gap:4px}
+    .gtitle,.navfoot{display:none}
+    .item{white-space:nowrap}
+    main{padding:20px 16px 48px}
+    h1{font-size:40px}
+  }
 </style></head><body>
-<header><div class="wrap hbar">
+<header class="topbar">
   <a class="brand" href="/app"><b>aqo</b>na</a>
-  <div class="who"><span class="avatar" id="avatar" aria-hidden="true"></span><span id="whoName"></span><button class="linkbtn" onclick="signOut()">Sign out</button></div>
-</div></header>
+  <div class="crumbs" id="crumbs"><b>Your queues</b></div>
+  <details class="acct" id="acct">
+    <summary aria-label="Account menu"><span class="avatar" id="avatar" aria-hidden="true"></span><span class="nm" id="whoName"></span>
+      <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+    <div class="menu">
+      <div class="who"><b id="menuName"></b><span id="menuEmail"></span></div>
+      <a href="/app#overview">All queues</a>
+      <a href="/app#account">Account</a>
+      <button onclick="signOut()">Sign out</button>
+    </div>
+  </details>
+</header>
 
-<main class="wrap">
-  <div id="loading" class="sub">Loading…</div>
+<div class="app">
+  <nav class="side hide" id="side" aria-label="Dashboard">
+    <div class="shopbox"><b id="shopName">Your shop</b><span id="shopRole"></span></div>
+    <div class="groups">
+      <div class="group"><div class="gtitle">Your shop</div>
+        <a class="item" href="#overview" data-tab="overview"><span class="bar"></span><span class="lbl">Overview</span><span class="count" id="qCount"></span></a>
+      </div>
+      <div class="group"><div class="gtitle">You</div>
+        <a class="item" href="#account" data-tab="account"><span class="bar"></span><span class="lbl">Account</span></a>
+      </div>
+    </div>
+    <div class="navfoot">
+      <div class="plan"><div class="t">Free plan</div><div class="u" id="usage"></div>
+        <a class="btn ink" style="min-height:40px;font-size:13px;border-radius:4px" href="/#pricing">See Pro</a></div>
+    </div>
+  </nav>
 
-  <!-- First visit: name the business -->
-  <form id="onboard" class="onboard hide" onsubmit="onboard(event)">
-    <h1>Name your business or queue</h1>
-    <div class="sub" style="margin:0">This is what customers see on their ticket. You can change it later in Settings.</div>
-    <label for="biz">Business or queue name</label>
-    <input id="biz" class="field" maxlength="60" required placeholder="Ana's Milk Tea" autocomplete="organization">
-    <label for="you">Your name</label>
-    <input id="you" class="field" maxlength="60" placeholder="Ana Reyes" autocomplete="name">
-    <div class="row" style="margin-top:6px"><button class="btn acc" id="onboardBtn">Create my queue</button><span class="msg bad" id="onboardMsg" role="alert"></span></div>
-  </form>
+  <main>
+    <div id="loading" class="sub">Loading…</div>
 
-  <div id="home" class="hide" style="display:flex;flex-direction:column;gap:22px"></div>
-</main>
+    <!-- First visit: name the business -->
+    <form id="onboard" class="onboard hide" onsubmit="onboard(event)">
+      <h1>Name your business or queue</h1>
+      <div class="sub" style="margin:0">This is what customers see on their ticket. You can change it later in Settings.</div>
+      <label for="biz">Business or queue name</label>
+      <input id="biz" class="field" maxlength="60" required placeholder="Ana's Milk Tea" autocomplete="organization">
+      <label for="you">Your name</label>
+      <input id="you" class="field" maxlength="60" placeholder="Ana Reyes" autocomplete="name">
+      <div class="row" style="margin-top:6px"><button class="btn acc" id="onboardBtn">Create my queue</button><span class="msg bad" id="onboardMsg" role="alert"></span></div>
+    </form>
+
+    <section id="tab-overview" class="hide" style="display:flex;flex-direction:column;gap:22px"></section>
+    <section id="tab-account" class="hide" style="display:flex;flex-direction:column;gap:22px"></section>
+  </main>
+</div>
 
 <script>
 const ORIGIN = location.origin;
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let me = null;
+const CHEV = '<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+let me = null, tab = 'overview';
 
 async function api(path, opts = {}){
   const r = await fetch('/api/app' + path, { ...opts, headers: { 'Content-Type': 'application/json' } });
@@ -82,14 +166,36 @@ async function api(path, opts = {}){
 async function load(){
   me = await api('/me');
   $('loading').classList.add('hide');
-  $('whoName').textContent = me.user.name || me.user.email;
-  $('avatar').textContent = (me.user.name || me.user.email).split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  const label = me.user.name || me.user.email;
+  $('whoName').textContent = label;
+  $('menuName').textContent = me.user.name || '';
+  $('menuEmail').textContent = me.user.email;
+  $('avatar').textContent = label.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
   if (!me.workspaces.length) return showOnboarding();
+  $('onboard').classList.add('hide');
+  $('side').classList.remove('hide');
   render();
+  go(location.hash.slice(1));
 }
 
+// ---------- tabs (kept in the address, so a refresh stays put) ----------
+function go(key){
+  tab = key === 'account' ? 'account' : 'overview';
+  if (location.hash.slice(1) !== tab) history.replaceState(null, '', '#' + tab);
+  $('tab-overview').classList.toggle('hide', tab !== 'overview');
+  $('tab-account').classList.toggle('hide', tab !== 'account');
+  document.querySelectorAll('nav.side .item').forEach(a => { if (a.dataset.tab === tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  const first = me && me.workspaces[0];
+  $('crumbs').innerHTML = (first ? '<a href="#overview">' + esc(first.name) + '</a><span class="sep">/</span>' : '') + '<b>' + (tab === 'account' ? 'Account' : 'Overview') + '</b>';
+  $('acct').open = false;
+}
+window.addEventListener('hashchange', () => { if (me && me.workspaces.length) go(location.hash.slice(1)); });
+document.addEventListener('click', e => { const d = $('acct'); if (d.open && !d.contains(e.target)) d.open = false; });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') $('acct').open = false; });
+
 function showOnboarding(){
-  $('onboard').classList.remove('hide'); $('home').classList.add('hide');
+  $('onboard').classList.remove('hide'); $('side').classList.add('hide');
+  $('tab-overview').classList.add('hide'); $('tab-account').classList.add('hide');
   let start = null;
   try { start = JSON.parse(sessionStorage.getItem('aqonaStart') || 'null'); } catch(e){}
   if (start) { $('biz').value = start.businessName || ''; $('you').value = start.yourName || me.user.name || ''; }
@@ -103,18 +209,25 @@ async function onboard(e){
   try {
     await api('/onboard', { method: 'POST', body: JSON.stringify({ businessName: $('biz').value, yourName: $('you').value }) });
     try { sessionStorage.removeItem('aqonaStart'); } catch(e){}
-    $('onboard').classList.add('hide');
     await load();
   } catch(err) { $('onboardMsg').textContent = err.message; $('onboardBtn').disabled = false; }
 }
 
 function render(){
-  const home = $('home');
-  home.classList.remove('hide');
-  home.innerHTML = me.workspaces.map(w => {
+  const owned = me.workspaces.filter(w => w.role === 'owner');
+  const first = me.workspaces[0];
+  $('shopName').textContent = first.name;
+  $('shopRole').textContent = (first.role === 'owner' ? 'Owner' : 'Staff') + ' · Free plan';
+  const totalQueues = me.workspaces.reduce((n, w) => n + w.queues.length, 0);
+  $('qCount').textContent = totalQueues;
+  const w0 = owned[0];
+  $('usage').textContent = w0 ? 'Queues ' + w0.queues.length + ' of ' + w0.limits.queues : 'Staff on ' + me.workspaces.length + (me.workspaces.length === 1 ? ' shop' : ' shops');
+
+  // Overview: the queues, ready to run. Nothing here deletes anything.
+  $('tab-overview').innerHTML = me.workspaces.map(w => {
     const owner = w.role === 'owner';
     return '<section aria-label="' + esc(w.name) + '" style="display:flex;flex-direction:column;gap:18px">' +
-      '<div><h1>' + esc(w.name) + '</h1><div class="sub">' + (owner ? 'Owner' : 'Staff') + ' · Free plan</div></div>' +
+      '<div><h1>' + esc(w.name) + '</h1><div class="sub">' + (owner ? 'Owner' : 'Staff') + ' · Free plan · ' + w.queues.length + (w.queues.length === 1 ? ' queue' : ' queues') + '</div></div>' +
       w.queues.map(q => {
         const link = ORIGIN + '/q/' + q.slug;
         return '<div class="card qcard">' +
@@ -131,25 +244,40 @@ function render(){
       }).join('') +
       (owner ? '<div class="usage"><b>Free plan</b><span>Queues ' + w.queues.length + ' of ' + w.limits.queues + '</span>' +
         '<button class="linkbtn" data-add="' + esc(w.id) + '">Add a queue</button><span class="msg" id="addMsg-' + esc(w.id) + '" role="status"></span></div>' : '') +
-      (owner ? '<div class="danger-zone"><h2 style="color:var(--danger)">Danger zone</h2>' +
-        w.queues.map(q => '<div class="row"><button class="btn danger" data-del="' + esc(q.id) + '" data-name="' + esc(q.name) + '">Delete “' + esc(q.name) + '”</button>' +
-          '<span class="sub" style="margin:0">Removes its QR address, every ticket and all its settings. Printed QR codes stop working.</span></div>').join('') +
-        '</div>' : '') +
       '</section>';
-  }).join('') +
-  '<div class="danger-zone"><h2 style="color:var(--danger)">Delete my account</h2>' +
-  '<div class="sub" style="margin:0">Deletes your account, your workspace, every queue in it and all their data. This cannot be undone.</div>' +
-  '<form class="row" onsubmit="deleteAccount(event)"><label for="confirmDel" style="width:100%">Type DELETE to confirm</label>' +
-  '<input id="confirmDel" class="field" style="max-width:220px" autocomplete="off"><button class="btn danger">Delete my account</button>' +
-  '<span class="msg bad" id="delMsg" role="alert"></span></form></div>';
+  }).join('');
 
-  home.querySelectorAll('[data-qr]').forEach(el => new QRCode(el, { text: el.dataset.qr, width: 400, height: 400, colorDark: '#0A2A4A', colorLight: '#FFFFFF' }));
-  home.querySelectorAll('[data-copy]').forEach(b => b.onclick = async () => {
+  // Account: details first; deleting is closed at the bottom.
+  $('tab-account').innerHTML =
+    '<div><h1>Account</h1><div class="sub">Signed in with ' + esc(me.user.email) + '</div></div>' +
+    '<div class="card">' +
+      '<div class="sec"><h2>Your details</h2>' +
+        '<label for="accName">Name</label><input id="accName" class="field" readonly value="' + esc(me.user.name || '') + '">' +
+        '<label for="accEmail">Email</label><input id="accEmail" class="field" readonly value="' + esc(me.user.email) + '">' +
+        '<div class="sub" style="margin:0">These come from your Google account.</div></div>' +
+      '<div class="sec"><h2>Your shops</h2>' +
+        me.workspaces.map(w => '<div class="row" style="justify-content:space-between"><span><b>' + esc(w.name) + '</b> <span class="sub" style="margin:0">· ' + (w.role === 'owner' ? 'Owner' : 'Staff') + ' · ' + w.queues.length + (w.queues.length === 1 ? ' queue' : ' queues') + '</span></span><span class="tag">Free</span></div>').join('') +
+      '</div>' +
+      '<div class="sec"><h2>Sign out</h2><div class="row"><button class="btn" onclick="signOut()">Sign out of this device</button></div></div>' +
+    '</div>' +
+    '<details class="risky"><summary>' + CHEV + 'Delete a queue or your account</summary><div class="inner">' +
+      owned.map(w => w.queues.map(q => '<div class="riskrow"><b>Delete “' + esc(q.name) + '”</b>' +
+        '<div class="sub" style="margin:0">Removes its QR address, every ticket and all its settings. Printed QR codes stop working.</div>' +
+        '<div><button class="btn danger" data-del="' + esc(q.id) + '" data-name="' + esc(q.name) + '">Delete this queue</button></div></div>').join('')).join('') +
+      '<form class="riskrow" onsubmit="deleteAccount(event)"><b>Delete my account</b>' +
+        '<div class="sub" style="margin:0">Deletes your account, your shop, every queue in it and all their data. This cannot be undone.</div>' +
+        '<label for="confirmDel">Type DELETE to confirm</label>' +
+        '<div class="row"><input id="confirmDel" class="field" style="max-width:220px" autocomplete="off"><button class="btn danger">Delete my account</button></div>' +
+        '<span class="msg bad" id="delMsg" role="alert"></span></form>' +
+    '</div></details>';
+
+  document.querySelectorAll('[data-qr]').forEach(el => new QRCode(el, { text: el.dataset.qr, width: 400, height: 400, colorDark: '#0A2A4A', colorLight: '#FFFFFF' }));
+  document.querySelectorAll('[data-copy]').forEach(b => b.onclick = async () => {
     try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = 'Copied'; } catch(e) { prompt('Copy this link:', b.dataset.copy); }
     setTimeout(() => { b.textContent = 'Copy link'; }, 2000);
   });
-  home.querySelectorAll('[data-add]').forEach(b => b.onclick = () => addQueue(b.dataset.add));
-  home.querySelectorAll('[data-del]').forEach(b => b.onclick = () => deleteQueue(b.dataset.del, b.dataset.name));
+  document.querySelectorAll('[data-add]').forEach(b => b.onclick = () => addQueue(b.dataset.add));
+  document.querySelectorAll('[data-del]').forEach(b => b.onclick = () => deleteQueue(b.dataset.del, b.dataset.name));
 }
 
 async function addQueue(workspaceId){
