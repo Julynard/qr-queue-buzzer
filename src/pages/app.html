@@ -247,7 +247,7 @@
           <button class="btn ink" id="invBtn">Invite</button></form>
         <div class="msg bad" id="invMsg" role="alert"></div>
         <div id="invList"></div>
-        <div class="linkbox hide" id="linkBox"><span><b id="linkTitle">Or send the link yourself</b><br><span style="color:var(--soft)" id="linkNote">Paste it in Messenger or WhatsApp. Works for 7 days.</span></span>
+        <div class="linkbox" id="linkBox"><span><b id="linkTitle">Or send the link yourself</b><br><span style="color:var(--soft)" id="linkNote">Paste it in Messenger or WhatsApp. Works for 7 days.</span></span>
           <button type="button" class="iconbtn" id="linkCopy" title="Copy invite link" aria-label="Copy invite link"></button></div>
         <div class="row" style="justify-content:space-between;margin-top:8px"><a class="linkbtn" href="/app#home" onclick="location.href='/app#home';location.reload()">Skip for now</a>
           <a class="btn acc" href="/app#home" onclick="location.href='/app#home';location.reload()">Finish and open my shop</a></div>
@@ -416,7 +416,7 @@ function showOnboarding(n = 1){
     $('planNotice').textContent = paid ? (c.dataset.plan === 'pro' ? 'Pro' : 'Max') + ' opens soon. For now every shop starts on Free; we\'ll tell you when you can switch.' : '';
     $('planNotice').classList.toggle('hide', !paid);
   });
-  $('linkCopy').innerHTML = COPY;
+  $('linkCopy').innerHTML = COPY; $('linkCopy').onclick = copyInviteLink;
   $('biz').oninput = showSlug; showSlug();
   onbStep(n);
 }
@@ -446,13 +446,28 @@ async function onboard(e){
 }
 async function onbInvite(e){
   e.preventDefault();
-  $('invMsg').textContent = ''; $('invBtn').disabled = true;
+  await inviteTyped();
+}
+// Invites the email in the field; returns the invite, or null (the reason shows under the field).
+async function inviteTyped(){
+  $('invMsg').textContent = ''; $('invBtn').disabled = true; $('linkCopy').disabled = true;
+  let d = null;
   try {
-    const d = await api('/invites', { method: 'POST', body: JSON.stringify({ workspaceId: newShop.workspaceId, email: $('invEmail').value }) });
+    d = await api('/invites', { method: 'POST', body: JSON.stringify({ workspaceId: newShop.workspaceId, email: $('invEmail').value }) });
     $('invEmail').value = '';
     addInvite(d);
   } catch(err) { $('invMsg').textContent = err.message; }
-  $('invBtn').disabled = false;
+  $('invBtn').disabled = false; $('linkCopy').disabled = false;
+  return d;
+}
+// The copy box shows from the start. An email in the field is invited first, then its link is copied;
+// an empty field copies the newest invite's link (there is no link before the first invite).
+let lastInvite = null;
+async function copyInviteLink(){
+  const note = 'Paste it in Messenger or WhatsApp. Works for 7 days.';
+  if ($('invEmail').value.trim()) { const d = await inviteTyped(); if (d) copyText(d.link, $('linkNote'), note); return; }
+  if (lastInvite) return copyText(lastInvite.link, $('linkNote'), note);
+  $('invMsg').textContent = 'Type their email first, then tap copy.'; $('invEmail').focus();
 }
 // One row per invite; the box below copies the newest invite's link (Free allows 2 staff, so at most 2 rows).
 function addInvite(d){
@@ -462,8 +477,7 @@ function addInvite(d){
   const many = $('invList').children.length > 1;
   $('linkTitle').textContent = many ? 'Or send ' + d.email + "'s link yourself" : 'Or send the link yourself';
   $('linkCopy').setAttribute('aria-label', 'Copy invite link for ' + d.email);
-  $('linkCopy').onclick = () => copyText(d.link, $('linkNote'), 'Paste it in Messenger or WhatsApp. Works for 7 days.');
-  $('linkBox').classList.remove('hide');
+  lastInvite = d;
 }
 async function copyText(text, note, back){
   try { await navigator.clipboard.writeText(text); } catch(e) { prompt('Copy this link:', text); return; }
