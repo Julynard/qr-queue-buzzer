@@ -24,10 +24,9 @@
   .note{margin-top:14px;font-size:13px;line-height:1.5;color:var(--soft)}
   .err{margin-top:12px;font-size:14px;font-weight:700;color:#B42318}.err:empty{display:none}
   button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-  .tear{height:24px;background:#fff;position:relative}
-  .tear::before,.tear::after{content:"";position:absolute;top:0;width:24px;height:24px;border-radius:50%;background:var(--ground)}
-  .tear::before{left:-12px}.tear::after{right:-12px}
-  .tear i{position:absolute;left:18px;right:18px;top:10px;border-top:4px dotted var(--ink);opacity:.4}
+  /* Side notches are real holes with an ink rim: rim outer radius = half the height, rim width = the 3px side border. */
+  .tear{height:30px;position:relative;background:radial-gradient(circle at 0 50%,transparent 12px,var(--ink) 12.5px 15px,#fff 15.5px) left/50% 100% no-repeat,radial-gradient(circle at 100% 50%,transparent 12px,var(--ink) 12.5px 15px,#fff 15.5px) right/50% 100% no-repeat}
+  .tear i{position:absolute;left:20px;right:20px;top:13px;border-top:4px dotted var(--ink);opacity:.4}
   .stub{background:var(--paper);border:3px solid var(--ink);border-top:0;border-radius:0 0 6px 6px;padding:10px 19px 16px;display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:1.45}
   .foot{margin-top:auto;display:flex;justify-content:center;gap:22px;padding-bottom:8px;font-size:13px;font-weight:600}
   .foot a{color:var(--soft)}

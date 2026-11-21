@@ -37,10 +37,9 @@
   .linkbtn{font:inherit;font-weight:700;min-height:44px;border:0;background:none;color:var(--ink);text-decoration:underline;padding:0;cursor:pointer}
   .linkbtn:disabled{color:var(--soft);text-decoration:none;cursor:default}
   #ts{margin-top:12px;min-height:0}
-  .tear{height:24px;flex:none;background:#fff;position:relative}
-  .tear::before,.tear::after{content:"";position:absolute;top:0;width:24px;height:24px;border-radius:50%;background:var(--ground)}
-  .tear::before{left:-12px}.tear::after{right:-12px}
-  .tear i{position:absolute;left:18px;right:18px;top:10px;border-top:4px dotted var(--ink);opacity:.4}
+  /* Side notches are real holes with an ink rim: rim outer radius = half the height, rim width = the 3px side border. */
+  .tear{height:30px;flex:none;position:relative;background:radial-gradient(circle at 0 50%,transparent 12px,var(--ink) 12.5px 15px,#fff 15.5px) left/50% 100% no-repeat,radial-gradient(circle at 100% 50%,transparent 12px,var(--ink) 12.5px 15px,#fff 15.5px) right/50% 100% no-repeat}
+  .tear i{position:absolute;left:20px;right:20px;top:13px;border-top:4px dotted var(--ink);opacity:.4}
   .stub{flex:none;background:var(--paper);border:3px solid var(--ink);border-top:0;border-radius:0 0 6px 6px;padding:10px 19px 16px;display:flex;flex-direction:column;gap:6px}
 </style></head><body>
 <div class="page">
