@@ -78,9 +78,9 @@ export class QueueDO extends DurableObject<Env> {
     Date.now() - (this.lastSeen.get(id) || 0) < POLL_ONLINE_MS;
 
   staffState() {
-    const { settings, nextResetAt, dayStartedAt, nextNum } = this.core.meta;
+    const { settings, nextResetAt, dayStartedAt, nextNum, joinCode } = this.core.meta;
     return {
-      type: "state", tickets: this.core.list(this.#isOnline), settings, nextResetAt, dayStartedAt,
+      type: "state", tickets: this.core.list(this.#isOnline), settings, nextResetAt, dayStartedAt, joinCode,
       ticketsToday: nextNum - 1, maxTickets: MAX_TICKETS_PER_DAY,
     };
   }
@@ -179,7 +179,7 @@ export class QueueDO extends DurableObject<Env> {
       const body = await readJson(request);
       if (!body) return json({ error: "bad request" }, 400);
       const r = this.core.join(body, { now, newId });
-      if ("error" in r) return json({ error: "full" }, 429);
+      if ("error" in r) return r.error === "full" ? json({ error: "full" }, 429) : json({ error: "nearby" }, 403);
       this.#save();
       if (r.created) { this.#broadcastStaff(); this.#notifyCustomers(); }
       return json(this.core.publicTicket(r.ticket));
@@ -296,6 +296,8 @@ export class QueueDO extends DurableObject<Env> {
     const waiting = this.core.waitingCount();
     return {
       queueName: this.core.meta.settings.queueName, waiting, waitMin: this.core.waitMinutes(waiting + 1), nextNum: this.core.meta.nextNum,
+      // Customers only learn that the check is on, never where the shop's saved location is.
+      nearbyOnly: this.core.meta.settings.nearbyOnly,
     };
   }
 

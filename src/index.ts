@@ -20,8 +20,9 @@ import { findQueueBySlug, renameQueue, roleIn } from "./queues.ts";
 import type { QueueRow } from "./queues.ts";
 import type { CustomerView, PublicTicket } from "./queue-core.ts";
 import { safeJson, fill, escHtml, safeNext } from "./html.ts";
+import { guardJoin } from "./join-guard.ts";
 
-interface QueueInfo { queueName: string; waiting: number; waitMin: number | null; nextNum: number }
+interface QueueInfo { queueName: string; waiting: number; waitMin: number | null; nextNum: number; nearbyOnly: boolean }
 
 const send = (body: BodyInit | null, type: string, extra: Record<string, string> = {}, status = 200): Response =>
   new Response(body, { status, headers: { "Content-Type": type, ...extra } });
@@ -152,7 +153,17 @@ async function queueRoute(request: Request, env: Env, row: QueueRow, forward: st
     return html(fill(CUSTOMER_HTML, {
       TICKET: safeJson(ticket), VIEW: safeJson(view), QUEUE: safeJson(info), NOTICE: safeJson(notice), BASE: safeJson(base),
       VAPID: env.VAPID_PUBLIC_KEY || "", MANIFEST: ticket ? `${base}/manifest/${ticket.id}.json` : "/manifest.json",
+      TURNSTILE_SITE: env.TURNSTILE_SITE_KEY,
     }));
+  }
+
+  // "Take a number" is open to anyone: rate-limited, and checked with Turnstile when its secret is set.
+  if (forward === "/api/join") {
+    const g = await guardJoin({
+      limiter: env.JOIN_LIMIT, secret: env.TURNSTILE_SECRET_KEY, token: request.headers.get("x-captcha-response"),
+      ip: request.headers.get("cf-connecting-ip"), hostname: new URL(request.url).hostname, queueId: row.id,
+    });
+    if (!g.ok) return json({ error: g.error }, g.status);
   }
 
   // API calls and live connections: same request, path rewritten to the queue's own route.

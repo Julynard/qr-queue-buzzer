@@ -20,6 +20,9 @@
   // Accounts, sessions, login codes, workspaces and the list of queues.
   // Created in the Cloudflare dashboard (Storage & Databases → D1). `npm run deploy` applies migrations/ to it first.
   "d1_databases": [{ "binding": "DB", "database_name": "aqona", "database_id": "20348698-6725-4973-817f-61e455b73fca", "migrations_dir": "migrations" }],
+  // "Take a number" limit: 10 joins a minute per queue and IP (counted per Cloudflare location, approximate).
+  // Generous on purpose: customers on a shop's Wi-Fi, or on the same mobile network, can share one IP.
+  "ratelimits": [{ "name": "JOIN_LIMIT", "namespace_id": "1001", "simple": { "limit": 10, "period": 60 } }],
   // The free plan only allows SQLite-backed Durable Objects.
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["QueueDO"] }],
   "vars": {
@@ -31,7 +34,8 @@
     // How login codes are delivered: "off" (live site until aqona.app email is set up: Google sign-in only)
     // or "console" (local dev only, set in .dev.vars: the code is printed in the wrangler dev terminal).
     "EMAIL_MODE": "off",
-    // Cloudflare Turnstile site key (public). This one is Cloudflare's always-pass test key.
+    // Cloudflare Turnstile site key (public), used on log-in and "Take a number". This one is Cloudflare's
+    // always-pass test key. The checks run only where the TURNSTILE_SECRET_KEY secret is set.
     "TURNSTILE_SITE_KEY": "1x00000000000000000000AA"
   }
 }

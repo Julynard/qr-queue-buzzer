@@ -27,6 +27,8 @@
     <li>Customers never sign up and never give a phone number or email.</li>
     <li>A first name is optional, so staff can call it out.</li>
     <li>If the customer allows alerts, we keep their browser's push address so we can notify that phone.</li>
+    <li>Some shops only take numbers from phones at the shop. There, the page asks for the phone's location once, when the customer taps "Take a number". We compare it with the shop's location and never save it. Customers who prefer not to share it can use a code from the staff instead.</li>
+    <li>To keep out bots, Cloudflare Turnstile checks the browser when a customer takes a number.</li>
     <li>All of this is deleted when the queue starts a new day (every night by default), or earlier if the shop removes the ticket.</li>
   </ul>
 
@@ -35,7 +37,7 @@
     <li>Your name and email address, used to log you in and show who you are.</li>
     <li>If you sign in with Google, the link between your Google account and Aqona (we never see your Google password).</li>
     <li>Your sessions (device and network address), to keep you logged in and to stop abuse.</li>
-    <li>Your workspace and queue names, and each queue's settings.</li>
+    <li>Your workspace and queue names, and each queue's settings, including the shop's location if you turn on "Only people at the shop".</li>
   </ul>
 
   <h2>Who processes this data</h2>

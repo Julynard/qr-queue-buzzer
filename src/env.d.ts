@@ -12,7 +12,7 @@ interface Env {
   /** Google sign-in. Both optional: the Google button is hidden when either is missing. */
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
-  /** Turnstile check on "Email me a code". */
+  /** Turnstile check on "Email me a code" and "Take a number". Unset: the join check is off. */
   TURNSTILE_SECRET_KEY?: string;
   /** Aqona's own people: emails, comma-separated. They pass every queue permission check. Deployed: a Secret. */
   SUPERADMIN_EMAILS?: string;
@@ -30,7 +30,7 @@ declare namespace Cloudflare {
     /** Google sign-in. Both optional: the Google button is hidden when either is missing. */
     GOOGLE_CLIENT_ID?: string;
     GOOGLE_CLIENT_SECRET?: string;
-    /** Turnstile check on "Email me a code". */
+    /** Turnstile check on "Email me a code" and "Take a number". Unset: the join check is off. */
     TURNSTILE_SECRET_KEY?: string;
     /** Aqona's own people: emails, comma-separated. They pass every queue permission check. Deployed: a Secret. */
     SUPERADMIN_EMAILS?: string;

@@ -22,9 +22,14 @@ function check(name: string, cond: boolean, extra = ""): void {
   else fails++;
   console.log((cond ? "PASS " : "FAIL ") + name + (cond ? "" : " " + extra));
 }
+// "Take a number" is rate-limited per IP and needs a Turnstile token. Each call here looks like a different
+// phone (its own CF-Connecting-IP) with the dummy token that Cloudflare's always-pass test secret accepts.
+const TOKEN = "XXXX.DUMMY.TOKEN.XXXX";
+let phoneN = 0;
+const asPhone = (): Record<string, string> => ({ "CF-Connecting-IP": `10.0.${phoneN >> 8 & 255}.${phoneN++ & 255}`, "x-captcha-response": TOKEN });
 // Queue calls (paths inside the queue, e.g. "/api/join"), made as the owner.
-const post = (p: string, body?: unknown): Promise<Response> =>
-  fetch(B + Q + p, { method: "POST", headers: { "Content-Type": "application/json", Cookie: COOKIE }, body: body === undefined ? undefined : JSON.stringify(body) });
+const post = (p: string, body?: unknown, headers: Record<string, string> = asPhone()): Promise<Response> =>
+  fetch(B + Q + p, { method: "POST", headers: { "Content-Type": "application/json", Cookie: COOKIE, ...headers }, body: body === undefined ? undefined : JSON.stringify(body) });
 const getJson = async <T>(p: string): Promise<T> => (await (await fetch(B + Q + p, { headers: { Cookie: COOKIE } })).json()) as T;
 const postJson = async <T>(p: string, body?: unknown): Promise<T> => (await (await post(p, body)).json()) as T;
 const pageText = async (p: string): Promise<string> => (await fetch(B + Q + p, { headers: { Cookie: COOKIE } })).text();
@@ -126,6 +131,13 @@ check("signed-in Start free -> dashboard", (await site("/start", cookieA)).heade
 check("logged-out Start free -> sign-in page", (await site("/start")).headers.get("location") === "/login");
 check("another shop's owner can't change settings (403)", (await site(Q + "/api/settings", cookieB, { method: "POST", body: "{}" })).status === 403);
 
+const noToken = await post("/api/join", {}, { "CF-Connecting-IP": "10.9.9.1" });
+check("join without a Turnstile token -> 403 check", noToken.status === 403 && ((await noToken.json()) as { error: string }).error === "check");
+const sameIp = { "CF-Connecting-IP": "10.9.9.2", "x-captcha-response": TOKEN };
+const burst: number[] = [];
+for (let i = 0; i < 11; i++) burst.push((await post("/api/join", { key: "b".repeat(31) + (i % 10) }, sameIp)).status);
+const busy = await post("/api/join", {}, sameIp);
+check("11+ joins a minute from one IP -> 429 busy", busy.status === 429 && ((await busy.json()) as { error: string }).error === "busy", burst.join(","));
 check("manual reset", (await post("/api/reset")).ok);
 
 const joins = await Promise.all(Array.from({ length: 20 }, (_, i) => postJson<TicketJson>("/api/join", { name: "C" + i })));
@@ -135,7 +147,7 @@ check("20 parallel joins get numbers 1..20, no duplicates", nums.join(",") === A
 const key = "c".repeat(32);
 const [d1, d2] = await Promise.all([postJson<TicketJson>("/api/join", { key }), postJson<TicketJson>("/api/join", { key })]);
 check("same join key twice in parallel -> one ticket", d1!.id === d2!.id && d1!.num === 21, JSON.stringify([d1, d2]));
-check("bad JSON body -> 400", (await fetch(B + Q + "/api/join", { method: "POST", body: "{nope" })).status === 400);
+check("bad JSON body -> 400", (await fetch(B + Q + "/api/join", { method: "POST", headers: asPhone(), body: "{nope" })).status === 400);
 
 const byNum = (n: number): TicketJson => joins.find((t) => t.num === n)!;
 const t1 = byNum(1), t2 = byNum(2), t3 = byNum(3);
@@ -219,6 +231,23 @@ check("bad time zone refused", (await post("/api/settings", { timeZone: "Mars/Ba
 const s = await postJson<{ ok: boolean; nextResetAt: number }>("/api/settings", { autoReset: true, resetTime: "00:00", timeZone: "Asia/Manila" });
 const next = new Date(s.nextResetAt);
 check("default next reset is midnight Manila (16:00 UTC)", s.ok && next.getUTCHours() === 16 && next.getUTCMinutes() === 0 && s.nextResetAt > Date.now(), JSON.stringify(s));
+// ---------- only people at the shop ----------
+const SHOP = { shopLat: 14.5995, shopLng: 120.9842 };
+check("nearby-only needs the shop's location first", (await post("/api/settings", { nearbyOnly: true })).status === 400);
+check("owner turns on nearby-only with a location", (await post("/api/settings", { ...SHOP, nearbyOnly: true })).ok);
+const joinPage = await pageText("");
+check("join page knows the check is on, but not where the shop is", joinPage.includes('"nearbyOnly":true') && !joinPage.includes("120.9842"));
+const nearErr = async (body: unknown): Promise<string> => { const r = await post("/api/join", body); return r.status + ":" + (((await r.json()) as { error?: string }).error ?? "ok"); };
+check("nearby-only: no location -> 403 nearby", (await nearErr({})) === "403:nearby");
+check("nearby-only: 1 km away -> 403 nearby", (await nearErr({ lat: 14.6085, lng: 120.9842, acc: 20 })) === "403:nearby");
+check("nearby-only: at the shop -> joins", (await nearErr({ lat: 14.5996, lng: 120.9843, acc: 30 })) === "200:ok");
+const code = (await getJson<{ joinCode: string }>("/api/state")).joinCode;
+check("staff see today's 4-digit code", /^\d{4}$/.test(code), code);
+check("nearby-only: today's code -> joins", (await nearErr({ code })) === "200:ok");
+await post("/api/reset");
+check("a new day gives a new code (old one refused)", (await getJson<{ joinCode: string }>("/api/state")).joinCode !== code && (await nearErr({ code })) === "403:nearby");
+check("owner turns nearby-only off", (await post("/api/settings", { nearbyOnly: false })).ok && (await nearErr({})) === "200:ok");
+
 staff.close();
 
 // ---------- deleting ----------

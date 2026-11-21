@@ -395,3 +395,83 @@ test("a queue object that was never set up, or was deleted, only accepts set-up"
   assert.equal(queueGate({ initialized: true, deleted: true }, "/api/state"), "gone");
   assert.equal(queueGate({ initialized: true, deleted: true }, "/internal/init"), "gone", "a deleted queue is never set up again");
 });
+
+// ---------- "Only people at the shop" (location or today's code) ----------
+const SHOP = { lat: 14.5995, lng: 120.9842 }; // Manila
+const nearby = (q: QueueCore, body: Record<string, unknown>) => q.join(body, { now: NOW, newId });
+function nearbyQueue(): QueueCore {
+  const q = new QueueCore();
+  assert.deepEqual(q.setSettings({ shopLat: SHOP.lat, shopLng: SHOP.lng, nearbyOnly: true }, NOW), { ok: true });
+  return q;
+}
+
+test("any settings change is saved, even when the reset time stays the same", () => {
+  const q = new QueueCore();
+  q.scheduleNextReset(NOW);
+  q.takeChanges();
+  q.setSettings({ queueName: "Ana's" }, NOW);
+  assert.equal(q.takeChanges().meta?.settings.queueName, "Ana's");
+});
+
+test("nearby-only is off by default and needs the shop's location first", () => {
+  const q = new QueueCore();
+  assert.equal(q.meta.settings.nearbyOnly, false);
+  assert.equal(q.setSettings({ nearbyOnly: true }, NOW).ok, false, "no location yet");
+  assert.equal(q.meta.settings.nearbyOnly, false, "a refused change applies nothing");
+  assert.deepEqual(q.setSettings({ shopLat: SHOP.lat, shopLng: SHOP.lng, nearbyOnly: true }, NOW), { ok: true });
+  assert.equal(q.setSettings({ shopLat: null, shopLng: null }, NOW).ok, false, "can't drop the location while it's on");
+  for (const bad of [{ shopLat: 91, shopLng: 0 }, { shopLat: 0, shopLng: 181 }, { shopLat: "14", shopLng: 120 }, { shopLat: 14 }, { shopLat: NaN, shopLng: 1 }]) {
+    assert.equal(new QueueCore().setSettings(bad, NOW).ok, false, JSON.stringify(bad));
+  }
+});
+
+test("nearby-only: a phone at the shop joins; one far away or with no location is refused", () => {
+  const q = nearbyQueue();
+  assert.ok("ticket" in nearby(q, { lat: SHOP.lat + 0.0009, lng: SHOP.lng, acc: 20 }), "about 100 m away");
+  assert.deepEqual(nearby(q, { lat: SHOP.lat + 0.009, lng: SHOP.lng, acc: 20 }), { error: "nearby" }, "about 1 km away");
+  assert.deepEqual(nearby(q, {}), { error: "nearby" }, "no location");
+  assert.deepEqual(nearby(q, { lat: "x", lng: SHOP.lng }), { error: "nearby" });
+});
+
+test("nearby-only: poor GPS gets some slack, but only up to a limit", () => {
+  const q = nearbyQueue();
+  const at450m = { lat: SHOP.lat + 0.00405, lng: SHOP.lng };
+  assert.ok("ticket" in nearby(q, { ...at450m, acc: 200 }), "300 m + 200 m accuracy covers 450 m");
+  assert.deepEqual(nearby(q, { ...at450m, acc: 20 }), { error: "nearby" });
+  assert.deepEqual(nearby(q, { lat: SHOP.lat + 0.009, lng: SHOP.lng, acc: 50_000 }), { error: "nearby" }, "huge accuracy is capped");
+});
+
+test("nearby-only: today's code works instead of location; a wrong code doesn't", () => {
+  const q = nearbyQueue();
+  const code = q.meta.joinCode!;
+  assert.match(code, /^\d{4}$/);
+  assert.ok("ticket" in nearby(q, { code }));
+  assert.ok("ticket" in nearby(q, { code: ` ${code.slice(0, 2)} ${code.slice(2)} ` }), "spaces are ignored");
+  assert.deepEqual(nearby(q, { code: code === "0000" ? "1111" : "0000" }), { error: "nearby" });
+  assert.deepEqual(nearby(q, { code: 1234 }), { error: "nearby" });
+});
+
+test("nearby-only: a retry with the same key gets its ticket back without checking again", () => {
+  const q = nearbyQueue();
+  const key = "d".repeat(32);
+  const first = nearby(q, { key, code: q.meta.joinCode });
+  assert.ok("ticket" in first);
+  const again = nearby(q, { key });
+  assert.ok("ticket" in again && again.ticket.id === first.ticket.id && !again.created);
+});
+
+test("nearby-only off: location and code are ignored", () => {
+  const q = new QueueCore();
+  assert.ok("ticket" in nearby(q, {}));
+  assert.ok("ticket" in nearby(q, { lat: 0, lng: 0 }));
+});
+
+test("today's code: always set and saved, and a new day gives a new one", () => {
+  const q = new QueueCore();
+  assert.match(q.meta.joinCode!, /^\d{4}$/);
+  assert.equal(q.takeChanges().meta?.joinCode, q.meta.joinCode, "a new code is saved");
+  assert.equal(new QueueCore({ meta: { joinCode: "4821" } }).meta.joinCode, "4821", "a saved code is kept");
+  q.reset(NOW, "5555");
+  assert.equal(q.meta.joinCode, "5555");
+  assert.equal(q.takeChanges().meta?.joinCode, "5555");
+});
