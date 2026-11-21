@@ -34,6 +34,11 @@ export interface Settings {
   timeZone: string; // IANA name
   queueName: string; // shown to customers, e.g. "Ana's Milk Tea · Counter 1"
   claimMinutes: number; // time to come after Notify before the ticket is a No show
+  /** Only people near the shop (or with today's code) may take a number. Needs shopLat/shopLng. */
+  nearbyOnly: boolean;
+  /** The shop's location, set from a staff phone at the counter. Never shown to customers. */
+  shopLat: number | null;
+  shopLng: number | null;
 }
 
 export interface Meta {
@@ -44,6 +49,8 @@ export interface Meta {
   lastResetIds: string[];
   /** The queue's public address prefix, e.g. "/q/anas-milk-tea" (set by the Worker). "" for the old single queue. */
   base?: string;
+  /** Today's 4-digit code: staff tell it to customers who can't share their location. New every day. */
+  joinCode?: string;
 }
 
 export interface Changes {
@@ -88,7 +95,7 @@ export interface PublicTicket {
   createdAt: number;
 }
 
-export type JoinResult = { ticket: Ticket; created: boolean } | { error: "full" };
+export type JoinResult = { ticket: Ticket; created: boolean } | { error: "full" | "nearby" };
 export interface ActResult { ok: boolean; changed: boolean; ticket?: Ticket; removed?: boolean }
 export type SettingsResult = { ok: true } | { ok: false; error: string };
 
@@ -98,7 +105,12 @@ export const QUEUE_NAME_MAX = 60;
 export const CLAIM_MINUTES_MAX = 30;
 export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
   autoReset: true, resetTime: "00:00", timeZone: "Asia/Manila", queueName: "", claimMinutes: 5,
+  nearbyOnly: false, shopLat: null, shopLng: null,
 });
+/** "Near the shop": within this many metres of the shop's saved location... */
+export const NEARBY_M = 300;
+/** ...plus the phone's reported GPS accuracy, up to this much (indoor GPS can be off by hundreds of metres). */
+export const ACCURACY_SLACK_MAX_M = 200;
 const MIN_MS = 60_000;
 // Wait estimate: typical (median) time each of the last few called tickets spent at the front of the line.
 const WAIT_SAMPLES = 10;
@@ -121,6 +133,19 @@ export const isAction = (s: string): s is Action => (ACTIONS as readonly string[
 const ID_RE = /^[a-f0-9]{12}$/;
 const KEY_RE = /^[a-f0-9]{16,64}$/;
 export const isTicketId = (s: unknown): s is string => typeof s === "string" && ID_RE.test(s);
+const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
+
+/** A random 4-digit code, e.g. "0482". */
+export function newJoinCode(): string {
+  return String(crypto.getRandomValues(new Uint32Array(1))[0]! % 10_000).padStart(4, "0");
+}
+
+/** Distance in metres between two points (haversine; plenty accurate at shop scale). */
+export function distanceM(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const rad = Math.PI / 180;
+  const a = Math.sin(((lat2 - lat1) * rad) / 2) ** 2 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(((lng2 - lng1) * rad) / 2) ** 2;
+  return 2 * 6_371_000 * Math.asin(Math.min(1, Math.sqrt(a)));
+}
 
 interface PendingChanges { put: Set<string>; del: Set<string>; clearAll: boolean; meta: boolean }
 
@@ -167,6 +192,8 @@ export class QueueCore {
     };
     this.meta.settings = { ...DEFAULT_SETTINGS, ...this.meta.settings };
     this.#resetChanges();
+    // Queues saved before today's code existed get one now (and it is saved with the next change).
+    if (!this.meta.joinCode) { this.meta.joinCode = newJoinCode(); this.#touchMeta(); }
   }
 
   #resetChanges(): void { this.changes = { put: new Set(), del: new Set(), clearAll: false, meta: false }; }
@@ -191,11 +218,15 @@ export class QueueCore {
    * A customer joins. `key` is a random value the phone sends with its join tap; repeating the same
    * key (double tap, retry after a network error) returns the same ticket instead of a second one.
    */
-  join({ name, key }: { name?: unknown; key?: unknown } = {}, { now, newId }: { now: number; newId: () => string }): JoinResult {
+  join(
+    { name, key, lat, lng, acc, code }: { name?: unknown; key?: unknown; lat?: unknown; lng?: unknown; acc?: unknown; code?: unknown } = {},
+    { now, newId }: { now: number; newId: () => string },
+  ): JoinResult {
     const cleanKey = typeof key === "string" && KEY_RE.test(key) ? key : null;
     if (cleanKey) {
       for (const t of this.tickets.values()) if (t.key === cleanKey) return { ticket: t, created: false };
     }
+    if (!this.#mayJoin(lat, lng, acc, code)) return { error: "nearby" };
     if (this.meta.nextNum > MAX_TICKETS_PER_DAY) return { error: "full" };
 
     let id: string;
@@ -210,6 +241,19 @@ export class QueueCore {
     this.#touch(t);
     this.#touchMeta();
     return { ticket: t, created: true };
+  }
+
+  /**
+   * With "only people at the shop" on: the phone's location must be near the shop, or it must send today's
+   * code. The location is the phone's own claim (it can be faked); it stops people joining from a photo of the QR.
+   */
+  #mayJoin(lat: unknown, lng: unknown, acc: unknown, code: unknown): boolean {
+    const { nearbyOnly, shopLat, shopLng } = this.meta.settings;
+    if (!nearbyOnly || shopLat == null || shopLng == null) return true;
+    if (typeof code === "string" && code.replace(/\s/g, "") === this.meta.joinCode) return true;
+    if (!isNum(lat) || !isNum(lng)) return false;
+    const slack = isNum(acc) ? Math.min(Math.max(acc, 0), ACCURACY_SLACK_MAX_M) : 0;
+    return distanceM(lat, lng, shopLat, shopLng) <= NEARBY_M + slack;
   }
 
   /** Staff or customer action on a ticket. */
@@ -335,13 +379,14 @@ export class QueueCore {
     return this.meta.lastResetIds.includes(id) ? "reset" : "gone";
   }
 
-  /** Start a new day: every ticket is cleared and numbering restarts at #1. */
-  reset(now: number): string[] {
+  /** Start a new day: every ticket is cleared, numbering restarts at #1, and today's code changes. */
+  reset(now: number, joinCode: string = newJoinCode()): string[] {
     const cleared = [...this.tickets.keys()];
     this.tickets.clear();
     this.meta.nextNum = 1;
     this.meta.dayStartedAt = now;
     this.meta.lastResetIds = cleared.slice(-MAX_TICKETS_PER_DAY);
+    this.meta.joinCode = joinCode;
     this.changes.put.clear();
     this.changes.del.clear();
     this.changes.clearAll = true;
@@ -350,7 +395,10 @@ export class QueueCore {
   }
 
   /** Validate and apply settings, then work out the next reset time. A refused change applies nothing. */
-  setSettings(input: { autoReset?: unknown; resetTime?: unknown; timeZone?: unknown; queueName?: unknown; claimMinutes?: unknown }, now: number): SettingsResult {
+  setSettings(
+    input: { autoReset?: unknown; resetTime?: unknown; timeZone?: unknown; queueName?: unknown; claimMinutes?: unknown; nearbyOnly?: unknown; shopLat?: unknown; shopLng?: unknown },
+    now: number,
+  ): SettingsResult {
     const s: Settings = { ...this.meta.settings };
     if (input.autoReset !== undefined) {
       if (typeof input.autoReset !== "boolean") return { ok: false, error: "autoReset must be true or false" };
@@ -375,7 +423,19 @@ export class QueueCore {
       }
       s.claimMinutes = m;
     }
+    if (input.shopLat !== undefined || input.shopLng !== undefined) {
+      const { shopLat: la, shopLng: ln } = input;
+      if (la === null && ln === null) { s.shopLat = null; s.shopLng = null; }
+      else if (isNum(la) && isNum(ln) && Math.abs(la) <= 90 && Math.abs(ln) <= 180) { s.shopLat = la; s.shopLng = ln; }
+      else return { ok: false, error: "The shop's location must be a latitude and longitude" };
+    }
+    if (input.nearbyOnly !== undefined) {
+      if (typeof input.nearbyOnly !== "boolean") return { ok: false, error: "nearbyOnly must be true or false" };
+      s.nearbyOnly = input.nearbyOnly;
+    }
+    if (s.nearbyOnly && (s.shopLat == null || s.shopLng == null)) return { ok: false, error: "Set the shop's location first" };
     this.meta.settings = s;
+    this.#touchMeta();
     this.scheduleNextReset(now);
     return { ok: true };
   }

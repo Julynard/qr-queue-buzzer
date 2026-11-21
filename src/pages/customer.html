@@ -6,6 +6,7 @@
 <meta name="apple-mobile-web-app-title" content="Aqona">
 <meta name="theme-color" content="#E9EDF1">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
@@ -126,6 +127,19 @@
       </div>
       <label for="name">Your name <span>(optional, so staff can call you)</span></label>
       <input id="name" name="name" maxlength="30" autocomplete="given-name" placeholder="Ana">
+      <div id="nearPart" class="hide">
+        <div class="note" style="margin-top:14px"><div class="body">
+          <b>For people at the shop</b>
+          <span>When you tap "Take a number", allow location so we can check you're here. It's checked once and never saved.</span>
+          <a href="#" id="codeLink">No location? Use a code from the staff</a>
+        </div></div>
+        <div id="codePart" class="hide">
+          <label for="joinCode">Today's code <span>(ask the staff)</span></label>
+          <input id="joinCode" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="0000">
+        </div>
+      </div>
+      <!-- Bot check: stays empty unless Cloudflare asks this phone for a tap. -->
+      <div id="ts"></div>
       <button class="primary" id="joinBtn" style="margin-top:12px" onclick="join()">Take a number</button>
       <div class="err" id="joinErr" role="alert" style="margin-top:10px"></div>
     </div>
@@ -304,6 +318,49 @@ function renderAlerts(){
   show('iosTip', isIOS && !standalone && secure);
 }
 
+// ---------- bot check (Cloudflare Turnstile) ----------
+// Runs in the background while the customer types; shows a box only if Cloudflare wants a tap.
+// Each token works for one "Take a number", so the check restarts after every try.
+const TS_SITE = '__TURNSTILE_SITE__';
+let tsWidget = null, tsToken = '', tsWaiters = [];
+function tsRender(){
+  if (tsWidget !== null) return;
+  if (!window.turnstile) { setTimeout(tsRender, 200); return; }
+  tsWidget = turnstile.render('#ts', {
+    sitekey: TS_SITE, action: 'join', appearance: 'interaction-only', size: 'flexible',
+    callback: (t) => { tsToken = t; tsWaiters.splice(0).forEach((f) => f(t)); },
+    'expired-callback': () => { tsToken = ''; },
+    'error-callback': () => { tsToken = ''; },
+  });
+}
+// The current token, waiting up to `ms` for one. '' if none came (the server then decides).
+function tsGet(ms){ return tsToken ? Promise.resolve(tsToken) : new Promise((res) => { tsWaiters.push(res); setTimeout(() => res(''), ms); }); }
+function tsReset(){ tsToken = ''; if (window.turnstile && tsWidget !== null) turnstile.reset(tsWidget); }
+const JOIN_ERRORS = {
+  full: 'The queue is full right now. Please ask the staff.',
+  busy: 'Too many tries from this network. Wait a minute, then try again.',
+  check: "We couldn't check this phone. Try again, or open this page in Chrome or Safari.",
+};
+
+// ---------- only people at the shop ----------
+// Some shops only take numbers from phones at the shop. The page sends this phone's location once
+// (the server compares it and never saves it), or today's code from the staff instead.
+function showCode(){ show('codePart', true); show('codeLink', false); $('joinCode').focus(); }
+function hereNow(){
+  return new Promise((res) => {
+    if (!('geolocation' in navigator)) return res(null);
+    navigator.geolocation.getCurrentPosition(
+      (p) => res({ lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy }),
+      () => res(null), { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+  });
+}
+function nearbyError(code, where){
+  showCode();
+  if (code) return "That code didn't work. Check it with the staff.";
+  if (!where) return "We couldn't get your location. Allow location and try again, or ask the staff for today's code.";
+  return "You seem to be away from the shop. Come to the counter, or ask the staff for today's code.";
+}
+
 // ---------- join ----------
 // One random key per page: a double tap or a retry after a network error gets the same ticket back.
 const joinKey = [...crypto.getRandomValues(new Uint8Array(16))].map(b=>b.toString(16).padStart(2,'0')).join('');
@@ -316,13 +373,20 @@ async function join(){
   if (!permP && pushSupported && Notification.permission==='default') permP = Notification.requestPermission();
   $('joinBtn').disabled = true; $('joinBtn').textContent = 'Taking a number…'; $('joinErr').textContent = '';
   try {
-    const r = await fetch(BASE+'/api/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:$('name').value, key:joinKey})});
-    if (r.status === 429) throw new Error('The queue is full right now. Please ask the staff.');
-    if (!r.ok) throw new Error('Could not join. Please try again.');
+    const code = $('joinCode').value.trim();
+    // Both start inside the tap, so the location prompt counts as the customer's own action.
+    const [token, where] = await Promise.all([tsGet(15000), QUEUE.nearbyOnly && !code ? hereNow() : null]);
+    const body = { name: $('name').value, key: joinKey, ...(where || {}), ...(code ? { code } : {}) };
+    const r = await fetch(BASE+'/api/join',{method:'POST',headers:{'Content-Type':'application/json','x-captcha-response':token},body:JSON.stringify(body)});
+    if (!r.ok) {
+      const err = (await r.json().catch(() => ({}))).error;
+      throw new Error(err === 'nearby' ? nearbyError(code, where) : JOIN_ERRORS[err] || 'Could not join. Please try again.');
+    }
     ticket = await r.json();
   } catch(e) {
     $('joinErr').textContent = e.message && !/fetch|network/i.test(e.message) ? e.message : 'No connection. Check your internet and try again.';
     $('joinBtn').disabled = false; $('joinBtn').textContent = 'Take a number'; joining = false;
+    tsReset();
     return;
   }
   try { localStorage.setItem(KEY, ticket.id); } catch(e){}
@@ -477,6 +541,9 @@ if (ticket) {
   $('ahead').textContent = w === 0 ? 'No one ahead of you' : w + ' ahead of you';
   $('aheadWait').textContent = QUEUE.waitMin ? 'about ' + QUEUE.waitMin + ' min' : '';
   $('nextNo').textContent = pad(QUEUE.nextNum || 1);
+  show('nearPart', !!QUEUE.nearbyOnly);
+  $('codeLink').onclick = (e) => { e.preventDefault(); showCode(); };
   showOnly('joinView');
+  tsRender();
 }
 </script></body></html>

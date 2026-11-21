@@ -207,7 +207,7 @@
     <!-- Counter (the live list) -->
     <section data-tab="queue">
       <div class="titlerow">
-        <div><h1>Counter</h1><div class="sub" id="queueSub"></div></div>
+        <div><h1>Counter</h1><div class="sub" id="queueSub"></div><div class="sub hide" id="joinCodeLine">Today's code for customers without location: <b id="joinCodeVal"></b></div></div>
         <span class="conn off" id="conn"><span class="dot"></span><span id="connText">Connecting…</span></span>
       </div>
       <div class="card" style="overflow:hidden;margin-top:20px">
@@ -288,6 +288,15 @@
           <input id="timeZone" class="field" placeholder="Asia/Manila" autocomplete="off" style="max-width:300px">
           <div class="muted" id="nextReset"></div>
           <div><button type="button" class="btn" style="min-height:46px;padding:0 16px" onclick="startNewDay()">Start new day now</button></div>
+        </div>
+        <div class="sec" style="gap:12px">
+          <h2>Only people at the shop</h2>
+          <label class="check"><input type="checkbox" id="nearbyOnly">Only phones at the shop can take a number</label>
+          <div class="muted">Stops people joining from a photo of your QR code. Customers share their location once (it is never saved). Phones within about 300 m count as here. Anyone who can't share location joins with today's code, shown on the Counter page. The code changes every new day.</div>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <button type="button" class="btn" style="min-height:46px;padding:0 16px" onclick="setShopLocation()">Use this phone's location</button>
+            <span class="muted" id="shopLoc" role="status"></span>
+          </div>
         </div>
         <div class="sec">
           <h2>Claim time</h2>
@@ -591,6 +600,8 @@ function render(d){
   const [shop, ...counter] = (s.queueName || '').split(' · ');
   $('qShop').textContent = shop || 'Your shop';
   $('qCounter').textContent = (counter.join(' · ') || 'Counter 1') + ' · ' + (CAN_MANAGE ? 'Owner' : 'Staff');
+  $('joinCodeLine').classList.toggle('hide', !s.nearbyOnly);
+  $('joinCodeVal').textContent = d.joinCode || '';
   renderNav();
 
   const el = $('list');
@@ -616,6 +627,25 @@ function showSettings(s){
   $('qname').value = s.queueName || '';
   $('autoReset').checked = s.autoReset; $('resetTime').value = s.resetTime; $('timeZone').value = s.timeZone;
   $('claimMinutes').value = s.claimMinutes;
+  $('nearbyOnly').checked = !!s.nearbyOnly;
+  $('shopLoc').textContent = s.shopLat != null ? 'Shop location saved.' : 'Not set yet. Tap this at the counter.';
+}
+// Saves where the shop is, from this phone. Do it at the counter: customers are compared with this spot.
+function setShopLocation(){
+  if (!('geolocation' in navigator)) { $('shopLoc').textContent = "This browser can't share location."; return; }
+  $('shopLoc').textContent = 'Getting location…';
+  navigator.geolocation.getCurrentPosition(async (p) => {
+    const acc = Math.round(p.coords.accuracy);
+    try {
+      const r = await fetch(BASE+'/api/settings', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ shopLat: p.coords.latitude, shopLng: p.coords.longitude })});
+      const d = await r.json();
+      if (!r.ok) { $('shopLoc').textContent = d.error || 'Could not save'; return; }
+      if (state) { state.settings = d.settings; render(state); }
+      $('shopLoc').textContent = 'Shop location saved (accurate to about ' + acc + ' m).' + (acc > 100 ? ' GPS is rough here; try again near a window or door.' : '');
+    } catch(e) { $('shopLoc').textContent = 'Could not save. Check the connection.'; }
+  }, (err) => {
+    $('shopLoc').textContent = err.code === 1 ? 'Location is blocked. Allow it for this site in the browser settings.' : "Couldn't get a location. Try again.";
+  }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
 }
 function showNextReset(d){
   const s = d.settings; if (!s) return;
@@ -630,6 +660,7 @@ async function saveSettings(e){
   const body = {
     queueName: $('qname').value, autoReset: $('autoReset').checked, resetTime: $('resetTime').value,
     timeZone: $('timeZone').value.trim() || 'Asia/Manila', claimMinutes: Number($('claimMinutes').value),
+    nearbyOnly: $('nearbyOnly').checked,
   };
   $('settingsMsg').textContent = 'Saving…';
   try {
