@@ -19,6 +19,10 @@ const RULES: { re: RegExp; method: "GET" | "POST"; need: Need }[] = [
   { re: new RegExp(`^/api/status/${ID}$`), method: "GET", need: "public" },
   { re: new RegExp(`^/api/(subscribe|ack)/${ID}$`), method: "POST", need: "public" },
   { re: new RegExp(`^/ws/t/${ID}$`), method: "GET", need: "public" },
+  // The display screen for a TV at the counter (ticket numbers only, no names)
+  { re: /^\/display$/, method: "GET", need: "public" },
+  { re: /^\/api\/display$/, method: "GET", need: "public" },
+  { re: /^\/ws\/display$/, method: "GET", need: "public" },
   // Running the queue
   { re: /^\/(staff|qr)$/, method: "GET", need: "staff" },
   { re: /^\/api\/state$/, method: "GET", need: "staff" },

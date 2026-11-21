@@ -221,6 +221,23 @@
     </section>
 
     <!-- QR code -->
+    <!-- Display screen: the public "Now calling" page for a TV at the counter -->
+    <section data-tab="display" class="hide">
+      <div class="row"><h1>Display screen</h1><span class="tag">Free on every plan</span></div>
+      <div class="card qrcard" style="margin-top:20px">
+        <div style="flex:1 1 320px;display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:14px;font-weight:700">Open this link on a TV or tablet at the counter</div>
+          <div style="font-size:18px;font-weight:800;word-break:break-all">__JOIN__/display</div>
+          <div class="muted" style="font-size:14px;line-height:1.5">It shows the numbers being called and the ones still preparing, plus your QR so new customers can join. Ticket numbers only, never names. It updates by itself; tap "Tap to turn on sound" on the TV once for a chime when a number is called.</div>
+          <div class="row" style="margin-top:6px">
+            <a class="btn acc" href="__BASE__/display" target="_blank" rel="noopener">Open display screen</a>
+            <button class="btn" type="button" id="copyDisplay" onclick="copyDisplayLink()">Copy link</button>
+          </div>
+        </div>
+      </div>
+      <div class="muted" style="margin-top:14px">Tip: on most TVs and laptops, press F11 (or use the browser's full-screen option) to hide the address bar.</div>
+    </section>
+
     <section data-tab="qr" class="hide">
       <h1>QR code</h1>
       <div class="card qrcard" style="margin-top:20px">
@@ -327,10 +344,8 @@ const PILLS = {
   done:    { bg:'#DCFCE7', fg:'#166534', label:'Done' },
   noshow:  { bg:'#FFEDD5', fg:'#9A3412', label:'No show' },
 };
-// Free on every plan, not built yet.
-const SOON = {
-  display: ['Display screen', 'A "Now calling" screen for your counter.', 'Open a link on a TV or tablet at the counter. It shows the numbers being called and the ones still preparing, so customers without alerts know when it\'s their turn. Ticket numbers only, never names. Free on every plan.'],
-};
+// Free on every plan but not built yet (none right now).
+const SOON = {};
 const LOCKED = {
   branding: ['Branding', 'Make every ticket yours.', 'Use your own colours and logo on the customer ticket, the QR poster and the display screen. Status colours stay fixed so customers are never confused.'],
   reports:  ['Reports', 'See your busiest hours.', 'Average wait time, customers per day, no-show rate and busiest hours, so you know when to add staff.'],
@@ -343,6 +358,12 @@ const GROUPS = [
   ['Pro', [['branding','Branding',1], ['reports','Reports',1], ['log','Activity log',1]]],
 ];
 let state = null, settingsShown = false, tab = 'queue', PLAN = 'free';
+async function copyDisplayLink(){
+  const link = JOIN + '/display';
+  try { await navigator.clipboard.writeText(link); $('copyDisplay').textContent = 'Copied'; } catch(e) { prompt('Copy this link:', link); return; }
+  setTimeout(() => { $('copyDisplay').textContent = 'Copy link'; }, 2000);
+}
+
 // ---------- Team (owner only; the server checks too) ----------
 let TEAM_WS = '';
 const COPY_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
@@ -438,7 +459,7 @@ function renderNav(){
       (locked && PLAN === 'free' ? LOCK : '') + (key === 'queue' ? '<span class="count">' + open + '</span>' : '') + (key === 'home' ? '</a>' : '</button>')).join('') + '</div>').join('');
 }
 function go(key){
-  tab = LOCKED[key] || SOON[key] || ['queue','qr'].includes(key) || (CAN_MANAGE && ['team','settings'].includes(key)) ? key : 'queue';
+  tab = LOCKED[key] || SOON[key] || ['queue','qr','display'].includes(key) || (CAN_MANAGE && ['team','settings'].includes(key)) ? key : 'queue';
   if (location.hash.slice(1) !== tab) history.replaceState(null, '', '#' + tab);
   if (tab === 'team') loadTeam();
   const lk = LOCKED[tab] || SOON[tab];

@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Now calling · __QUEUE_NAME__</title>
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;700;800&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  /* Made for a TV or tablet in landscape; everything scales with the screen. Ticket numbers only, never names. */
+  :root{--accent:#0B6FB8;--paper:#CFE4F5;--ink:#0A2A4A;--hi:#FFE58A}
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;overflow:hidden;color:var(--ink);font-family:Inter,system-ui,sans-serif;
+    background:radial-gradient(ellipse 60vw 60vh at 15% -5%,rgba(11,111,184,.55),rgba(10,42,74,0) 70%),
+               radial-gradient(ellipse 50vw 50vh at 100% 110%,rgba(207,228,245,.14),rgba(10,42,74,0) 70%),
+               radial-gradient(rgba(207,228,245,.09) 1px,transparent 1.6px) 0 0/24px 24px,#0A2A4A}
+  .screen{height:100vh;padding:2.2vw;display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:1.7vw}
+  .anton{font-family:Anton,Impact,sans-serif;font-weight:400}
+  .calling{background:linear-gradient(160deg,rgba(255,255,255,.16),rgba(255,255,255,0) 45%),var(--accent);border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.35);padding:2.3vw 2.5vw;display:flex;flex-direction:column;gap:1.5vw;color:#fff;min-height:0}
+  .head{display:flex;justify-content:space-between;align-items:baseline;gap:1vw}
+  .head h1{margin:0;font-size:5vw;line-height:1}
+  .head span{font-size:1.35vw;font-weight:700}
+  .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.5vw}
+  .tk{position:relative;overflow:hidden;background:var(--paper);color:var(--ink);border-radius:8px;display:flex;align-items:stretch;box-shadow:0 10px 24px rgba(10,42,74,.35)}
+  .tk .bell{width:5.7vw;flex:none;display:flex;align-items:center;justify-content:center}
+  .tk .bell svg{width:2vw;height:2vw}
+  .tk .n{flex:1;display:flex;align-items:center;justify-content:center;padding:1vw;font-family:Anton,Impact,sans-serif;font-size:8.3vw;line-height:1}
+  .tk::before,.tk::after{content:"";position:absolute;left:5vw;width:1.5vw;height:1.5vw;border-radius:50%;background:var(--accent)}
+  .tk::before{top:-.75vw}.tk::after{bottom:-.75vw}
+  .tk.fresh{animation:call 1.2s ease-out 2}
+  @keyframes call{0%{transform:scale(.92);box-shadow:0 0 0 0 rgba(255,229,138,.95)}40%{transform:scale(1.04)}100%{transform:scale(1);box-shadow:0 0 0 1.2vw rgba(255,229,138,0)}}
+  .empty{font-size:1.7vw;font-weight:600;opacity:.85;padding:2vw 0}
+  .calling .foot{margin-top:auto;font-size:1.3vw;font-weight:600}
+  .side{display:flex;flex-direction:column;gap:1.7vw;min-height:0}
+  .prep{flex:1;background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,0) 40%),var(--paper);border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.35);padding:2vw 2.3vw;display:flex;flex-direction:column;gap:1.3vw;min-height:0}
+  .prep h2{margin:0;font-size:3.8vw;line-height:1}
+  .prep .head span{font-size:1.25vw}
+  .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.95vw}
+  .grid3 div{background:#fff;border-radius:6px;box-shadow:0 2px 0 rgba(10,42,74,.12);padding:.6vw 0;text-align:center;font-family:Anton,Impact,sans-serif;font-size:3.3vw;line-height:1.15}
+  .wait{margin-top:auto;align-self:flex-start;padding:.7vw 1vw;background:var(--hi);font-size:1.15vw;font-weight:800}
+  .join{background:#fff;border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.35);padding:1.5vw 1.7vw;display:flex;gap:1.5vw;align-items:center}
+  .qr{width:9vw;height:9vw;flex:none;padding:.4vw;border:3px solid var(--ink);border-radius:8px}
+  .qr img,.qr canvas{width:100%!important;height:auto!important}
+  .join .t{font-family:Anton,Impact,sans-serif;font-size:2.5vw;line-height:1}
+  .join .s{font-size:1.05vw;color:#545B66;margin-top:.4vw}
+  .join .shop{display:flex;align-items:baseline;gap:.7vw;margin-top:.6vw;font-size:1.05vw;font-weight:800}
+  .join .shop small{font-weight:500;color:#6B7280}
+  .wm{font-family:'Space Grotesk',Inter,sans-serif;font-weight:700;letter-spacing:-.02em;color:var(--ink)}.wm b{color:var(--accent)}
+  .status{position:fixed;left:50%;bottom:1vw;transform:translateX(-50%);background:rgba(10,42,74,.92);color:#fff;font-size:14px;font-weight:700;padding:8px 14px;border-radius:999px}
+  .sound{position:fixed;right:1vw;bottom:1vw;font:inherit;font-size:14px;font-weight:800;padding:10px 14px;border:2px solid #fff;border-radius:999px;background:rgba(10,42,74,.9);color:#fff;cursor:pointer}
+  .hide{display:none!important}
+  @media (max-aspect-ratio:1/1){ /* a phone or tablet held upright: stack */
+    body{overflow:auto}.screen{height:auto;min-height:100vh;grid-template-columns:1fr}
+    .head h1{font-size:10vw}.head span{font-size:3vw}.tk .n{font-size:16vw}.tk .bell{width:12vw}.tk .bell svg{width:5vw;height:5vw}
+    .tk::before,.tk::after{left:11vw;width:3vw;height:3vw}.tk::before{top:-1.5vw}.tk::after{bottom:-1.5vw}
+    .prep h2{font-size:8vw}.prep .head span{font-size:3.4vw}.grid3 div{font-size:7vw}.wait,.calling .foot,.empty,.join .s,.join .shop{font-size:3.4vw}
+    .qr{width:22vw;height:22vw}.join .t{font-size:6vw}
+  }
+</style></head><body>
+<div class="screen">
+  <section class="calling" aria-live="polite">
+    <div class="head"><h1 class="anton">Now calling</h1><span>Please come to the counter</span></div>
+    <div class="grid2" id="calling"></div>
+    <div class="empty hide" id="noCalls">No one is being called right now.</div>
+    <div class="foot">Not called yet? Your phone will buzz.</div>
+  </section>
+  <div class="side">
+    <section class="prep">
+      <div class="head"><h2 class="anton">Preparing</h2><span id="count"></span></div>
+      <div class="grid3" id="preparing"></div>
+      <div class="wait hide" id="wait"></div>
+    </section>
+    <section class="join">
+      <div class="qr" id="qr" role="img" aria-label="QR code to take a number"></div>
+      <div><div class="t">Scan to join</div><div class="s">No app. No sign-up. Get buzzed.</div>
+        <div class="shop"><span id="shop">__QUEUE_NAME__</span><small>by <span class="wm"><b>aqo</b>na</span></small></div></div>
+    </section>
+  </div>
+</div>
+<div class="status hide" id="status">Reconnecting…</div>
+<button class="sound" id="soundBtn" type="button">Tap to turn on sound</button>
+<script>
+const JOIN = '__JOIN__';
+const BASE = '__BASE__';
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(3, '0');
+const BELL = '<svg viewBox="0 0 24 24" fill="none" stroke="#0A2A4A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
+new QRCode($('qr'), { text: JOIN, width: 400, height: 400, colorDark: '#0A2A4A', colorLight: '#FFFFFF' });
+
+// Optional chime when a new number is called (browsers need one tap before playing sound).
+let ctx = null;
+$('soundBtn').onclick = () => {
+  try { ctx = ctx || new (window.AudioContext || window.webkitAudioContext)(); ctx.resume(); chime(); } catch(e){}
+  $('soundBtn').classList.add('hide');
+  keepAwake();
+};
+function chime(){
+  if (!ctx) return;
+  [0, .22].forEach((t, i) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.value = i ? 660 : 880;
+    g.gain.setValueAtTime(.0001, ctx.currentTime + t); g.gain.exponentialRampToValueAtTime(.35, ctx.currentTime + t + .02); g.gain.exponentialRampToValueAtTime(.0001, ctx.currentTime + t + .5);
+    o.connect(g); g.connect(ctx.destination); o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + .55); });
+}
+// Keep the TV's screen on.
+let lock = null;
+async function keepAwake(){ try { if ('wakeLock' in navigator && document.visibilityState === 'visible') lock = await navigator.wakeLock.request('screen'); } catch(e){} }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !lock) keepAwake(); });
+keepAwake();
+
+let shown = [];
+function render(v){
+  if (!v || v.type !== 'display') return;
+  if (v.queueName) $('shop').textContent = v.queueName;
+  const calling = v.calling.slice(0, 4);
+  const fresh = calling.filter(n => !shown.includes(n));
+  $('calling').innerHTML = calling.map(n => '<div class="tk' + (fresh.includes(n) && shown.length ? ' fresh' : '') + '"><div class="bell">' + BELL + '</div><div class="n">' + pad(n) + '</div></div>').join('');
+  $('noCalls').classList.toggle('hide', calling.length > 0);
+  if (fresh.length && shown.length) chime();
+  shown = v.calling.slice();
+  $('preparing').innerHTML = v.preparing.slice(0, 9).map(n => '<div>' + pad(n) + '</div>').join('');
+  $('count').textContent = v.preparing.length === 1 ? '1 in line' : v.preparing.length + ' in line';
+  $('wait').textContent = v.waitMin ? 'About ' + v.waitMin + ' min wait right now' : '';
+  $('wait').classList.toggle('hide', !v.waitMin);
+}
+
+// Live updates over a socket; while it's down, check every 10 s and keep trying to reconnect.
+let ws = null, tries = 0, poller = null;
+function connect(){
+  try { ws = new WebSocket((location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + location.host + BASE + '/ws/display'); }
+  catch(e) { ws = null; startPolling(); return; }
+  ws.onopen = () => { tries = 0; $('status').classList.add('hide'); stopPolling(); };
+  ws.onmessage = e => { try { render(JSON.parse(e.data)); } catch(_){} };
+  ws.onclose = () => { ws = null; $('status').classList.remove('hide'); startPolling(); setTimeout(connect, Math.min(1000 * 2 ** tries++, 15000)); };
+}
+async function poll(){
+  try {
+    const r = await fetch(BASE + '/api/display', { cache: 'no-store' });
+    if (r.status === 404 || r.status === 410) { $('status').textContent = 'This queue was closed.'; return; }
+    render(await r.json());
+  } catch(e){}
+}
+function startPolling(){ if (!poller) { poll(); poller = setInterval(poll, 10000); } }
+function stopPolling(){ clearInterval(poller); poller = null; }
+setInterval(() => { if (ws && ws.readyState === 1) ws.send('ping'); }, 30000);
+connect();
+</script>
+</body></html>
