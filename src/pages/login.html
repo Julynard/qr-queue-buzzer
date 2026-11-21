@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Log in · Aqona</title>
+<title>Sign in or sign up · Aqona</title>
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,10 +16,12 @@
   .bar{display:flex;justify-content:space-between;align-items:center;padding:6px 4px 0}
   .brand{font-family:'Space Grotesk',Inter,sans-serif;font-weight:700;font-size:26px;letter-spacing:-.03em;text-decoration:none}.brand b{color:var(--accent)}
   .bar a.link{font-size:14px;font-weight:800;min-height:44px;display:flex;align-items:center}
-  .ticket{flex:1;display:flex;flex-direction:column;min-height:0}
-  .top{flex:1;display:flex;flex-direction:column;background:#fff;border:3px solid var(--ink);border-bottom:0;border-radius:6px 6px 0 0;padding:22px 19px 18px}
+  .ticket{flex:none;display:flex;flex-direction:column}
+  .top{display:flex;flex-direction:column;background:#fff;border:3px solid var(--ink);border-bottom:0;border-radius:6px 6px 0 0;padding:22px 19px 18px}
   .eyebrow{display:flex;justify-content:space-between;font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
-  h1{margin:16px 0 0;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:72px;line-height:.95}
+  h1{margin:16px 0 0;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:60px;line-height:.95}
+  .foot{margin-top:auto;display:flex;justify-content:center;gap:22px;padding-bottom:8px;font-size:13px;font-weight:600}
+  .foot a{color:var(--soft)}
   h1.small{font-size:64px}
   p{margin:10px 0 0;font-size:15px;line-height:1.5}
   .btn{font:inherit;font-size:17px;font-weight:800;height:56px;border:3px solid var(--ink);border-radius:4px;background:var(--accent);color:#fff;cursor:pointer;width:100%}
@@ -44,15 +46,15 @@
 <div class="page">
   <div class="bar">
     <a class="brand" href="/"><b>aqo</b>na</a>
-    <a class="link" href="/start">Start free</a>
+    <a class="link" href="/">Home</a>
   </div>
   <div class="ticket">
     <div class="top">
       <div class="eyebrow"><span>Staff entrance</span><span>Admit one</span></div>
 
       <form id="stepEmail" onsubmit="sendCode(event)">
-        <h1>Log in</h1>
-        <p>For shop owners and staff. Customers never need an account.</p>
+        <h1>Sign in or<br>sign up</h1>
+        <p>For shop owners and staff. New here? We'll set up your shop next.</p>
         <button type="button" class="google hide" id="googleBtn" onclick="google()"><svg width="20" height="20" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>Continue with Google</button>
         <div id="emailPart" class="hide">
           <div class="or" id="orLine"><span></span>or use your email<span></span></div>
@@ -61,7 +63,7 @@
           <div id="ts"></div>
           <button class="btn" id="sendBtn" style="margin-top:12px">Email me a code</button>
         </div>
-        <p id="noMethods" class="hide"><b>Log-in isn't open yet.</b> We're setting up sign-in for this site. Please check back soon.</p>
+        <p id="noMethods" class="hide"><b>Sign-in isn't open yet.</b> We're setting up sign-in for this site. Please check back soon.</p>
         <div class="err" id="emailErr" role="alert"></div>
       </form>
 
@@ -70,7 +72,7 @@
         <p>We sent a 6-digit code to <b id="sentTo"></b>. It works for 10 minutes.</p>
         <label for="code" style="margin-top:22px;display:block">6-digit code</label>
         <input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required>
-        <button class="btn" id="codeBtn" style="margin-top:12px">Log in</button>
+        <button class="btn" id="codeBtn" style="margin-top:12px">Continue</button>
         <div class="err" id="codeErr" role="alert"></div>
         <div class="row">
           <button type="button" class="linkbtn" onclick="backToEmail()">Use another email</button>
@@ -81,9 +83,10 @@
     <div class="tear"><i></i></div>
     <div class="stub">
       <div style="font-size:14px;font-weight:800">No password to remember.</div>
-      <div style="font-size:13px;line-height:1.45">New shop? <a href="/start" style="font-weight:800">Start free</a>, it takes a minute. By continuing you agree to the <a href="/privacy">Privacy notice</a>.</div>
+      <div style="font-size:13px;line-height:1.45">One page for new and returning people. First time here? Your account is made when you sign in, then you name your shop. By continuing you agree to the <a href="/privacy">Privacy notice</a>.</div>
     </div>
   </div>
+  <div class="foot"><a href="/privacy">Privacy notice</a><a href="/">Home</a></div>
 </div>
 <script>
 const METHODS = __METHODS__;
@@ -112,10 +115,10 @@ renderTurnstile();
 // the code from the address so a reload doesn't show it again. Never show error_description (URL text).
 const googleError = new URLSearchParams(location.search).get('error');
 if (googleError) {
-  const other = METHODS.email ? ' Or log in with your email below.' : '';
+  const other = METHODS.email ? ' Or use your email below.' : '';
   $('emailErr').textContent = (googleError === 'access_denied'
-    ? 'Google log-in was cancelled. Tap Continue with Google to try again.'
-    : 'Google log-in didn\'t work. Please try again.') + other;
+    ? 'Google sign-in was cancelled. Tap Continue with Google to try again.'
+    : 'Google sign-in didn\'t work. Please try again.') + other;
   const u = new URL(location.href);
   u.searchParams.delete('error'); u.searchParams.delete('error_description');
   history.replaceState(null, '', u.pathname + u.search + u.hash);
@@ -174,7 +177,7 @@ async function checkCode(e){
     location.href = NEXT;
   } catch(err) {
     $('codeErr').textContent = err.message && !/fetch/i.test(err.message) ? err.message : 'No connection. Please try again.';
-    $('codeBtn').disabled = false; $('codeBtn').textContent = 'Log in';
+    $('codeBtn').disabled = false; $('codeBtn').textContent = 'Continue';
   }
 }
 </script>

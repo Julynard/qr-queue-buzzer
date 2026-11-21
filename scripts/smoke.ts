@@ -76,7 +76,7 @@ const isState = (m: Msg): m is StateJson => m.type === "state";
 const isStatus = (status?: string) => (m: Msg): boolean => m.type === "status" && (status === undefined || m.status === status);
 
 // ---------- public site, old addresses ----------
-for (const p of ["/", "/login", "/start", "/privacy", "/sw.js", "/icon.svg", "/manifest.json"]) {
+for (const p of ["/", "/login", "/privacy", "/sw.js", "/icon.svg", "/manifest.json"]) {
   const r = await site(p);
   check(`GET ${p} -> 200`, r.status === 200, String(r.status));
 }
@@ -123,7 +123,7 @@ check("logged-out home shows Log in and Start free", homeOut.includes('href="/lo
 const homeIn = await (await site("/", cookieA)).text();
 check("signed-in home hides Log in and Start free", !homeIn.includes('href="/login"') && !homeIn.includes('href="/start"') && homeIn.includes("Open dashboard"));
 check("signed-in Start free -> dashboard", (await site("/start", cookieA)).headers.get("location") === "/app");
-check("logged-out Start free page opens", (await site("/start")).status === 200);
+check("logged-out Start free -> sign-in page", (await site("/start")).headers.get("location") === "/login");
 check("another shop's owner can't change settings (403)", (await site(Q + "/api/settings", cookieB, { method: "POST", body: "{}" })).status === 403);
 
 check("manual reset", (await post("/api/reset")).ok);

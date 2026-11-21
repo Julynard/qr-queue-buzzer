@@ -8,7 +8,6 @@ import SW_JS from "./pages/sw.txt";
 import ICON_SVG from "./pages/icon.svg";
 import HOME_HTML from "./pages/home.html";
 import LOGIN_HTML from "./pages/login.html";
-import START_HTML from "./pages/start.html";
 import APP_HTML from "./pages/app.html";
 import PRIVACY_HTML from "./pages/privacy.html";
 
@@ -46,7 +45,8 @@ export default {
     // Signed-in visitors don't see "Log in" / "Start free": they get a link to their dashboard instead.
     if (p === "/") return (await signedIn(env, request)) ? forSignedIn(HOME_HTML) : html(HOME_HTML);
     if (p === "/privacy") return html(PRIVACY_HTML);
-    if (p === "/start") return (await signedIn(env, request)) ? redirect("/app") : html(fill(START_HTML, { METHODS: safeJson(signInMethods(env)) }));
+    // "Start free" and "Log in" are one page now; old /start links keep working.
+    if (p === "/start") return redirect((await signedIn(env, request)) ? "/app" : "/login");
     if (p === "/login" || p === "/app" || p.startsWith("/api/app/")) {
       const auth = createAuth(env, request);
       const session = await getSession(auth, request);
