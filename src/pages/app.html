@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Your queues · Aqona</title>
+<title>Home · Aqona</title>
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,29 +16,31 @@
   button:focus-visible,a:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
   .brand{font-family:'Space Grotesk',Inter,sans-serif;font-weight:700;letter-spacing:-.03em;text-decoration:none;color:var(--ink)}.brand b{color:var(--accent);font-weight:700}
   .brand:hover{color:var(--ink)}
-  /* top bar (same as the staff page) */
-  .topbar{position:sticky;top:0;z-index:20;height:64px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 20px}
+  /* ---- app shell: the same top bar and sidebar on Home and on the counter page ---- */
+  .topbar{position:sticky;top:0;z-index:20;height:64px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 20px}
   .topbar .brand{font-size:26px;flex:none}
-  .crumbs{flex:1;min-width:0;display:flex;align-items:center;gap:8px;font-size:14px;color:var(--soft);white-space:nowrap;overflow:hidden}
-  .crumbs a{color:var(--soft);font-weight:600;text-decoration:none}.crumbs a:hover{color:var(--ink)}
-  .crumbs b{color:var(--ink);overflow:hidden;text-overflow:ellipsis}
-  .crumbs .sep{color:#9AA6B2}
+  .topbar .grow{flex:1}
+  .planchip{font-size:12px;font-weight:800;padding:6px 12px;border-radius:999px;background:var(--ground);border:1px solid #CBD0D6;color:var(--ink);text-decoration:none;white-space:nowrap}
+  .planchip span{color:var(--accent)}
+  .planchip:hover{color:var(--ink);border-color:var(--ink)}
   .acct{position:relative;flex:none}
   .acct summary{list-style:none;display:flex;align-items:center;gap:10px;min-height:44px;padding:0 8px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700}
   .acct summary::-webkit-details-marker{display:none}
   .acct summary:hover,.acct[open] summary{background:var(--ground)}
-  .acct .caret{width:16px;height:16px;flex:none}
-  .acct .menu{position:absolute;right:0;top:calc(100% + 6px);min-width:250px;background:#fff;border:2px solid var(--ink);border-radius:8px;box-shadow:0 14px 30px rgba(10,42,74,.14);padding:6px;display:flex;flex-direction:column}
-  .acct .menu .who{padding:10px 12px 12px;font-size:13px;color:var(--soft);border-bottom:1px solid var(--line);margin-bottom:4px;word-break:break-all}
-  .acct .menu .who b{display:block;color:var(--ink);font-size:14px}
-  .acct .menu a,.acct .menu button{min-height:44px;padding:0 12px;border:0;border-radius:6px;background:none;color:var(--ink);font-weight:600;font-size:14px;text-align:left;text-decoration:none;display:flex;align-items:center}
-  .acct .menu a:hover,.acct .menu button:hover{background:var(--ground);color:var(--ink)}
+  .caret{width:16px;height:16px;flex:none}
+  .acct .menu{position:absolute;right:0;top:calc(100% + 6px);min-width:260px;background:#fff;border:2px solid var(--ink);border-radius:8px;box-shadow:0 14px 30px rgba(10,42,74,.14);padding:6px;display:flex;flex-direction:column}
+  .menu .who{padding:10px 12px 12px;font-size:13px;color:var(--soft);border-bottom:1px solid var(--line);margin-bottom:4px;word-break:break-all}
+  .menu .who b{display:block;color:var(--ink);font-size:14px}
+  .menu a,.menu button{min-height:44px;padding:0 12px;border:0;border-radius:6px;background:none;color:var(--ink);font-weight:600;font-size:14px;text-align:left;text-decoration:none;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .menu a:hover,.menu button:hover{background:var(--ground);color:var(--ink)}
+  .menu .mtitle{padding:8px 12px 4px;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+  .menu a[aria-current]{background:var(--paper)}
+  .role{font-size:11px;font-weight:800;padding:2px 9px;border-radius:999px;background:var(--ground);border:1px solid #CBD0D6;color:var(--ink)}
+  .role.owner{background:var(--ink);border-color:var(--ink);color:#fff}
+  .phoneonly{display:none!important}
   .avatar{width:32px;height:32px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex:none}
-  /* sidebar + main (same as the staff page) */
   .app{min-height:calc(100vh - 64px);display:flex;flex-wrap:wrap;align-items:stretch}
   nav.side{flex:1 1 240px;max-width:280px;background:#fff;border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:18px}
-  .shopbox{min-height:52px;padding:8px 12px;margin:0 8px;border:2px solid var(--ink);border-radius:6px;background:var(--paper);display:flex;flex-direction:column;justify-content:center}
-  .shopbox b{font-size:15px}.shopbox span{font-size:12px}
   .groups{display:flex;flex-direction:column;gap:18px}
   .group{display:flex;flex-direction:column;gap:2px}
   .gtitle{padding:0 10px 6px;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
@@ -49,9 +51,14 @@
   .item[aria-current=page]{background:var(--paper);font-weight:800}
   .item[aria-current=page] .bar{background:var(--ink)}
   .count{font-size:12px;font-weight:800;padding:2px 8px;border-radius:999px;background:var(--hi);color:var(--ink)}
-  .navfoot{margin-top:auto;padding:0 4px}
-  .plan{border:2px dashed #9AA6B2;border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px}
-  .plan .t{font-size:13px;font-weight:800}.plan .u{font-size:12px;color:var(--soft)}
+  .navfoot{margin-top:auto;display:flex;flex-direction:column;gap:10px}
+  .usage{padding:12px;border-radius:8px;background:var(--ground);font-size:12px;color:var(--soft);line-height:1.5}
+  .usage b{color:var(--ink)}
+  .shopsw{position:relative}
+  .shopsw summary{list-style:none;cursor:pointer;min-height:52px;padding:0 12px;border:2px solid var(--ink);border-radius:6px;background:var(--paper);display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .shopsw summary::-webkit-details-marker{display:none}
+  .shopsw summary b{display:block;font-size:14px;line-height:1.2}.shopsw summary span{font-size:12px}
+  .shopsw .menu{position:absolute;left:0;bottom:calc(100% + 8px);width:320px;background:#fff;border:2px solid var(--ink);border-radius:8px;box-shadow:0 14px 30px rgba(10,42,74,.14);padding:6px;display:flex;flex-direction:column;z-index:15}
   main{flex:999 1 560px;min-width:0;padding:28px 32px 64px;display:flex;flex-direction:column;gap:22px}
   h1{margin:0;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:48px;line-height:1}
   h2{margin:0;font-size:18px;font-weight:800}
@@ -61,14 +68,28 @@
   .btn:hover{color:var(--ink)}
   .btn.acc{background:var(--accent);color:#fff}.btn.ink{background:var(--ink);color:#fff}
   .btn.danger{border-color:var(--danger);color:var(--danger)}
+  .btn.sm{min-height:40px;font-size:14px;padding:0 14px}
   .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
   .tag{font-size:12px;font-weight:800;padding:3px 10px;border-radius:999px;background:var(--ink);color:#fff}
-  .qcard{padding:24px;display:flex;flex-wrap:wrap;gap:28px;align-items:center}
-  .qr{width:180px;height:180px;border:2px solid var(--line);border-radius:8px;padding:8px;flex:none}
+  .tag.soft{background:var(--ground);border:1px solid #CBD0D6;color:var(--ink)}
+  /* Home */
+  .homegrid{display:flex;flex-wrap:wrap;gap:22px;align-items:stretch}
+  .postercard{flex:1.3 1 460px;background:var(--paper);border:3px solid var(--ink);border-radius:8px;padding:26px;display:flex;flex-wrap:wrap;gap:26px;align-items:center}
+  .qr{width:180px;height:180px;flex:none;padding:8px;background:#fff;border:2px solid var(--ink);border-radius:8px}
   .qr img,.qr canvas{width:100%!important;height:auto!important}
-  .addr{font-size:17px;font-weight:800;word-break:break-all}
-  .usage{background:#fff;border:2px dashed #9AA6B2;border-radius:8px;padding:14px 16px;font-size:14px;display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center}
-  .linkbtn{border:0;background:none;padding:0;min-height:44px;font-weight:700;color:var(--ink);text-decoration:underline}
+  .eyebrow{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+  .bigline{font-family:Anton,Impact,sans-serif;font-size:40px;line-height:1}
+  .steps{flex:1 1 360px;padding:0}
+  .steps .eyebrow{padding:16px 22px 0;color:var(--mute)}
+  .step{display:flex;gap:16px;align-items:center;padding:16px 22px}
+  .step+.step{border-top:1px dashed #CBD0D6}
+  .step .n{width:36px;height:36px;flex:none;border-radius:50%;border:2px solid var(--ink);display:flex;align-items:center;justify-content:center;font-weight:800}
+  .step.done .n{background:var(--ink);color:#fff}
+  .step.done .t{text-decoration:line-through;color:var(--mute)}
+  .step .t{font-weight:800}.step .d{font-size:14px;color:var(--soft);margin-top:2px}
+  .nowcard{padding:18px 22px;display:flex;flex-wrap:wrap;align-items:center;gap:18px}
+  .nowcard .num{font-family:Anton,Impact,sans-serif;font-size:36px;line-height:1}
+  /* Account */
   label{font-size:14px;font-weight:700}
   .field{font:inherit;font-size:16px;color:var(--ink);height:50px;padding:0 12px;border:2px solid var(--ink);border-radius:6px;background:#fff;width:100%;max-width:420px}
   .field[readonly]{background:var(--ground);border-color:#CBD0D6;color:var(--soft)}
@@ -86,9 +107,9 @@
   .onboard{background:var(--paper);border:3px solid var(--ink);border-radius:6px;padding:28px;display:flex;flex-direction:column;gap:12px;max-width:560px}
   @media (max-width:760px){
     .topbar{gap:10px;padding:0 14px}
-    .acct .nm{display:none}
+    .acct .nm,.planchip{display:none}
+    .phoneonly{display:flex!important}
     nav.side{max-width:none;width:100%;flex-basis:100%;border-right:0;border-bottom:1px solid var(--line);padding:12px 14px;gap:10px}
-    .shopbox{display:none}
     .groups{flex-direction:row;gap:4px;overflow-x:auto}
     .group{flex-direction:row;gap:4px}
     .gtitle,.navfoot{display:none}
@@ -98,14 +119,15 @@
   }
 </style></head><body>
 <header class="topbar">
-  <a class="brand" href="/app"><b>aqo</b>na</a>
-  <div class="crumbs" id="crumbs"><b>Your queues</b></div>
+  <a class="brand" href="/app#home"><b>aqo</b>na</a>
+  <span class="grow"></span>
+  <a class="planchip hide" id="planChip" href="/#pricing">Free plan · <span>See Pro</span></a>
   <details class="acct" id="acct">
     <summary aria-label="Account menu"><span class="avatar" id="avatar" aria-hidden="true"></span><span class="nm" id="whoName"></span>
       <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
     <div class="menu">
       <div class="who"><b id="menuName"></b><span id="menuEmail"></span></div>
-      <a href="/app#overview">All queues</a>
+      <div class="phoneonly" style="flex-direction:column" id="menuShops"></div>
       <a href="/app#account">Account</a>
       <button onclick="signOut()">Sign out</button>
     </div>
@@ -113,19 +135,15 @@
 </header>
 
 <div class="app">
-  <nav class="side hide" id="side" aria-label="Dashboard">
-    <div class="shopbox"><b id="shopName">Your shop</b><span id="shopRole"></span></div>
-    <div class="groups">
-      <div class="group"><div class="gtitle">Your shop</div>
-        <a class="item" href="#overview" data-tab="overview"><span class="bar"></span><span class="lbl">Overview</span><span class="count" id="qCount"></span></a>
-      </div>
-      <div class="group"><div class="gtitle">You</div>
-        <a class="item" href="#account" data-tab="account"><span class="bar"></span><span class="lbl">Account</span></a>
-      </div>
-    </div>
+  <nav class="side hide" id="side" aria-label="Main">
+    <div class="groups" id="groups"></div>
     <div class="navfoot">
-      <div class="plan"><div class="t">Free plan</div><div class="u" id="usage"></div>
-        <a class="btn ink" style="min-height:40px;font-size:13px;border-radius:4px" href="/#pricing">See Pro</a></div>
+      <div class="usage" id="usage"></div>
+      <details class="shopsw" id="shopsw">
+        <summary aria-label="Switch shop"><span><b id="swShop"></b><span id="swSub"></span></span>
+          <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="menu" id="swMenu"></div>
+      </details>
     </div>
   </nav>
 
@@ -134,16 +152,16 @@
 
     <!-- First visit: name the business -->
     <form id="onboard" class="onboard hide" onsubmit="onboard(event)">
-      <h1>Name your business or queue</h1>
-      <div class="sub" style="margin:0">This is what customers see on their ticket. You can change it later in Settings.</div>
-      <label for="biz">Business or queue name</label>
+      <h1>What's your shop called?</h1>
+      <div class="sub" style="margin:0">Customers see this on their ticket. We'll make your first counter for you.</div>
+      <label for="biz">Business name</label>
       <input id="biz" class="field" maxlength="60" required placeholder="Ana's Milk Tea" autocomplete="organization">
       <label for="you">Your name</label>
       <input id="you" class="field" maxlength="60" placeholder="Ana Reyes" autocomplete="name">
-      <div class="row" style="margin-top:6px"><button class="btn acc" id="onboardBtn">Create my queue</button><span class="msg bad" id="onboardMsg" role="alert"></span></div>
+      <div class="row" style="margin-top:6px"><button class="btn acc" id="onboardBtn">Create my shop</button><span class="msg bad" id="onboardMsg" role="alert"></span></div>
     </form>
 
-    <section id="tab-overview" class="hide" style="display:flex;flex-direction:column;gap:22px"></section>
+    <section id="tab-home" class="hide" style="display:flex;flex-direction:column;gap:22px"></section>
     <section id="tab-account" class="hide" style="display:flex;flex-direction:column;gap:22px"></section>
   </main>
 </div>
@@ -152,8 +170,10 @@
 const ORIGIN = location.origin;
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const LOCK = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="Locked, Pro plan"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
 const CHEV = '<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
-let me = null, tab = 'overview';
+const counterName = q => (q.name.split(' · ')[1] || 'Counter 1');
+let me = null, shop = null, tab = 'home';
 
 async function api(path, opts = {}){
   const r = await fetch('/api/app' + path, { ...opts, headers: { 'Content-Type': 'application/json' } });
@@ -165,37 +185,84 @@ async function api(path, opts = {}){
 
 async function load(){
   me = await api('/me');
-  $('loading').classList.add('hide');
   const label = me.user.name || me.user.email;
   $('whoName').textContent = label;
   $('menuName').textContent = me.user.name || '';
   $('menuEmail').textContent = me.user.email;
   $('avatar').textContent = label.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
-  if (!me.workspaces.length) return showOnboarding();
+  if (!me.workspaces.length) { $('loading').classList.add('hide'); return showOnboarding(); }
+  const owned = me.workspaces.filter(w => w.role === 'owner');
+  // Staff open straight onto their counter (only from a plain /app, so the Home link still works for them).
+  if (!owned.length && !location.hash && me.workspaces[0].queues[0]) { location.replace('/q/' + me.workspaces[0].queues[0].slug + '/staff'); return; }
+  const want = new URLSearchParams(location.search).get('shop');
+  shop = me.workspaces.find(w => w.id === want) || owned[0] || me.workspaces[0];
+  $('loading').classList.add('hide');
   $('onboard').classList.add('hide');
   $('side').classList.remove('hide');
+  $('planChip').classList.remove('hide');
+  renderShell();
   render();
   go(location.hash.slice(1));
+  loadToday();
+}
+
+// ---------- shell: sidebar items, usage box, shop switcher ----------
+function renderShell(){
+  const q = shop.queues[0];
+  const staffUrl = q ? '/q/' + q.slug + '/staff' : '#home';
+  const owner = shop.role === 'owner';
+  const link = (key, label, href, extra = '') =>
+    '<a class="item" href="' + href + '" data-key="' + key + '"><span class="bar"></span><span class="lbl">' + label + '</span>' + extra + '</a>';
+  $('groups').innerHTML =
+    '<div class="group"><div class="gtitle">Your counter</div>' +
+      link('home', 'Home', '#home') + link('counter', 'Counter', staffUrl + '#queue', '<span class="count" id="navCount">0</span>') +
+      link('qr', 'QR &amp; poster', staffUrl + '#qr') + link('display', 'Display screen', staffUrl + '#display') + '</div>' +
+    (owner ? '<div class="group"><div class="gtitle">Manage</div>' + link('team', 'Team', staffUrl + '#team') + link('settings', 'Settings', staffUrl + '#settings') + '</div>' : '') +
+    '<div class="group"><div class="gtitle">Pro</div>' + link('branding', 'Branding', staffUrl + '#branding', LOCK) +
+      link('reports', 'Reports', staffUrl + '#reports', LOCK) + link('log', 'Activity log', staffUrl + '#log', LOCK) + '</div>';
+  $('planChip').href = q ? staffUrl + '#plan' : '/#pricing';
+  $('swShop').textContent = shop.name;
+  $('swSub').textContent = (q ? counterName(q) + ' · ' : '') + (owner ? 'Owner' : 'Staff');
+  const shopLinks = me.workspaces.map(w => {
+    const href = w.role === 'owner' ? '/app?shop=' + encodeURIComponent(w.id) + '#home' : (w.queues[0] ? '/q/' + w.queues[0].slug + '/staff' : '#');
+    return '<a href="' + esc(href) + '"' + (w.id === shop.id ? ' aria-current="true"' : '') + '><span><b style="display:block">' + esc(w.name) + '</b>' +
+      '<span style="font-size:12px;font-weight:500">' + esc(w.queues[0] ? counterName(w.queues[0]) : 'No counter') + '</span></span>' +
+      '<span class="role' + (w.role === 'owner' ? ' owner' : '') + '">' + (w.role === 'owner' ? 'Owner' : 'Staff') + '</span></a>';
+  }).join('');
+  $('swMenu').innerHTML = '<div class="mtitle">Your shops</div>' + shopLinks;
+  $('menuShops').innerHTML = me.workspaces.length > 1 ? '<div class="mtitle">Your shops</div>' + shopLinks : '';
+}
+
+// Today's numbers come from the counter itself (tickets so far, people waiting).
+async function loadToday(){
+  const q = shop.queues[0];
+  if (!q) return;
+  try {
+    const d = await (await fetch('/q/' + q.slug + '/api/state', { cache: 'no-store' })).json();
+    const waiting = (d.tickets || []).filter(t => t.status !== 'done' && t.status !== 'noshow').length;
+    $('usage').innerHTML = 'Today: <b>' + (d.ticketsToday ?? 0) + '</b> of ' + (d.maxTickets || 999) + ' tickets';
+    if ($('navCount')) $('navCount').textContent = waiting;
+    if ($('nowNum')) $('nowNum').textContent = waiting;
+  } catch(e) { $('usage').textContent = 'Today: open the counter to see tickets'; }
 }
 
 // ---------- tabs (kept in the address, so a refresh stays put) ----------
 function go(key){
-  tab = key === 'account' ? 'account' : 'overview';
-  if (location.hash.slice(1) !== tab) history.replaceState(null, '', '#' + tab);
-  $('tab-overview').classList.toggle('hide', tab !== 'overview');
+  tab = key === 'account' ? 'account' : 'home';
+  if (location.hash.slice(1) !== tab) history.replaceState(null, '', location.pathname + location.search + '#' + tab);
+  $('tab-home').classList.toggle('hide', tab !== 'home');
   $('tab-account').classList.toggle('hide', tab !== 'account');
-  document.querySelectorAll('nav.side .item').forEach(a => { if (a.dataset.tab === tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
-  const first = me && me.workspaces[0];
-  $('crumbs').innerHTML = (first ? '<a href="#overview">' + esc(first.name) + '</a><span class="sep">/</span>' : '') + '<b>' + (tab === 'account' ? 'Account' : 'Overview') + '</b>';
+  document.querySelectorAll('#groups .item').forEach(a => { if (a.dataset.key === tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  document.title = (tab === 'account' ? 'Account' : 'Home') + ' · Aqona';
   $('acct').open = false;
 }
-window.addEventListener('hashchange', () => { if (me && me.workspaces.length) go(location.hash.slice(1)); });
-document.addEventListener('click', e => { const d = $('acct'); if (d.open && !d.contains(e.target)) d.open = false; });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') $('acct').open = false; });
+window.addEventListener('hashchange', () => { if (shop) go(location.hash.slice(1)); });
+document.addEventListener('click', e => { for (const d of [$('acct'), $('shopsw')]) if (d.open && !d.contains(e.target)) d.open = false; });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('acct').open = false; $('shopsw').open = false; } });
 
 function showOnboarding(){
   $('onboard').classList.remove('hide'); $('side').classList.add('hide');
-  $('tab-overview').classList.add('hide'); $('tab-account').classList.add('hide');
+  $('tab-home').classList.add('hide'); $('tab-account').classList.add('hide');
   let start = null;
   try { start = JSON.parse(sessionStorage.getItem('aqonaStart') || 'null'); } catch(e){}
   if (start) { $('biz').value = start.businessName || ''; $('you').value = start.yourName || me.user.name || ''; }
@@ -214,79 +281,71 @@ async function onboard(e){
 }
 
 function render(){
-  const owned = me.workspaces.filter(w => w.role === 'owner');
-  const first = me.workspaces[0];
-  $('shopName').textContent = first.name;
-  $('shopRole').textContent = (first.role === 'owner' ? 'Owner' : 'Staff') + ' · Free plan';
-  const totalQueues = me.workspaces.reduce((n, w) => n + w.queues.length, 0);
-  $('qCount').textContent = totalQueues;
-  const w0 = owned[0];
-  $('usage').textContent = w0 ? 'Queues ' + w0.queues.length + ' of ' + w0.limits.queues : 'Staff on ' + me.workspaces.length + (me.workspaces.length === 1 ? ' shop' : ' shops');
-
-  // Overview: the queues, ready to run. Nothing here deletes anything.
-  $('tab-overview').innerHTML = me.workspaces.map(w => {
-    const owner = w.role === 'owner';
-    return '<section aria-label="' + esc(w.name) + '" style="display:flex;flex-direction:column;gap:18px">' +
-      '<div><h1>' + esc(w.name) + '</h1><div class="sub">' + (owner ? 'Owner' : 'Staff') + ' · Free plan · ' + w.queues.length + (w.queues.length === 1 ? ' queue' : ' queues') + '</div></div>' +
-      w.queues.map(q => {
-        const link = ORIGIN + '/q/' + q.slug;
-        return '<div class="card qcard">' +
-          '<div class="qr" data-qr="' + esc(link) + '" role="img" aria-label="QR code for ' + esc(q.name) + '"></div>' +
-          '<div style="flex:1 1 260px;display:flex;flex-direction:column;gap:12px">' +
-            '<h2>' + esc(q.name) + '</h2>' +
-            '<div><div style="font-size:13px;font-weight:700;color:var(--soft)">Customers scan this to join</div><div class="addr">' + esc(link.replace(/^https?:\/\//, '')) + '</div></div>' +
-            '<div class="row">' +
-              '<a class="btn acc" href="/q/' + esc(q.slug) + '/staff">Open staff page</a>' +
-              '<a class="btn" href="/q/' + esc(q.slug) + '/qr" target="_blank" rel="noopener">Print poster</a>' +
-              '<button class="btn" data-copy="' + esc(link) + '">Copy link</button>' +
-            '</div>' +
-          '</div></div>';
-      }).join('') +
-      (owner ? '<div class="usage"><b>Free plan</b><span>Queues ' + w.queues.length + ' of ' + w.limits.queues + '</span>' +
-        '<button class="linkbtn" data-add="' + esc(w.id) + '">Add a queue</button><span class="msg" id="addMsg-' + esc(w.id) + '" role="status"></span></div>' : '') +
-      '</section>';
-  }).join('');
+  const q = shop.queues[0];
+  const first = (me.user.name || '').split(/\s+/)[0];
+  const link = q ? ORIGIN + '/q/' + q.slug : '';
+  const staffUrl = q ? '/q/' + q.slug + '/staff' : '#home';
+  // Home: print the poster first, then the getting-started steps.
+  $('tab-home').innerHTML =
+    '<div><h1>' + (first ? 'Welcome, ' + esc(first) : 'Welcome') + '</h1><div class="sub">' + esc(shop.name) +
+      (q ? ' is ready. Print your poster and you can take your first customer.' : '') + '</div></div>' +
+    (q ? '<div class="homegrid">' +
+      '<section class="postercard" aria-label="Print your QR poster">' +
+        '<div class="qr" id="homeQr" role="img" aria-label="QR code for ' + esc(q.name) + '"></div>' +
+        '<div style="display:flex;flex-direction:column;gap:10px;flex:1 1 220px"><span class="eyebrow">Step 1</span>' +
+          '<div class="bigline">Print your QR poster</div>' +
+          '<div style="font-size:15px;line-height:1.5">Put it at the counter. Customers scan it to take a number.</div>' +
+          '<div style="font-size:13px;font-weight:700;word-break:break-all">' + esc(link.replace(/^https?:\/\//, '')) + '</div>' +
+          '<div class="row"><a class="btn acc" href="/q/' + esc(q.slug) + '/qr" target="_blank" rel="noopener">Print poster</a>' +
+          '<button class="btn" id="copyLink">Copy link</button></div></div>' +
+      '</section>' +
+      '<section class="card steps" aria-label="Getting started"><div class="eyebrow">Getting started</div>' +
+        '<div class="step done"><span class="n">✓</span><div style="flex:1"><div class="t">Create your shop</div><div class="d">' + esc(counterName(q)) + ' is ready.</div></div></div>' +
+        '<div class="step"><span class="n">2</span><div style="flex:1"><div class="t">Invite your staff</div><div class="d">They\'ll go straight to ' + esc(counterName(q)) + ' when they sign in.</div></div>' +
+          '<span class="tag soft">Coming soon</span></div>' +
+        '<div class="step"><span class="n">3</span><div style="flex:1"><div class="t">Try it with your phone</div><div class="d">Scan the poster, take a number, then tap Notify.</div></div>' +
+          '<a class="btn sm" href="' + esc(staffUrl) + '#queue">Open counter</a></div>' +
+      '</section></div>' +
+      '<section class="card nowcard"><span class="num" id="nowNum">0</span><span style="flex:1;font-size:15px">people waiting at <b>' + esc(counterName(q)) + '</b> right now.</span>' +
+        '<a class="btn acc" href="' + esc(staffUrl) + '#queue">Open counter</a></section>'
+    : '<div class="card sec"><b>This shop has no counter yet.</b></div>');
 
   // Account: details first; deleting is closed at the bottom.
+  const owned = me.workspaces.filter(w => w.role === 'owner');
   $('tab-account').innerHTML =
     '<div><h1>Account</h1><div class="sub">Signed in with ' + esc(me.user.email) + '</div></div>' +
     '<div class="card">' +
       '<div class="sec"><h2>Your details</h2>' +
         '<label for="accName">Name</label><input id="accName" class="field" readonly value="' + esc(me.user.name || '') + '">' +
         '<label for="accEmail">Email</label><input id="accEmail" class="field" readonly value="' + esc(me.user.email) + '">' +
-        '<div class="sub" style="margin:0">These come from your Google account.</div></div>' +
+        '<div class="sub" style="margin:0">These come from the account you signed in with.</div></div>' +
       '<div class="sec"><h2>Your shops</h2>' +
-        me.workspaces.map(w => '<div class="row" style="justify-content:space-between"><span><b>' + esc(w.name) + '</b> <span class="sub" style="margin:0">· ' + (w.role === 'owner' ? 'Owner' : 'Staff') + ' · ' + w.queues.length + (w.queues.length === 1 ? ' queue' : ' queues') + '</span></span><span class="tag">Free</span></div>').join('') +
+        me.workspaces.map(w => '<div class="row" style="justify-content:space-between"><span><b>' + esc(w.name) + '</b> <span class="sub" style="margin:0">· ' +
+          (w.queues[0] ? esc(counterName(w.queues[0])) : 'No counter') + '</span></span><span class="role' + (w.role === 'owner' ? ' owner' : '') + '">' + (w.role === 'owner' ? 'Owner' : 'Staff') + '</span></div>').join('') +
       '</div>' +
       '<div class="sec"><h2>Sign out</h2><div class="row"><button class="btn" onclick="signOut()">Sign out of this device</button></div></div>' +
     '</div>' +
-    '<details class="risky"><summary>' + CHEV + 'Delete a queue or your account</summary><div class="inner">' +
-      owned.map(w => w.queues.map(q => '<div class="riskrow"><b>Delete “' + esc(q.name) + '”</b>' +
+    '<details class="risky"><summary>' + CHEV + 'Delete a counter or your account</summary><div class="inner">' +
+      owned.map(w => w.queues.map(qq => '<div class="riskrow"><b>Delete “' + esc(qq.name) + '”</b>' +
         '<div class="sub" style="margin:0">Removes its QR address, every ticket and all its settings. Printed QR codes stop working.</div>' +
-        '<div><button class="btn danger" data-del="' + esc(q.id) + '" data-name="' + esc(q.name) + '">Delete this queue</button></div></div>').join('')).join('') +
+        '<div><button class="btn danger" data-del="' + esc(qq.id) + '" data-name="' + esc(qq.name) + '">Delete this counter</button></div></div>').join('')).join('') +
       '<form class="riskrow" onsubmit="deleteAccount(event)"><b>Delete my account</b>' +
-        '<div class="sub" style="margin:0">Deletes your account, your shop, every queue in it and all their data. This cannot be undone.</div>' +
+        '<div class="sub" style="margin:0">Deletes your account, your shop, every counter in it and all their data. This cannot be undone.</div>' +
         '<label for="confirmDel">Type DELETE to confirm</label>' +
         '<div class="row"><input id="confirmDel" class="field" style="max-width:220px" autocomplete="off"><button class="btn danger">Delete my account</button></div>' +
         '<span class="msg bad" id="delMsg" role="alert"></span></form>' +
     '</div></details>';
 
-  document.querySelectorAll('[data-qr]').forEach(el => new QRCode(el, { text: el.dataset.qr, width: 400, height: 400, colorDark: '#0A2A4A', colorLight: '#FFFFFF' }));
-  document.querySelectorAll('[data-copy]').forEach(b => b.onclick = async () => {
-    try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = 'Copied'; } catch(e) { prompt('Copy this link:', b.dataset.copy); }
-    setTimeout(() => { b.textContent = 'Copy link'; }, 2000);
-  });
-  document.querySelectorAll('[data-add]').forEach(b => b.onclick = () => addQueue(b.dataset.add));
+  if (q) {
+    new QRCode($('homeQr'), { text: link, width: 400, height: 400, colorDark: '#0A2A4A', colorLight: '#FFFFFF' });
+    $('copyLink').onclick = async () => {
+      try { await navigator.clipboard.writeText(link); $('copyLink').textContent = 'Copied'; } catch(e) { prompt('Copy this link:', link); }
+      setTimeout(() => { $('copyLink').textContent = 'Copy link'; }, 2000);
+    };
+  }
   document.querySelectorAll('[data-del]').forEach(b => b.onclick = () => deleteQueue(b.dataset.del, b.dataset.name));
 }
 
-async function addQueue(workspaceId){
-  const msg = $('addMsg-' + workspaceId);
-  const name = prompt('Name of the new queue (for example "Counter 2"):');
-  if (!name) return;
-  try { await api('/queues', { method: 'POST', body: JSON.stringify({ workspaceId, name }) }); await load(); }
-  catch(err) { msg.textContent = err.status === 402 ? 'The Free plan has 1 queue. More counters come with Pro (coming soon).' : err.message; }
-}
 async function deleteQueue(id, name){
   if (!confirm('Delete "' + name + '"?\n\nIts QR address, every ticket and all its settings are removed. Printed QR codes stop working. This cannot be undone.')) return;
   try { await api('/queues/' + id, { method: 'DELETE' }); await load(); } catch(err) { alert(err.message); }
@@ -301,6 +360,6 @@ async function signOut(){
   try { await fetch('/api/auth/sign-out', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }); } catch(e){}
   location.href = '/';
 }
-load().catch(err => { if (err.message !== 'log in') $('loading').textContent = 'Could not load your queues. Please refresh.'; });
+load().catch(err => { if (err.message !== 'log in') $('loading').textContent = 'Could not load your shop. Please refresh.'; });
 </script>
 </body></html>
