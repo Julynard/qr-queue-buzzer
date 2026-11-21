@@ -73,6 +73,7 @@
   .pill{font-size:13px;font-weight:700;padding:4px 12px;border-radius:999px;white-space:nowrap}
   .act{font-size:14px;font-weight:700;min-height:44px;padding:0 16px;border:2px solid var(--ink);border-radius:6px;background:#fff;color:var(--ink);display:inline-flex;align-items:center;gap:8px;vertical-align:middle}
   .act.notify{background:var(--accent);color:#fff}
+  .act:disabled{opacity:.7;cursor:progress}
   .act+.act{margin-left:8px}
   .rm{min-height:44px;min-width:44px;margin-left:6px;border:0;border-radius:6px;background:transparent;color:var(--mute);vertical-align:middle;display:inline-flex;align-items:center;justify-content:center}
   .rm:hover{color:var(--ink);background:var(--ground)}
@@ -325,8 +326,22 @@ setInterval(() => { if (ws && ws.readyState === 1) ws.send('ping'); }, 30000);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !ws && !stopped) connect(); });
 connect();
 
-async function act(a, id){
+// Tickets whose Notify request is still on its way: the button shows "Notifying…" until it is done.
+const notifying = new Set();
+const notifyBtn = (id, q) => notifying.has(id)
+  ? '<button class="act notify" disabled>' + BELL + 'Notifying…</button>'
+  : '<button class="act notify" onclick="act(\'buzz\',' + q + ',this)">' + BELL + 'Notify</button>';
+async function act(a, id, btn){
+  if (a === 'buzz') {
+    if (notifying.has(id)) return;
+    notifying.add(id);
+    if (btn) btn.outerHTML = notifyBtn(id, "'" + id + "'");
+  }
   try { await fetch(BASE+'/api/'+a+'/'+id, {method:'POST'}); } catch(e){}
+  if (a === 'buzz') {
+    notifying.delete(id);
+    if (state) render(state);
+  }
   if (!ws || ws.readyState !== 1) poll();
 }
 
@@ -369,7 +384,7 @@ function render(d){
         '<div class="small">' + (t.push ? 'Lock-screen alerts on' : 'No lock-screen alerts') + '</div></td>' +
       '<td><span class="pill" style="background:' + p.bg + ';color:' + p.fg + '">' + p.label + '</span></td>' +
       '<td style="white-space:nowrap">' +
-        (isOpen ? '<button class="act notify" onclick="act(\'buzz\',' + q + ')">' + BELL + 'Notify</button><button class="act" onclick="act(\'done\',' + q + ')">Done</button>' : '') +
+        (isOpen ? notifyBtn(t.id, q) + '<button class="act" onclick="act(\'done\',' + q + ')">Done</button>' : '') +
         '<button class="rm" aria-label="Remove ticket ' + pad(t.num) + '" title="Remove" onclick="act(\'remove\',' + q + ')">' + X + '</button></td></tr>';
   }).join('');
   if (!settingsShown && d.settings) { showSettings(d.settings); settingsShown = true; }
