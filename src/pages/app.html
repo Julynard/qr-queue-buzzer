@@ -122,24 +122,41 @@
   .stepsbar .s i{width:28px;height:28px;border-radius:50%;border:2px solid #CBD0D6;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:13px;font-weight:800;background:#fff}
   .stepsbar .s.on{color:var(--ink);font-weight:800}.stepsbar .s.on i{background:var(--accent);border-color:var(--ink);color:#fff}
   .stepsbar .s.done{color:var(--ink)}.stepsbar .s.done i{background:var(--ink);border-color:var(--ink);color:#fff}
-  .stepsbar .line{width:40px;border-top:2px dashed #CBD0D6}
+  .stepsbar .line{width:48px;border-top:2px dashed #CBD0D6}
+  .stepsbar .line.done{border-top:2px solid var(--ink)}
+  .signedas{display:flex;align-items:center;gap:4px;min-width:0;font-size:14px;color:var(--soft)}
+  .signedas .who{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .signedas b{color:var(--ink)}.signedas .linkbtn{min-height:44px;font-size:14px;flex:none}
+  #invMsg:empty{display:none}
   .onbhead{text-align:center}.onbhead .sub{margin-top:8px;font-size:16px}
   .plans{display:flex;flex-wrap:wrap;gap:20px;justify-content:center}
   .plancard{position:relative;width:280px;text-align:left;font:inherit;color:var(--ink);cursor:pointer;background:#fff;border:2px solid var(--ink);border-radius:8px;padding:22px;display:flex;flex-direction:column;gap:10px}
   .plancard[aria-pressed=true]{border:3px solid var(--accent);box-shadow:0 0 0 4px var(--paper)}
   .plancard .badge{position:absolute;top:-14px;right:16px;padding:4px 12px;border-radius:999px;background:var(--ink);color:#fff;font-size:12px;font-weight:800;box-shadow:0 0 0 3px var(--ground)}
-  .plancard .nm{font-family:Anton,Impact,sans-serif;font-size:34px;line-height:1}
-  .plancard .pr{font-family:Anton,Impact,sans-serif;font-size:36px}.plancard .pr span{font-family:Inter,sans-serif;font-size:14px;font-weight:700;color:var(--soft)}
-  .plancard ul{margin:0;padding:0 0 0 18px;font-size:14px;line-height:1.6}
+  .plancard .top{display:flex;justify-content:space-between;align-items:center}
+  .plancard .nm{font-family:Anton,Impact,sans-serif;font-size:36px;line-height:1}
+  .plancard .dot{width:22px;height:22px;flex:none;border-radius:50%;border:2px solid var(--ink);background:#fff;box-shadow:inset 0 0 0 3px #fff}
+  .plancard[aria-pressed=true] .dot{background:var(--accent)}
+  .plancard .pr{font-family:Anton,Impact,sans-serif;font-size:40px}.plancard .pr span{font-family:Inter,sans-serif;font-size:14px;font-weight:700;color:var(--soft)}
+  .plancard .small{display:block;font-size:13px;color:var(--soft);margin-top:4px}
+  .plancard ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;font-size:14px}
+  .plancard li{display:flex;gap:8px;align-items:flex-start}
+  .plancard li::before{content:"";width:18px;height:18px;flex:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23166534' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") no-repeat center/18px}
   .notice{max-width:900px;width:100%;padding:12px 16px;background:var(--hi);border:2px solid var(--ink);border-radius:6px;font-size:15px;font-weight:600}
   .onbcard{width:100%;max-width:620px;background:#fff;border:3px solid var(--ink);border-radius:6px;padding:28px;display:flex;flex-direction:column;gap:12px}
   .onbcard.paper{background:var(--paper)}
-  .onbcard .field{max-width:none}
-  .invrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px dashed #CBD0D6}
-  .iconbtn{width:44px;height:44px;flex:none;border:2px solid var(--ink);border-radius:6px;background:#fff;color:var(--ink);display:inline-flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+  .onbcard .field{max-width:none;height:54px;font-size:17px}
+  .onbcard h1{font-size:52px}
+  .onbcard label{margin-top:6px}
+  .counterbox{margin-top:8px;padding:14px 16px;background:#fff;border:2px dashed #9AA6B2;border-radius:6px;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+  .linkbox{margin-top:6px;padding:14px 16px;background:var(--ground);border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .linkbox>span{font-size:14px;line-height:1.45}
+  .invrow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 12px;padding:12px 0;border-top:1px dashed #CBD0D6}
+  .iconbtn{width:48px;height:48px;flex:none;border:2px solid var(--ink);border-radius:6px;background:#fff;color:var(--ink);display:inline-flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
   .invitedcard{width:100%;max-width:620px;background:var(--hi);border:2px solid var(--ink);border-radius:6px;padding:18px 20px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
   @media (max-width:760px){
     .topbar{gap:10px;padding:0 14px}
+    .stepsbar{gap:8px}.stepsbar .line{width:16px}
     .acct .nm,.planchip{display:none}
     .phoneonly{display:flex!important}
     nav.side{max-width:none;width:100%;flex-basis:100%;border-right:0;border-bottom:1px solid var(--line);padding:12px 14px;gap:10px}
@@ -164,6 +181,7 @@
       <div class="note" id="planNote">Changes this shop's plan right away. No payment is taken.</div>
     </div>
   </details>
+  <span class="signedas hide" id="signedAs"><span class="who">Signed in as <b id="signedEmail"></b> ·</span><button type="button" class="linkbtn" onclick="signOut()">Sign out</button></span>
   <details class="acct" id="acct">
     <summary aria-label="Account menu"><span class="avatar" id="avatar" aria-hidden="true"></span><span class="nm" id="whoName"></span>
       <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
@@ -199,11 +217,11 @@
       <div id="onb1" class="onb hide" style="padding:0">
         <div class="onbhead"><h1>Pick a plan</h1><div class="sub">Start on Free. You can upgrade any time; your counter and settings carry over.</div></div>
         <div class="plans">
-          <button type="button" class="plancard" data-plan="free" aria-pressed="true"><span class="badge">Available now</span><span class="nm">Free</span><span class="pr">₱0 <span>forever</span></span>
+          <button type="button" class="plancard" data-plan="free" aria-pressed="true"><span class="badge">Available now</span><span class="top"><span class="nm">Free</span><span class="dot" aria-hidden="true"></span></span><span><span class="pr">₱0 <span>forever</span></span><span class="small">No card needed</span></span>
             <ul><li>1 counter, 1 QR code</li><li>Owner + 2 staff</li><li>300 tickets a day</li><li>Display screen for a TV</li></ul></button>
-          <button type="button" class="plancard" data-plan="pro" aria-pressed="false"><span class="badge">Coming soon</span><span class="nm">Pro</span><span class="pr">₱299 <span>/ month</span></span>
+          <button type="button" class="plancard" data-plan="pro" aria-pressed="false"><span class="badge">Coming soon</span><span class="top"><span class="nm">Pro</span><span class="dot" aria-hidden="true"></span></span><span><span class="pr">₱299 <span>/ month</span></span><span class="small">or ₱2,990 a year</span></span>
             <ul><li>Up to 5 counters</li><li>Owner + 5 staff</li><li>Your colours and logo</li><li>Reports and activity log</li></ul></button>
-          <button type="button" class="plancard" data-plan="max" aria-pressed="false"><span class="badge">Coming soon</span><span class="nm">Max</span><span class="pr">₱999 <span>/ month</span></span>
+          <button type="button" class="plancard" data-plan="max" aria-pressed="false"><span class="badge">Coming soon</span><span class="top"><span class="nm">Max</span><span class="dot" aria-hidden="true"></span></span><span><span class="pr">₱999 <span>/ month</span></span><span class="small">or ₱9,990 a year</span></span>
             <ul><li>Up to 10 counters</li><li>Unlimited staff</li><li>Branches, food-park QR</li><li>Priority support</li></ul></button>
         </div>
         <div class="notice hide" id="planNotice" role="alert"></div>
@@ -211,23 +229,26 @@
       </div>
       <form id="onboard" class="onbcard paper hide" onsubmit="onboard(event)">
         <h1>What's your shop called?</h1>
-        <div class="sub" style="margin:0">Customers see this on their ticket. We'll make your first counter for you: <b>Counter 1</b>.</div>
+        <div class="sub" style="margin:0;font-size:15px">Customers see this on their ticket.</div>
         <label for="biz">Business name</label>
         <input id="biz" class="field" maxlength="60" required placeholder="Ana's Milk Tea" autocomplete="organization">
         <label for="you">Owner name</label>
         <input id="you" class="field" maxlength="60" placeholder="Ana Reyes" autocomplete="name">
+        <div class="counterbox">We'll make your first counter for you: <b>Counter 1</b>.<br>Its QR opens <b id="slugPreview"></b></div>
         <div class="row" style="justify-content:space-between;margin-top:6px"><button type="button" class="linkbtn" onclick="onbStep(1)">Back</button>
           <span class="row"><span class="msg bad" id="onboardMsg" role="alert"></span><button class="btn acc" id="onboardBtn">Continue</button></span></div>
       </form>
       <div id="onb3" class="onbcard hide">
         <h1>Who helps at the counter?</h1>
-        <div class="sub" style="margin:0">Staff run the counter: they notify customers and mark orders done. Only you add or remove staff. Free includes 2.</div>
-        <form class="row" style="flex-wrap:nowrap" onsubmit="onbInvite(event)"><label for="invEmail" class="hide">Their email</label>
+        <div class="sub" style="margin:0;font-size:15px">Staff notify customers and mark orders done. Only you can add or remove staff. Free includes 2.</div>
+        <label for="invEmail">Their email</label>
+        <form class="row" style="flex-wrap:nowrap" onsubmit="onbInvite(event)">
           <input id="invEmail" class="field" type="email" placeholder="name@example.com" autocomplete="off" style="flex:1">
           <button class="btn ink" id="invBtn">Invite</button></form>
         <div class="msg bad" id="invMsg" role="alert"></div>
         <div id="invList"></div>
-        <div class="sub" style="margin:0">They sign in with that email (Google or a code) and go straight to Counter 1. Copy each link and send it by Messenger or WhatsApp.</div>
+        <div class="linkbox hide" id="linkBox"><span><b id="linkTitle">Or send the link yourself</b><br><span style="color:var(--soft)" id="linkNote">Paste it in Messenger or WhatsApp. Works for 7 days.</span></span>
+          <button type="button" class="iconbtn" id="linkCopy" title="Copy invite link" aria-label="Copy invite link"></button></div>
         <div class="row" style="justify-content:space-between;margin-top:8px"><a class="linkbtn" href="/app#home" onclick="location.href='/app#home';location.reload()">Skip for now</a>
           <a class="btn acc" href="/app#home" onclick="location.href='/app#home';location.reload()">Finish and open my shop</a></div>
       </div>
@@ -295,14 +316,25 @@ async function load(){
   $('menuName').textContent = me.user.name || '';
   setMenuEmail(me.user.email);
   $('avatar').textContent = label.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
-  if (!me.workspaces.length) { $('loading').classList.add('hide'); return showOnboarding(); }
+  // Onboarding keeps its step in the address (#setup-plan / #setup-shop / #setup-team), so a refresh stays on it.
+  const step = location.hash.slice(1);
+  if (!me.workspaces.length) { $('loading').classList.add('hide'); return showOnboarding(step === 'setup-shop' ? 2 : 1); }
   const owned = me.workspaces.filter(w => w.role === 'owner');
+  // The shop exists from step 2 on; a refresh on the team step comes back to it with the invites sent so far.
+  if (step === 'setup-team' && owned.length) {
+    $('loading').classList.add('hide');
+    newShop = { workspaceId: owned[0].id };
+    showOnboarding(3);
+    try { (await api('/team?workspaceId=' + encodeURIComponent(newShop.workspaceId))).invites.forEach(addInvite); } catch(e) {}
+    return;
+  }
   // Staff open straight onto their counter (only from a plain /app, so the Home link still works for them).
   if (!owned.length && !location.hash && me.workspaces[0].queues[0]) { location.replace('/q/' + me.workspaces[0].queues[0].slug + '/staff'); return; }
   const want = new URLSearchParams(location.search).get('shop');
   shop = me.workspaces.find(w => w.id === want) || owned[0] || me.workspaces[0];
   $('loading').classList.add('hide');
   $('onb').classList.add('hide');
+  $('signedAs').classList.add('hide'); $('acct').classList.remove('hide');
   $('side').classList.remove('hide');
   renderShell();
   applyPlan(shop.plan || 'free', me.superadmin, shop.role === 'owner' || me.superadmin ? shop.id : '');
@@ -371,8 +403,11 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('acct').
 // ---------- onboarding ----------
 let newShop = null;
 const COPY = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
-function showOnboarding(){
+const SETUP_STEPS = ['setup-plan', 'setup-shop', 'setup-team'];
+function showOnboarding(n = 1){
   $('onb').classList.remove('hide'); $('side').classList.add('hide');
+  // Onboarding top bar: who is signed in and Sign out, nothing else.
+  $('acct').classList.add('hide'); $('signedAs').classList.remove('hide'); $('signedEmail').textContent = me.user.email;
   $('tab-home').classList.add('hide'); $('tab-account').classList.add('hide');
   $('you').value = me.user.name || '';
   renderInvited($('invitedBox'), ' Or set up your own shop below.');
@@ -381,12 +416,22 @@ function showOnboarding(){
     $('planNotice').textContent = paid ? (c.dataset.plan === 'pro' ? 'Pro' : 'Max') + ' opens soon. For now every shop starts on Free; we\'ll tell you when you can switch.' : '';
     $('planNotice').classList.toggle('hide', !paid);
   });
-  onbStep(1);
+  $('linkCopy').innerHTML = COPY;
+  $('biz').oninput = showSlug; showSlug();
+  onbStep(n);
+}
+// The address the first counter's QR will open (the server adds a short suffix if it's taken).
+function showSlug(){
+  const slug = $('biz').value.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/['’]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 35).replace(/-+$/g, '');
+  $('slugPreview').textContent = location.host + '/q/' + (slug || 'your-shop');
 }
 function onbStep(n){
   $('onb1').classList.toggle('hide', n !== 1); $('onboard').classList.toggle('hide', n !== 2); $('onb3').classList.toggle('hide', n !== 3);
   $('stepsbar').innerHTML = ['Plan', 'Your shop', 'Your team'].map((t, i) =>
-    '<span class="s' + (i + 1 < n ? ' done' : i + 1 === n ? ' on' : '') + '"><i>' + (i + 1 < n ? '✓' : i + 1) + '</i>' + t + '</span>' + (i < 2 ? '<span class="line"></span>' : '')).join('');
+    '<span class="s' + (i + 1 < n ? ' done' : i + 1 === n ? ' on' : '') + '"><i>' + (i + 1 < n ? '✓' : i + 1) + '</i>' + t + '</span>' +
+    (i < 2 ? '<span class="line' + (i + 2 <= n ? ' done' : '') + '"></span>' : '')).join('');
+  if (location.hash.slice(1) !== SETUP_STEPS[n - 1]) history.replaceState(null, '', location.pathname + location.search + '#' + SETUP_STEPS[n - 1]);
   if (n === 2) $('biz').focus();
   if (n === 3) $('invEmail').focus();
 }
@@ -405,13 +450,20 @@ async function onbInvite(e){
   try {
     const d = await api('/invites', { method: 'POST', body: JSON.stringify({ workspaceId: newShop.workspaceId, email: $('invEmail').value }) });
     $('invEmail').value = '';
-    const row = document.createElement('div'); row.className = 'invrow';
-    row.innerHTML = '<span><b>' + esc(d.email) + '</b><span class="sub" style="display:block;margin:0">Invited · link works 7 days</span></span>' +
-      '<button class="iconbtn" title="Copy invite link" aria-label="Copy invite link for ' + esc(d.email) + '">' + COPY + '</button>';
-    row.querySelector('button').onclick = () => copyText(d.link, row.querySelector('.sub'), 'Invited · link works 7 days');
-    $('invList').appendChild(row);
+    addInvite(d);
   } catch(err) { $('invMsg').textContent = err.message; }
   $('invBtn').disabled = false;
+}
+// One row per invite; the box below copies the newest invite's link (Free allows 2 staff, so at most 2 rows).
+function addInvite(d){
+  const row = document.createElement('div'); row.className = 'invrow';
+  row.innerHTML = '<b style="overflow-wrap:anywhere">' + esc(d.email) + '</b><span style="font-size:13px;color:var(--soft);flex:none">Invited · waiting to join</span>';
+  $('invList').appendChild(row);
+  const many = $('invList').children.length > 1;
+  $('linkTitle').textContent = many ? 'Or send ' + d.email + "'s link yourself" : 'Or send the link yourself';
+  $('linkCopy').setAttribute('aria-label', 'Copy invite link for ' + d.email);
+  $('linkCopy').onclick = () => copyText(d.link, $('linkNote'), 'Paste it in Messenger or WhatsApp. Works for 7 days.');
+  $('linkBox').classList.remove('hide');
 }
 async function copyText(text, note, back){
   try { await navigator.clipboard.writeText(text); } catch(e) { prompt('Copy this link:', text); return; }
