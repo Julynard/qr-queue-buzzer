@@ -12,19 +12,24 @@
   a{color:#0A2A4A}a:hover{color:#0B6FB8}
   a:focus-visible{outline:3px solid #0B6FB8;outline-offset:2px}
   @media (max-width:640px){.navlinks{display:none!important}}
-  /* Clients strip: names slide slowly from right to left. The list is written twice so the loop has no gap. */
-  .clients{background:var(--accent);color:#FFFFFF}
-  .clients-wrap{max-width:1200px;margin:0 auto;padding:18px 24px;display:flex;align-items:center;gap:10px 26px}
-  .clients h2{margin:0;flex:none;font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
-  .marquee{flex:1;min-width:0;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
-  .marquee-track{display:flex;width:max-content;animation:clients-slide 45s linear infinite}
-  .marquee:hover .marquee-track{animation-play-state:paused}
-  .marquee ul{display:flex;margin:0;padding:0;list-style:none}
-  .marquee li{display:flex;align-items:center;gap:14px;padding-right:28px;font-size:16px;font-weight:700;white-space:nowrap}
-  .marquee li::before{content:"";width:7px;height:7px;border-radius:50%;background:#CFE4F5}
-  @keyframes clients-slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-  @media (max-width:640px){.clients-wrap{flex-direction:column;align-items:flex-start}.marquee{align-self:stretch}}
-  @media (prefers-reduced-motion:reduce){.marquee{-webkit-mask-image:none;mask-image:none}.marquee-track{animation:none;width:auto}.marquee ul{flex-wrap:wrap;row-gap:8px}.marquee ul[aria-hidden]{display:none}}
+  /* Showcase: two rows of shop "logos" sliding in opposite directions. Each row is written twice so the loop has no gap. */
+  .showcase{background:#EDF1F5;border-top:1px solid #E3E6EA;border-bottom:1px solid #E3E6EA}
+  .showcase-wrap{max-width:1200px;margin:0 auto;padding:64px 24px;display:flex;flex-direction:column;gap:28px}
+  .showcase-head{text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
+  .showcase-head > span{font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#33506E}
+  .showcase-head h2{margin:0;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:clamp(36px,4.4vw,56px);line-height:1}
+  .logo-rows{display:flex;flex-direction:column;gap:16px}
+  .logo-row{overflow:hidden;padding:4px 0;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+  .logo-track{display:flex;width:max-content;animation:logos-slide 55s linear infinite}
+  .logo-row.rev .logo-track{animation-direction:reverse;animation-duration:65s}
+  .logo-row:hover .logo-track{animation-play-state:paused}
+  .logo-row ul{display:flex;gap:16px;margin:0;padding:0 16px 0 0;list-style:none}
+  .logo{position:relative;display:flex;align-items:center;gap:10px;height:68px;padding:0 24px;background:#FFFFFF;border:1px solid #E3E6EA;border-radius:10px;box-shadow:0 1px 2px rgba(10,42,74,.06);white-space:nowrap;font-family:'Space Grotesk',Inter,sans-serif;font-weight:700;font-size:18px;letter-spacing:-.01em;color:#0A2A4A;overflow:hidden}
+  .logo::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--accent);transform:scaleX(0);transition:transform .25s}
+  .logo:hover::before{transform:scaleX(1)}
+  .logo svg{flex:none;width:30px;height:30px;padding:5px;box-sizing:border-box;border-radius:8px;color:#FFFFFF;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  @keyframes logos-slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  @media (prefers-reduced-motion:reduce){.logo-row{-webkit-mask-image:none;mask-image:none}.logo-track{animation:none;width:auto}.logo-row ul{flex-wrap:wrap;justify-content:center;padding:0}.logo-row ul[aria-hidden]{display:none}}
 </style></head><body>
 <div style="background: #F6F7F9; color: #0A2A4A; font-family: Inter, system-ui, sans-serif; min-height: 100vh">
 
@@ -108,14 +113,25 @@
       </div>
     </section>
 
-    <section class="clients" aria-labelledby="clients-title">
-      <div class="clients-wrap">
-        <h2 id="clients-title">Clients</h2>
-        <div class="marquee">
-          <div class="marquee-track">
-            <ul><li>Ana's Milk Tea</li><li>Kanto Coffee</li><li>Lola's Lugaw</li><li>Barrio Barbers</li><li>Sunrise Family Clinic</li><li>Bayani Pharmacy</li><li>Sakto Car Wash</li><li>Tambayan Food Park</li><li>Kusina ni Nena</li><li>Brew &amp; Bites</li></ul>
-            <ul aria-hidden="true"><li>Ana's Milk Tea</li><li>Kanto Coffee</li><li>Lola's Lugaw</li><li>Barrio Barbers</li><li>Sunrise Family Clinic</li><li>Bayani Pharmacy</li><li>Sakto Car Wash</li><li>Tambayan Food Park</li><li>Kusina ni Nena</li><li>Brew &amp; Bites</li></ul>
+    <section class="showcase" aria-labelledby="showcase-title">
+      <div class="showcase-wrap">
+        <div class="showcase-head">
+          <span>Loved by busy counters</span>
+          <h2 id="showcase-title">Shops that say <span style="white-space: nowrap">&ldquo;Ako na!&rdquo;</span></h2>
+        </div>
+        <div class="logo-rows">
+        <div class="logo-row">
+          <div class="logo-track">
+            <ul><li class="logo"><svg viewBox="0 0 24 24" style="background:#0B6FB8" aria-hidden="true"><path d="m6 8 1.75 12.28a2 2 0 0 0 2 1.72h4.54a2 2 0 0 0 2-1.72L18 8"/><path d="M5 8h14"/><path d="M7 15a6.47 6.47 0 0 1 5 0 6.47 6.47 0 0 0 5 0"/><path d="m12 8 1-6h2"/></svg>Ana's Milk Tea</li><li class="logo"><svg viewBox="0 0 24 24" style="background:#8A5A3B" aria-hidden="true"><path d="M10 2v2"/><path d="M14 2v2"/><path d="M6 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/></svg>Kanto Coffee</li><li class="logo"><svg viewBox="0 0 24 24" style="background:#0F766E" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>Sunrise Family Clinic</li><li class="logo"><svg viewBox="0 0 24 24" style="background:#0A2A4A" aria-hidden="true"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></svg>Barrio Barbers</li><li class="logo"><svg viewBox="0 0 24 24" style="background:#15803D" aria-hidden="true"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>Bayani Pharmacy</li><li class="logo"><svg viewBox="0 0 24 24" style="background:#C2410C" aria-hidden="true"><path d="M3 9h18l-1.5-5h-15Z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/></svg>Tambayan Food Park</li></ul>
+            <ul aria-hidden="true"><li class="logo"><svg viewBox="0 0 24 24" style="background:#0B6FB8" aria-hidden="true"><path d="m6 8 1.75 12.28a2 2 0 0 0 2 1.72h4.54a2 2 0 0 0 2-1.72L18 8"/><path d="M5 8h14"/><path d="M7 15a6.47 6.47 0 0 1 5 0 6.47 6.47 0 0 0 5 0"/><path d="m12 8 1-6h2"/></svg>Ana's Milk Tea</li><li class="logo"><svg viewBox="0 0 24 24" style="background:#8A5A3B" aria-hidden="true"><path d="M10 2v2"/><path d="M14 2v2"/><path d="M6 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/></svg>Kanto Coffee</li><li class="logo"><svg viewBox="0 0 24 24" style="background:#0F766E" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>Sunrise Family Clinic</li><li class="logo"><svg viewBox="0 0 24 24" style="background:#0A2A4A" aria-hidden="true"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></svg>Barrio Barbers</li><li class="logo"><svg viewBox="0 0 24 24" style="background:#15803D" aria-hidden="true"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>Bayani Pharmacy</li><li class="logo"><svg viewBox="0 0 24 24" style="background:#C2410C" aria-hidden="true"><path d="M3 9h18l-1.5-5h-15Z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/></svg>Tambayan Food Park</li></ul>
           </div>
+        </div>
+        <div class="logo-row rev">
+          <div class="logo-track">
+            <ul><li class="logo"><svg viewBox="0 0 24 24" style="background:#B45309" aria-hidden="true"><path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z"/><path d="M7 21h10"/><path d="M19.5 12 22 6"/></svg>Lola's Lugaw</li><li class="logo"><svg viewBox="0 0 24 24" style="background:#0B6FB8" aria-hidden="true"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>Sakto Car Wash</li><li class="logo"><svg viewBox="0 0 24 24" style="background:#B42318" aria-hidden="true"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>Kusina ni Nena</li><li class="logo"><svg viewBox="0 0 24 24" style="background:#0A2A4A" aria-hidden="true"><path d="M21.42 10.92a1 1 0 0 0-.02-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0Z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg>San Roque Registrar</li><li class="logo"><svg viewBox="0 0 24 24" style="background:#7C3AED" aria-hidden="true"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></svg>Gupit Studio</li><li class="logo"><svg viewBox="0 0 24 24" style="background:#0F766E" aria-hidden="true"><path d="M10 2v2"/><path d="M14 2v2"/><path d="M6 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/></svg>Brew &amp; Bites</li></ul>
+            <ul aria-hidden="true"><li class="logo"><svg viewBox="0 0 24 24" style="background:#B45309" aria-hidden="true"><path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z"/><path d="M7 21h10"/><path d="M19.5 12 22 6"/></svg>Lola's Lugaw</li><li class="logo"><svg viewBox="0 0 24 24" style="background:#0B6FB8" aria-hidden="true"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>Sakto Car Wash</li><li class="logo"><svg viewBox="0 0 24 24" style="background:#B42318" aria-hidden="true"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>Kusina ni Nena</li><li class="logo"><svg viewBox="0 0 24 24" style="background:#0A2A4A" aria-hidden="true"><path d="M21.42 10.92a1 1 0 0 0-.02-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0Z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg>San Roque Registrar</li><li class="logo"><svg viewBox="0 0 24 24" style="background:#7C3AED" aria-hidden="true"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></svg>Gupit Studio</li><li class="logo"><svg viewBox="0 0 24 24" style="background:#0F766E" aria-hidden="true"><path d="M10 2v2"/><path d="M14 2v2"/><path d="M6 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/></svg>Brew &amp; Bites</li></ul>
+          </div>
+        </div>
         </div>
       </div>
     </section>
