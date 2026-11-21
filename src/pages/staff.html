@@ -73,6 +73,7 @@
   .pill{font-size:13px;font-weight:700;padding:4px 12px;border-radius:999px;white-space:nowrap}
   .act{font-size:14px;font-weight:700;min-height:44px;padding:0 16px;border:2px solid var(--ink);border-radius:6px;background:#fff;color:var(--ink);display:inline-flex;align-items:center;gap:8px;vertical-align:middle}
   .act.notify{background:var(--accent);color:#fff}
+  .act:disabled{opacity:.7;cursor:progress}
   .act+.act{margin-left:8px}
   .rm{min-height:44px;min-width:44px;margin-left:6px;border:0;border-radius:6px;background:transparent;color:var(--mute);vertical-align:middle;display:inline-flex;align-items:center;justify-content:center}
   .rm:hover{color:var(--ink);background:var(--ground)}
@@ -123,7 +124,7 @@
       <div class="plan">
         <div class="t">Free plan</div>
         <div class="u" id="usage"></div>
-        <button class="btn ink" style="min-height:40px;font-size:13px;border-radius:4px;justify-content:center" onclick="go('plan')">See Plus</button>
+        <button class="btn ink" style="min-height:40px;font-size:13px;border-radius:4px;justify-content:center" onclick="go('plan')">See Pro</button>
       </div>
       <a class="account" href="/app"><span class="avatar" id="avatar" aria-hidden="true"></span><span><b id="meName"></b><span class="small" style="display:block">All queues</span></span></a>
       <button class="signout" onclick="signOut()">Sign out</button>
@@ -206,15 +207,15 @@
       </form>
     </section>
 
-    <!-- Plus (locked) -->
+    <!-- Pro (locked) -->
     <section data-tab="locked" class="hide">
-      <div class="row"><h1 id="lockedTitle"></h1><span class="tag">Plus</span></div>
+      <div class="row"><h1 id="lockedTitle"></h1><span class="tag">Pro</span></div>
       <div class="card locked" style="margin-top:20px">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0A2A4A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
         <div class="head" id="lockedHead"></div>
         <div class="body" id="lockedBody"></div>
         <div class="row" style="margin-top:6px">
-          <button class="btn ink" onclick="document.getElementById('upgradeMsg').textContent='Paid plans are coming soon.'">Upgrade to Plus</button>
+          <button class="btn ink" onclick="document.getElementById('upgradeMsg').textContent='Paid plans are coming soon.'">Upgrade to Pro</button>
           <button class="btn" onclick="go('queue')">Back to queue</button>
           <span class="msg" id="upgradeMsg" role="status"></span>
         </div>
@@ -229,7 +230,7 @@ const BASE = '__BASE__'; // this queue's address, e.g. /q/anas-milk-tea
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pad = n => String(n).padStart(3, '0');
-const LOCK = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="Locked, Plus plan"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+const LOCK = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="Locked, Pro plan"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
 const BELL = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
 const X = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
 const PILLS = {
@@ -244,12 +245,12 @@ const LOCKED = {
   branding: ['Branding', 'Make every ticket yours.', 'Use your own colours and logo on the customer ticket, the QR poster and the display screen. Status colours stay fixed so customers are never confused.'],
   reports:  ['Reports', 'See your busiest hours.', 'Average wait time, customers per day, no-show rate and busiest hours, so you know when to add staff.'],
   log:      ['Activity log', 'Know who did what.', 'Every notify, done, removal and new day, with the staff member and the time. Useful when a customer says they were skipped.'],
-  plan:     ['Plus plan', 'Grow past the Free limits.', 'Unlimited tickets, more staff and queues, a display screen for your counter, your own branding, reports and the activity log.'],
+  plan:     ['Pro plan', 'Grow past the Free limits.', '₱299 a month: up to 5 counters, owner + 5 staff, unlimited tickets, a display screen for your counter, your own branding, reports and the activity log. Need more? Max (₱999 a month) adds up to 10 counters, branches and a food-park QR.'],
 };
 const GROUPS = [
   ['Run the queue', [['queue','Queue'], ['qr','QR code']]],
   ['Manage', [['team','Team'], ['settings','Settings']]],
-  ['Plus', [['display','Display screen',1], ['branding','Branding',1], ['reports','Reports',1], ['log','Activity log',1]]],
+  ['Pro', [['display','Display screen',1], ['branding','Branding',1], ['reports','Reports',1], ['log','Activity log',1]]],
 ];
 let state = null, settingsShown = false, tab = 'queue';
 
@@ -325,8 +326,22 @@ setInterval(() => { if (ws && ws.readyState === 1) ws.send('ping'); }, 30000);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !ws && !stopped) connect(); });
 connect();
 
-async function act(a, id){
+// Tickets whose Notify request is still on its way: the button shows "Notifying…" until it is done.
+const notifying = new Set();
+const notifyBtn = (id, q) => notifying.has(id)
+  ? '<button class="act notify" disabled>' + BELL + 'Notifying…</button>'
+  : '<button class="act notify" onclick="act(\'buzz\',' + q + ',this)">' + BELL + 'Notify</button>';
+async function act(a, id, btn){
+  if (a === 'buzz') {
+    if (notifying.has(id)) return;
+    notifying.add(id);
+    if (btn) btn.outerHTML = notifyBtn(id, "'" + id + "'");
+  }
   try { await fetch(BASE+'/api/'+a+'/'+id, {method:'POST'}); } catch(e){}
+  if (a === 'buzz') {
+    notifying.delete(id);
+    if (state) render(state);
+  }
   if (!ws || ws.readyState !== 1) poll();
 }
 
@@ -369,7 +384,7 @@ function render(d){
         '<div class="small">' + (t.push ? 'Lock-screen alerts on' : 'No lock-screen alerts') + '</div></td>' +
       '<td><span class="pill" style="background:' + p.bg + ';color:' + p.fg + '">' + p.label + '</span></td>' +
       '<td style="white-space:nowrap">' +
-        (isOpen ? '<button class="act notify" onclick="act(\'buzz\',' + q + ')">' + BELL + 'Notify</button><button class="act" onclick="act(\'done\',' + q + ')">Done</button>' : '') +
+        (isOpen ? notifyBtn(t.id, q) + '<button class="act" onclick="act(\'done\',' + q + ')">Done</button>' : '') +
         '<button class="rm" aria-label="Remove ticket ' + pad(t.num) + '" title="Remove" onclick="act(\'remove\',' + q + ')">' + X + '</button></td></tr>';
   }).join('');
   if (!settingsShown && d.settings) { showSettings(d.settings); settingsShown = true; }
