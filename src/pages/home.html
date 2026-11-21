@@ -11,6 +11,12 @@
   body{margin:0}
   a{color:#0A2A4A}a:hover{color:#0B6FB8}
   a:focus-visible{outline:3px solid #0B6FB8;outline-offset:2px}
+  /* Pricing: Monthly / Yearly switch. Buttons swap the text of every element with data-month / data-year. */
+  .billing{align-self:flex-start;display:inline-flex;gap:4px;padding:4px;background:#FFFFFF;border:2px solid #0A2A4A;border-radius:999px}
+  .billing button{font:inherit;font-size:15px;font-weight:800;min-height:44px;padding:0 18px;border:0;border-radius:999px;background:transparent;color:#0A2A4A;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+  .billing button[aria-pressed="true"]{background:#0A2A4A;color:#FFFFFF}
+  .billing button:focus-visible{outline:3px solid #0B6FB8;outline-offset:2px}
+  .billing .save{padding:2px 8px;border-radius:999px;background:#FFE58A;color:#0A2A4A;font-size:12px}
   @media (max-width:640px){.navlinks{display:none!important}}
   /* Clients strip: names slide slowly from right to left. The list is written twice so the loop has no gap. */
   .clients{background:var(--accent);color:#FFFFFF}
@@ -195,6 +201,10 @@
         <h2 id="pricing-title" style="margin: 0; font-family: Anton, Impact, sans-serif; font-weight: 400; font-size: clamp(40px, 5vw, 64px); line-height: 1">Start free. Grow when you're busy.</h2>
         <p style="margin: 0; font-size: 18px; line-height: 1.55; color: #33506E">One QR code per business on every plan. Prices are per business, in Philippine pesos.</p>
       </div>
+      <div class="billing" role="group" aria-label="Billing period">
+        <button type="button" aria-pressed="true" data-period="month">Monthly</button>
+        <button type="button" aria-pressed="false" data-period="year">Yearly <span class="save">2 months free</span></button>
+      </div>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 24px; align-items: stretch">
         <div style="background: #FFFFFF; border: 3px solid #0A2A4A; border-radius: 6px; padding: 28px; display: flex; flex-direction: column; gap: 16px">
           <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px">
@@ -222,8 +232,8 @@
             <span style="padding: 4px 12px; background: var(--accent); color: #FFFFFF; font-size: 13px; font-weight: 800; border-radius: 999px">Most popular</span>
           </div>
           <div>
-            <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px"><span style="font-family: Anton, Impact, sans-serif; font-size: 56px; line-height: 1">₱299</span><span style="font-size: 16px; font-weight: 700; color: #33506E">/ month</span><span style="align-self: center; margin-left: 6px; padding: 3px 9px; background: #FFE58A; color: #0A2A4A; font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; border-radius: 999px">Launch price</span></div>
-            <div style="margin-top: 6px; font-size: 14px; color: #33506E">or ₱2,990 a year (2 months free)</div>
+            <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px"><span style="font-family: Anton, Impact, sans-serif; font-size: 56px; line-height: 1" data-month="₱299" data-year="₱2,990">₱299</span><span style="font-size: 16px; font-weight: 700; color: #33506E" data-month="/ month" data-year="/ year">/ month</span><span style="align-self: center; margin-left: 6px; padding: 3px 9px; background: #FFE58A; color: #0A2A4A; font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; border-radius: 999px">Launch price</span></div>
+            <div style="margin-top: 6px; font-size: 14px; color: #33506E" data-month="or ₱2,990 a year (2 months free)" data-year="About ₱249 a month, billed yearly">or ₱2,990 a year (2 months free)</div>
           </div>
           <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; font-size: 16px">
             <li style="display: flex; gap: 10px; align-items: flex-start"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M20 6 9 17l-5-5"/></svg><span>Up to 5 counters, still 1 QR code</span></li>
@@ -243,8 +253,8 @@
             <span style="padding: 4px 12px; background: #0A2A4A; color: #FFFFFF; font-size: 13px; font-weight: 800; border-radius: 999px">For busy places</span>
           </div>
           <div>
-            <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px"><span style="font-family: Anton, Impact, sans-serif; font-size: 56px; line-height: 1">₱999</span><span style="font-size: 16px; font-weight: 700; color: #33506E">/ month</span><span style="align-self: center; margin-left: 6px; padding: 3px 9px; background: #FFE58A; color: #0A2A4A; font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; border-radius: 999px">Launch price</span></div>
-            <div style="margin-top: 6px; font-size: 14px; color: #33506E">or ₱9,990 a year (2 months free)</div>
+            <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px"><span style="font-family: Anton, Impact, sans-serif; font-size: 56px; line-height: 1" data-month="₱999" data-year="₱9,990">₱999</span><span style="font-size: 16px; font-weight: 700; color: #33506E" data-month="/ month" data-year="/ year">/ month</span><span style="align-self: center; margin-left: 6px; padding: 3px 9px; background: #FFE58A; color: #0A2A4A; font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; border-radius: 999px">Launch price</span></div>
+            <div style="margin-top: 6px; font-size: 14px; color: #33506E" data-month="or ₱9,990 a year (2 months free)" data-year="About ₱833 a month, billed yearly">or ₱9,990 a year (2 months free)</div>
           </div>
           <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; font-size: 16px">
             <li style="display: flex; gap: 10px; align-items: flex-start"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M20 6 9 17l-5-5"/></svg><span>Up to 10 counters</span></li>
@@ -312,4 +322,12 @@
     </div>
   </footer>
 </div>
+<script>
+// Pricing: Monthly / Yearly switch.
+document.querySelectorAll('.billing button').forEach(btn => btn.addEventListener('click', () => {
+  const yearly = btn.dataset.period === 'year';
+  document.querySelectorAll('.billing button').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+  document.querySelectorAll('[data-month]').forEach(el => { el.textContent = yearly ? el.dataset.year : el.dataset.month; });
+}));
+</script>
 </body></html>
