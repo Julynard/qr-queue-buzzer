@@ -15,7 +15,7 @@ const SEND_CODE_PATH = "/email-otp/send-verification-otp";
 export function signInMethods(env: Env): { google: boolean; email: boolean } {
   return {
     google: !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET),
-    email: env.EMAIL_MODE === "console",
+    email: env.EMAIL_MODE === "console" || env.EMAIL_MODE === "log",
   };
 }
 
@@ -28,17 +28,22 @@ export function authOptions(env: Env, baseURL: string): BetterAuthOptions {
       expiresIn: OTP_SECONDS,
       allowedAttempts: 5,
       async sendVerificationOTP({ email, otp }) {
-        // Local development only. The live site has no email sending until aqona.app is set up,
-        // so its log-in page offers Google only and this refuses.
-        if (env.EMAIL_MODE === "console") { console.log(`[dev] login code for ${email}: ${otp}`); return; }
+        // No email sending until aqona.app is set up. "console" (local) prints the code in the wrangler dev
+        // terminal; "log" (live, for testing) writes it to the Worker's logs, which only the account owner
+        // can read (dashboard → Workers → aqona → Logs, or `npx wrangler tail`). Never show it on the page:
+        // anyone could then sign in as any email.
+        if (env.EMAIL_MODE === "console" || env.EMAIL_MODE === "log") { console.log(`[login code] ${email}: ${otp}`); return; }
         throw new Error("Email codes are not available yet");
       },
     }),
     organization({
       schema: { organization: { additionalFields: { plan: { type: "string", defaultValue: "free", input: false, required: false } } } },
     }),
-    captcha({ provider: "cloudflare-turnstile", secretKey: env.TURNSTILE_SECRET_KEY ?? "", endpoints: [SEND_CODE_PATH] }),
   ];
+  // Turnstile on "Email me a code", only once its secret is set (without one, Better Auth refuses every code).
+  if (env.TURNSTILE_SECRET_KEY) {
+    plugins.push(captcha({ provider: "cloudflare-turnstile", secretKey: env.TURNSTILE_SECRET_KEY, endpoints: [SEND_CODE_PATH] }) as BetterAuthPlugin);
+  }
   // Better Auth Infrastructure (owner-requested): dashboard and abuse protection. It sends sign-in
   // events to Better Auth's servers, so it is only on when its key is set (and the privacy notice says so).
   if (env.BETTER_AUTH_API_KEY) {

@@ -31,9 +31,12 @@
     "VAPID_PUBLIC_KEY": "BASvt5_OUiBwIjzKMhhAANAw79gwBrz3d5qLGcjou0DGSDNKyfdzAXRoyYQOWqdRZ8CgdI6sOnHnIF_Pwj3B6ZU",
     // Contact the push services can use. Change to a real mailto: or https: address before going live.
     "VAPID_SUBJECT": "mailto:test@example.com",
-    // How login codes are delivered: "off" (live site until aqona.app email is set up: Google sign-in only)
-    // or "console" (local dev only, set in .dev.vars: the code is printed in the wrangler dev terminal).
-    "EMAIL_MODE": "off",
+    // How login codes are delivered (no email sending until aqona.app is set up):
+    //   "log"     live site, for testing: the code is written to the Worker's logs (dashboard → Workers → aqona → Logs,
+    //             or `npx wrangler tail`). Only the account owner can read them, so only they can finish an email sign-in.
+    //   "console" local dev (set in .dev.vars): the code is printed in the wrangler dev terminal.
+    //   "off"     Google sign-in only.
+    "EMAIL_MODE": "log",
     // Cloudflare Turnstile site key (public), used on log-in and "Take a number". This one is Cloudflare's
     // always-pass test key. The checks run only where the TURNSTILE_SECRET_KEY secret is set.
     "TURNSTILE_SITE_KEY": "1x00000000000000000000AA"
