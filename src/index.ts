@@ -15,8 +15,9 @@ import PRIVACY_HTML from "./pages/privacy.html";
 export { QueueDO } from "./queue-do.ts";
 import { createAuth, getSession, signInMethods } from "./auth.ts";
 import { handleAppApi } from "./app-api.ts";
-import { classifyQueuePath } from "./access.ts";
-import { findQueueBySlug, isMember, renameQueue } from "./queues.ts";
+import { allows, canManage, classifyQueuePath } from "./access.ts";
+import type { Role } from "./access.ts";
+import { findQueueBySlug, renameQueue, roleIn } from "./queues.ts";
 import type { QueueRow } from "./queues.ts";
 import type { CustomerView, PublicTicket } from "./queue-core.ts";
 import { safeJson, fill, escHtml, safeNext } from "./html.ts";
@@ -42,9 +43,10 @@ export default {
 
     if (p.startsWith("/api/auth/")) return createAuth(env, request).handler(request);
 
-    if (p === "/") return html(HOME_HTML);
+    // Signed-in visitors don't see "Log in" / "Start free": they get a link to their dashboard instead.
+    if (p === "/") return (await signedIn(env, request)) ? forSignedIn(HOME_HTML) : html(HOME_HTML);
     if (p === "/privacy") return html(PRIVACY_HTML);
-    if (p === "/start") return html(fill(START_HTML, { METHODS: safeJson(signInMethods(env)) }));
+    if (p === "/start") return (await signedIn(env, request)) ? redirect("/app") : html(fill(START_HTML, { METHODS: safeJson(signInMethods(env)) }));
     if (p === "/login" || p === "/app" || p.startsWith("/api/app/")) {
       const auth = createAuth(env, request);
       const session = await getSession(auth, request);
@@ -70,17 +72,37 @@ export default {
       if (!row) return notFound(); // no Durable Object is created for an unknown address
       const route = classifyQueuePath(m[2] ?? "", request.method);
       if (!route) return notFound();
-      if (route.kind === "member") {
+      let role: Role | null = null;
+      if (route.need !== "public") {
         const session = await getSession(createAuth(env, request), request);
         if (!session) return isPage(route.forward) ? redirect("/login?next=" + encodeURIComponent(p)) : json({ error: "log in first" }, 401);
-        if (!(await isMember(env.DB, session.user.id, row.workspace_id))) return isPage(route.forward) ? html("<!doctype html><meta charset=utf-8><p>You are not on this queue's team.</p>", 403) : json({ error: "not on this queue's team" }, 403);
+        role = await roleIn(env, session.user, row.workspace_id);
+        if (!allows(route.need, role)) {
+          const why = role ? "Only the owner can do this." : "You are not on this queue's team.";
+          return isPage(route.forward) ? html(`<!doctype html><meta charset=utf-8><p>${why}</p>`, 403) : json({ error: why }, 403);
+        }
       }
-      return queueRoute(request, env, row, route.forward, origin);
+      return queueRoute(request, env, row, route.forward, origin, role);
     }
 
     return new Response("Not found", { status: 404 });
   },
 } satisfies ExportedHandler<Env>;
+
+// Better Auth's session cookie ("__Secure-" in front on https). No cookie: skip the database lookup.
+const hasSessionCookie = (request: Request): boolean => /(?:^|;\s*)(?:__Secure-)?better-auth\.session_token=/.test(request.headers.get("Cookie") ?? "");
+async function signedIn(env: Env, request: Request): Promise<boolean> {
+  return hasSessionCookie(request) && !!(await getSession(createAuth(env, request), request));
+}
+
+/** The home page for a signed-in visitor: "Log in" links go, "Start free" links open the dashboard. */
+function forSignedIn(page: string): Response {
+  const res = html(page);
+  return new HTMLRewriter()
+    .on('a[href="/login"]', { element: (el) => { el.remove(); } })
+    .on('a[href="/start"]', { element: (el) => { el.setAttribute("href", "/app"); el.setInnerContent("Open dashboard"); } })
+    .transform(res);
+}
 
 function manifest(startUrl: string, scope: string): string {
   return JSON.stringify({
@@ -91,7 +113,7 @@ function manifest(startUrl: string, scope: string): string {
 }
 
 /** A request under /q/<slug>, already allowed. `forward` is the path inside the queue (e.g. /api/buzz/<id>). */
-async function queueRoute(request: Request, env: Env, row: QueueRow, forward: string, origin: string): Promise<Response> {
+async function queueRoute(request: Request, env: Env, row: QueueRow, forward: string, origin: string, role: Role | null): Promise<Response> {
   const stub = env.QUEUE.get(env.QUEUE.idFromName(row.id));
   const base = `/q/${row.slug}`;
   // Reads the queue's own data; null when the queue is gone (deleted moments ago, still in the slug cache).
@@ -101,7 +123,7 @@ async function queueRoute(request: Request, env: Env, row: QueueRow, forward: st
   };
   let m: RegExpMatchArray | null;
 
-  if (forward === "/staff") return html(fill(STAFF_HTML, { JOIN: origin + base, BASE: base }));
+  if (forward === "/staff") return html(fill(STAFF_HTML, { JOIN: origin + base, BASE: base, CAN_MANAGE: String(canManage(role)) }));
   if (forward === "/qr") {
     const info = await internal<QueueInfo>("/api/info");
     if (!info) return notFound();

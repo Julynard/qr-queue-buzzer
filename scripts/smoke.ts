@@ -117,6 +117,14 @@ check("internal queue routes are not reachable from outside", (await site(Q + "/
 const anonStaff = new Socket("/ws/staff", "");
 check("logged-out staff live connection is refused", await anonStaff.opened.then(() => false, () => true));
 check("owner opens the staff page", (await site(Q + "/staff", cookieA)).status === 200);
+check("owner's staff page shows Team and Settings", (await (await site(Q + "/staff", cookieA)).text()).includes("const CAN_MANAGE = true;"));
+const homeOut = await (await site("/")).text();
+check("logged-out home shows Log in and Start free", homeOut.includes('href="/login"') && homeOut.includes('href="/start"'));
+const homeIn = await (await site("/", cookieA)).text();
+check("signed-in home hides Log in and Start free", !homeIn.includes('href="/login"') && !homeIn.includes('href="/start"') && homeIn.includes("Open dashboard"));
+check("signed-in Start free -> dashboard", (await site("/start", cookieA)).headers.get("location") === "/app");
+check("logged-out Start free page opens", (await site("/start")).status === 200);
+check("another shop's owner can't change settings (403)", (await site(Q + "/api/settings", cookieB, { method: "POST", body: "{}" })).status === 403);
 
 check("manual reset", (await post("/api/reset")).ok);
 
